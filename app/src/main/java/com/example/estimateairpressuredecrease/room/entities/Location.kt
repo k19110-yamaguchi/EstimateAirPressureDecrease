@@ -1,4 +1,4 @@
-package com.example.estimateairpressuredecrease.entities
+package com.example.estimateairpressuredecrease.room.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

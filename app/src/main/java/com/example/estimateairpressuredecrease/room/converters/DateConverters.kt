@@ -1,4 +1,4 @@
-package com.example.estimateairpressuredecrease.converters
+package com.example.estimateairpressuredecrease.room.converters
 
 import androidx.room.TypeConverter
 import java.time.LocalDateTime

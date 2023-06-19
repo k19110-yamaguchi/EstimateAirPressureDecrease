@@ -1,10 +1,10 @@
-package com.example.estimateairpressuredecrease.dao
+package com.example.estimateairpressuredecrease.room.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import com.example.estimateairpressuredecrease.entities.Home
+import com.example.estimateairpressuredecrease.room.entities.Home
 import kotlinx.coroutines.flow.Flow
 
 @Dao

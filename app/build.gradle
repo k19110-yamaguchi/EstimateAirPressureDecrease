@@ -3,6 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     // roomを使うのに必要
     id 'kotlin-kapt'
+    id 'com.google.dagger.hilt.android'
 }
 
 android {
@@ -46,12 +47,16 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
+    // Hiltを使うのに必要
+    kapt {
+        correctErrorTypes true
+    }
 }
 
 dependencies {
 
     implementation 'androidx.core:core-ktx:1.7.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
     implementation 'androidx.activity:activity-compose:1.3.1'
     implementation "androidx.compose.ui:ui:$compose_ui_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_ui_version"
@@ -72,8 +77,16 @@ dependencies {
 
     // List<Double>をroomに保存するために必要
     implementation "com.google.code.gson:gson:2.8.9"
-
     implementation "androidx.sqlite:sqlite:2.3.0"
+
+    // Hiltを使うのに必要
+    def hilt_version ="2.44"
+    implementation "com.google.dagger:hilt-android:$hilt_version"
+    kapt "com.google.dagger:hilt-android-compiler:$hilt_version"
+    implementation "androidx.lifecycle:lifecycle-viewmodel:2.5.1"
+    kapt "androidx.lifecycle:lifecycle-compiler:2.5.1"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1"
+
 
 
 
