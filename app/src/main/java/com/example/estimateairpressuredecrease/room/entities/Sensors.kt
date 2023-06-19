@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 @Entity
 data class Sensors(
-    @PrimaryKey(autoGenerate = true) val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     var accId: Int,
     var locId: Int,
     var startDate: LocalDateTime,

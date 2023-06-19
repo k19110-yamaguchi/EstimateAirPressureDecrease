@@ -87,6 +87,9 @@ dependencies {
     kapt "androidx.lifecycle:lifecycle-compiler:2.5.1"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1"
 
+    // ViewModelを使うのに必要
+    implementation "androidx.hilt:hilt-navigation-compose:1.0.0"
+
 
 
 

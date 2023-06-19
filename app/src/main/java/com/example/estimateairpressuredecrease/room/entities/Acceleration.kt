@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class Acceleration(
-    @PrimaryKey(autoGenerate = true) val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     var xAccList: List<Double>,
     var yAccList: List<Double>,
     var zAccList: List<Double>,
