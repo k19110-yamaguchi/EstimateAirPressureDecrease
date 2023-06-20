@@ -13,6 +13,5 @@ data class Home(
     var minProperPressure: Int,
     // 空気を注入した日付
     var inflatedDate: LocalDateTime,
-
 )
 

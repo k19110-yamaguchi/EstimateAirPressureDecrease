@@ -3,12 +3,13 @@ package com.example.estimateairpressuredecrease.hilt
 import android.content.Context
 import androidx.room.Room
 import com.example.estimateairpressuredecrease.room.AppDatabase
+import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 
-@dagger.Module
+@Module
 @InstallIn(SingletonComponent::class)
 object Module {
     @Provides

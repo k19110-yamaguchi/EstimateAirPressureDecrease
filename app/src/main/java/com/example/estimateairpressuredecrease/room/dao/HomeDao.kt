@@ -14,6 +14,10 @@ interface HomeDao {
     // 起動初期、空のデータベースを作成
     suspend fun createHomeDB(home: Home)
 
+    // idが一致するデータを取得
+    @Query("SELECT * FROM Home WHERE id = :id")
+    suspend fun getHomeById(id: Int): Home?
+
     // データを取得
     @Query("SELECT * FROM Home")
     fun getHomeData(): Flow<List<Home>>

@@ -7,10 +7,14 @@ import java.time.LocalDateTime
 @Entity
 data class Sensors(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    // 加速度データのid
     var accId: Int,
+    // 位置情報データのid
     var locId: Int,
+    // 測定開始時間
     var startDate: LocalDateTime,
+    // 測定終了時間
     var stopDate: LocalDateTime,
-    var airPressure: Int,
-
+    // 測定時の空気圧(学習の場合は入力が必要)
+    var airPressure: Int = 0,
     )
