@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter
 
 // RoomでLocalDateTimeを使用できるように
 // LocalDateTime <-> String("yyyy/MM/dd HH-mm-ss")に変換
-class DateConverters {
+class DateConverter {
     //書式を指定
     private val dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH-mm-ss")
 

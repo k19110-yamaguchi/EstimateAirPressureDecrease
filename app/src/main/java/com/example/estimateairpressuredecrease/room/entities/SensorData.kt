@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
 @Entity
-data class Sensors(
+data class SensorData (
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     // 加速度データのid
     var accId: Int,
@@ -17,4 +17,4 @@ data class Sensors(
     var stopDate: LocalDateTime,
     // 測定時の空気圧(学習の場合は入力が必要)
     var airPressure: Int = 0,
-    )
+)

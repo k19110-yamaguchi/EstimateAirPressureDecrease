@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity
-data class FeatureValues(
+data class FeatureValueData(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     // 特徴量を抽出するのに用いたセンサデータのid
     var sensorsId: Int,
@@ -13,3 +13,4 @@ data class FeatureValues(
     // 振幅スペクトル
     var ampSptList: List<Double>,
 )
+

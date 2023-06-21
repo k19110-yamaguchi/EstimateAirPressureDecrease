@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!-- android:screenOrientation="portrait": 画面を縦に固定 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    android:screenOrientation="portrait"
     xmlns:tools="http://schemas.android.com/tools">
 
+
+    <!-- 加速度、位置情報を取得するのに必要-->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- android:name=".hilt.App":  Hiltを使うのに必要-->
     <application
         android:name=".hilt.App"
         android:allowBackup="true"
