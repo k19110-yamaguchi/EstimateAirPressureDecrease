@@ -94,6 +94,10 @@ dependencies {
     implementation 'androidx.activity:activity-ktx:1.4.0'
     implementation 'androidx.fragment:fragment-ktx:1.4.0'
 
+    // ステータスバーの色変更に必要
+    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.25.1'
+
+
 
 
 

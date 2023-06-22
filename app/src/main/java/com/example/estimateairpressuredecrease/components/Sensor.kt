@@ -2,10 +2,12 @@ package com.example.estimateairpressuredecrease.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -78,7 +80,12 @@ fun Sensor(acc: Accelerometer, gps: Gps, viewModel: MainViewModel = hiltViewMode
 
         }
 
-        Button(onClick = {
+        Button(
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = Color(0xFF654321),
+                contentColor = Color.White
+            ),
+            onClick = {
             viewModel.isSensing = !viewModel.isSensing
         }) {
             Text(text = if(viewModel.isSensing) "測定終了" else "測定開始", fontSize = 30.sp)
