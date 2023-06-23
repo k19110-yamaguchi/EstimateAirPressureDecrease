@@ -2,7 +2,7 @@
 
 ## データベース
 
-Sensors
+SensorData
 | 名前 | データタイプ | 役割 | 備考 |
 | ---- | ---- | ---- | ---- |
 | id | Int | データベースがレコードを管理するための項目 | プライマリキー |
@@ -12,7 +12,7 @@ Sensors
 | stopDate |  LocalDateTime |　 データを取得を終了した時間 |　yyyy-MM-dd hh：mm：ss |
 | airPressure | Int | 空気圧 | |
 
-Acceleration
+AccData
 | 名前 | データタイプ | 役割 | 備考 |
 | ---- | ---- | ---- | ---- |
 | id | Int | データベースがレコードを管理するための項目 | プライマリキー |
@@ -21,7 +21,7 @@ Acceleration
 | zAccList | List(Double) | z軸加速度データ | |
 | timeList | List(Double) | 加速度を取得した時間 | |
 
-Location
+LocData
 | 名前 | データタイプ | 役割 | 備考 |
 | id | Int | データベースがレコードを管理するための項目 | プライマリキー |
 | ---- | ---- | ---- | ---- |
@@ -29,7 +29,7 @@ Location
 | lonList | List(Double) | 経度データ | |
 | timeList | List(Double) | 位置情報を取得した時間 | |
 
-featureValues
+featureValueData
 | 名前 | データタイプ | 役割 | 備考 |
 | ---- | ---- | ---- | ---- |
 | id | Int | データベースがレコードを管理するための項目 | プライマリキー |
@@ -37,7 +37,7 @@ featureValues
 | accSd | Double | 加速度標準偏差 |  |
 | ampSptList | List(Double) | 0~40Hzの振幅スペクトル |
 
-Home
+HomeData
 | 名前 | データタイプ | 役割 | 備考 |
 | ---- | ---- | ---- | ---- |
 | id | Int | データベースがレコードを管理するための項目 | プライマリキー |

@@ -13,13 +13,15 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.estimateairpressuredecrease.MainViewModel
 import com.example.estimateairpressuredecrease.sensors.Accelerometer
+import com.example.estimateairpressuredecrease.sensors.Barometric
 import com.example.estimateairpressuredecrease.sensors.Gps
+import com.example.estimateairpressuredecrease.sensors.Gravity
+import com.example.estimateairpressuredecrease.ui.theme.background
+import com.example.estimateairpressuredecrease.ui.theme.element
 
 @Composable
-fun Sensor(acc: Accelerometer, gps: Gps, viewModel: MainViewModel = hiltViewModel()){
-
-
-
+fun Sensor(acc: Accelerometer, gps: Gps, gra: Gravity, bar: Barometric,
+           viewModel: MainViewModel = hiltViewModel()){
     // センシング中の場合
     if (viewModel.isSensing){
         acc.startListening(object : Accelerometer.AccListener {
@@ -36,10 +38,29 @@ fun Sensor(acc: Accelerometer, gps: Gps, viewModel: MainViewModel = hiltViewMode
                 viewModel.lon = lon
             }
         })
+
+        gra.startListening(object : Gravity.GravityListener {
+            override fun onGravityChanged(x: Double, y: Double, z: Double) {
+                viewModel.xGra = x
+                viewModel.yGra = y
+                viewModel.zGra = z
+            }
+        })
+
+        bar.startListening(object : Barometric.BarListener {
+            override fun onBarometricChanged(bar: Double) {
+                viewModel.bar = bar
+            }
+        })
+
+
+
     // センシング外の場合
     }else{
         acc.stopListening()
         gps.stopListening()
+        gra.stopListening()
+        bar.stopListening()
     }
 
     Column(
@@ -66,6 +87,23 @@ fun Sensor(acc: Accelerometer, gps: Gps, viewModel: MainViewModel = hiltViewMode
             Spacer(modifier = Modifier.height(30.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "x軸重力加速度(m/s):", fontSize = 20.sp)
+                Text(text = viewModel.xGra.toString() , fontSize = 20.sp)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "y軸重力加速度(m/s):", fontSize = 20.sp)
+                Text(text = viewModel.yGra.toString() , fontSize = 20.sp)
+
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "z軸重力加速度(m/s):", fontSize = 20.sp)
+                Text(text = viewModel.zGra.toString() , fontSize = 20.sp)
+
+            }
+
+            Spacer(modifier = Modifier.height(30.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = "緯度:", fontSize = 20.sp)
                 Text(text = viewModel.lat.toString() , fontSize = 20.sp)
 
@@ -76,13 +114,21 @@ fun Sensor(acc: Accelerometer, gps: Gps, viewModel: MainViewModel = hiltViewMode
 
             }
 
+            Spacer(modifier = Modifier.height(30.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "気圧:", fontSize = 20.sp)
+                Text(text = viewModel.bar.toString() , fontSize = 20.sp)
+
+            }
+
         }else{
 
         }
 
         Button(
             colors = ButtonDefaults.buttonColors(
-                backgroundColor = Color(0xFF654321),
+                backgroundColor = element,
                 contentColor = Color.White
             ),
             onClick = {

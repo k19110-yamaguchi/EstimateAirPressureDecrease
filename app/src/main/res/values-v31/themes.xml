@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.EstimateAirPressureDecrease" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">#FAE29D</item>
-        <item name="android:windowSplashScreenBackground">#FAE29D</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:windowSplashScreenBackground">@color/background</item>
 
     </style>
 </resources>

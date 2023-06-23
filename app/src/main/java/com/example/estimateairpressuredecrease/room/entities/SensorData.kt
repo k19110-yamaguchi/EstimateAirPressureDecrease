@@ -9,8 +9,12 @@ data class SensorData (
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     // 加速度データのid
     var accId: Int,
+    // 重力加速度データのid
+    var graId: Int,
     // 位置情報データのid
     var locId: Int,
+    // 気圧データのid
+    var barId: Int,
     // 測定開始時間
     var startDate: LocalDateTime,
     // 測定終了時間

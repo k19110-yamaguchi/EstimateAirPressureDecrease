@@ -37,6 +37,13 @@ class MainViewModel @Inject constructor(private val homeDao: HomeDao) : ViewMode
     var lat: Double by mutableStateOf(0.0)
     var lon: Double by mutableStateOf(0.0)
 
+    // 重力加速度
+    var xGra: Double by mutableStateOf(0.0)
+    var yGra: Double by mutableStateOf(0.0)
+    var zGra: Double by mutableStateOf(0.0)
+
+    var bar: Double by mutableStateOf(0.0)
+
 
 
 
