@@ -4,6 +4,8 @@ plugins {
     // roomを使うのに必要
     id 'kotlin-kapt'
     id 'com.google.dagger.hilt.android'
+    // pythonを使うのに必要
+    id 'com.chaquo.python'
 }
 
 android {
@@ -20,6 +22,17 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
+        }
+
+        // pythonを使うのに必要
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        }
+
+        python {
+            pip {
+                install "numpy"
+            }
         }
     }
 

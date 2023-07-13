@@ -4,6 +4,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.util.Log
 
 // SensorEventListener: リスナーの登録
 class Accelerometer(private val context: Context) : SensorEventListener {
@@ -15,6 +16,8 @@ class Accelerometer(private val context: Context) : SensorEventListener {
     // private val accelerationData = mutableListOf<Triple<Double, Double, Double>>()
     private var listener: AccListener? = null
 
+    private var startTime: Double = 0.0
+
     init {
         accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     }
@@ -25,9 +28,10 @@ class Accelerometer(private val context: Context) : SensorEventListener {
         sensorManager.registerListener(this, accelerometerSensor, SensorManager.SENSOR_DELAY_NORMAL)
     }
 
-    // 加速度取得を
+    // 加速度取得を停止
     fun stopListening() {
         listener = null
+        startTime = 0.0
         sensorManager.unregisterListener(this)
     }
 
@@ -36,9 +40,12 @@ class Accelerometer(private val context: Context) : SensorEventListener {
             val x = event.values[0].toDouble()
             val y = event.values[1].toDouble()
             val z = event.values[2].toDouble()
-            // accelerationData.add(Triple(x, y, z))
-            listener?.onAccelerationChanged(x, y, z)
-            // Log.d("Acceleration", "x: ${x}, y: ${y}, z: ${z},")
+            var t = (event.timestamp.toDouble() / 1_000_000_000.0) - startTime
+            if (startTime == 0.0){
+                startTime = t
+                t = 0.0
+            }
+            listener?.onAccelerationChanged(x, y, z, t)
         }
     }
 
@@ -47,7 +54,7 @@ class Accelerometer(private val context: Context) : SensorEventListener {
     }
 
     interface AccListener {
-        fun onAccelerationChanged(x: Double, y: Double, z: Double)
+        fun onAccelerationChanged(x: Double, y: Double, z: Double, t: Double)
     }
 
 }

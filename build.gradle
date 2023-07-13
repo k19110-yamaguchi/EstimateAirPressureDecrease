@@ -9,5 +9,6 @@ plugins {
     id 'org.jetbrains.kotlin.android' version '1.7.0' apply false
     // Hiltを使うのに必要
     id 'com.google.dagger.hilt.android' version "2.44" apply false
-
+    // pythonを使うのに必要
+    id 'com.chaquo.python' version '12.0.1' apply false
 }

@@ -14,6 +14,8 @@ class Gravity(private val context: Context) : SensorEventListener {
     //
     private var listener: GravityListener? = null
 
+    private var startTime: Double = 0.0
+
     init {
         gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY)
     }
@@ -27,6 +29,7 @@ class Gravity(private val context: Context) : SensorEventListener {
     // 加速度取得を
     fun stopListening() {
         listener = null
+        startTime = 0.0
         sensorManager.unregisterListener(this)
     }
 
@@ -35,9 +38,13 @@ class Gravity(private val context: Context) : SensorEventListener {
             val x = event.values[0].toDouble()
             val y = event.values[1].toDouble()
             val z = event.values[2].toDouble()
-            // accelerationData.add(Triple(x, y, z))
-            listener?.onGravityChanged(x, y, z)
-            // Log.d("Acceleration", "x: ${x}, y: ${y}, z: ${z},")
+            var t = (event.timestamp.toDouble() / 1_000_000_000.0) - startTime
+            if (startTime == 0.0){
+                startTime = t
+                t = 0.0
+            }
+            listener?.onGravityChanged(x, y, z, t)
+
         }
     }
 
@@ -46,7 +53,7 @@ class Gravity(private val context: Context) : SensorEventListener {
     }
 
     interface GravityListener {
-        fun onGravityChanged(x: Double, y: Double, z: Double)
+        fun onGravityChanged(x: Double, y: Double, z: Double, t: Double)
     }
 
 }

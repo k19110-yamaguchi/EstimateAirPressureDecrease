@@ -17,6 +17,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
+import com.example.estimateairpressuredecrease.components.Home
 import com.example.estimateairpressuredecrease.components.Sensor
 import com.example.estimateairpressuredecrease.sensors.Accelerometer
 import com.example.estimateairpressuredecrease.sensors.Barometric
@@ -31,9 +32,12 @@ class MainActivity: ComponentActivity() {
 
     // Accelerationクラスを読み込む
     private lateinit var acc: Accelerometer
-    private lateinit var  gps: Gps
+    private lateinit var gps: Gps
     private lateinit var gra: Gravity
     private lateinit var bar: Barometric
+    companion object {
+        lateinit var instance: MainActivity
+    }
 
     private val requestLocationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -49,6 +53,8 @@ class MainActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val locationPermissionGranted by mutableStateOf(checkLocationPermission())
+        instance = this
+
 
         if (locationPermissionGranted) {
             setMainContent()
@@ -139,8 +145,8 @@ class MainActivity: ComponentActivity() {
 
 @Composable
 fun MainContent(acc: Accelerometer, gps: Gps, gra: Gravity, bar: Barometric) {
-
-    Sensor(acc, gps, gra, bar)
-    //executionConfirmation()
+    // Home()
+    Sensor(acc, gps, gra, bar, )
+    // executionConfirmation()
 }
 

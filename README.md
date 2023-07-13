@@ -7,7 +7,9 @@ SensorData
 | ---- | ---- | ---- | ---- |
 | id | Int | データベースがレコードを管理するための項目 | プライマリキー |
 | accId | Int | 加速度のid |  |
-| locationId | Int | 位置情報のid |  |
+| graId | Int | 重力加速度のid |  |
+| locId | Int | 位置情報のid |  |
+| barId | Int | 気圧のid |  |
 | startDate | LocalDateTime |　 データを取得を開始した時間 |　yyyy-MM-dd hh：mm：ss |
 | stopDate |  LocalDateTime |　 データを取得を終了した時間 |　yyyy-MM-dd hh：mm：ss |
 | airPressure | Int | 空気圧 | |
@@ -21,11 +23,28 @@ AccData
 | zAccList | List(Double) | z軸加速度データ | |
 | timeList | List(Double) | 加速度を取得した時間 | |
 
+GraData
+| 名前 | データタイプ | 役割 | 備考 |
+| ---- | ---- | ---- | ---- |
+| id | Int | データベースがレコードを管理するための項目 | プライマリキー |
+| xAccList | List(Double) | x軸重力加速度データ | |
+| yAccList | List(Double) | y軸重力加速度データ | |
+| zAccList | List(Double) | z軸重力加速度データ | |
+| timeList | List(Double) | 加速度を取得した時間 | |
+
 LocData
 | 名前 | データタイプ | 役割 | 備考 |
 | id | Int | データベースがレコードを管理するための項目 | プライマリキー |
 | ---- | ---- | ---- | ---- |
 | latList | List(Double) | 緯度データ | |
+| lonList | List(Double) | 経度データ | |
+| timeList | List(Double) | 位置情報を取得した時間 | |
+
+LocData
+| 名前 | データタイプ | 役割 | 備考 |
+| id | Int | データベースがレコードを管理するための項目 | プライマリキー |
+| ---- | ---- | ---- | ---- |
+| barList | List(Double) | 緯度データ | |
 | lonList | List(Double) | 経度データ | |
 | timeList | List(Double) | 位置情報を取得した時間 | |
 

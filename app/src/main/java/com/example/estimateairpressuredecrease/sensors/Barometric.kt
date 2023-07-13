@@ -15,6 +15,8 @@ class Barometric(private val context: Context) : SensorEventListener {
     // private val accelerationData = mutableListOf<Triple<Double, Double, Double>>()
     private var listener: BarListener? = null
 
+    private var startTime: Double = 0.0
+
     init {
         barometricSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
     }
@@ -28,14 +30,19 @@ class Barometric(private val context: Context) : SensorEventListener {
     // 加速度取得を
     fun stopListening() {
         listener = null
+        startTime = 0.0
         sensorManager.unregisterListener(this)
     }
 
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type == Sensor.TYPE_PRESSURE) {
             val bar = event.values[0].toDouble()
-            listener?.onBarometricChanged(bar)
-            // Log.d("Acceleration", "x: ${x}, y: ${y}, z: ${z},")
+            var t = (event.timestamp.toDouble() / 1_000_000_000.0) - startTime
+            if (startTime == 0.0){
+                startTime = t
+                t = 0.0
+            }
+            listener?.onBarometricChanged(bar, t)
         }
     }
 
@@ -44,7 +51,7 @@ class Barometric(private val context: Context) : SensorEventListener {
     }
 
     interface BarListener {
-        fun onBarometricChanged(bar: Double)
+        fun onBarometricChanged(bar: Double, t:Double)
     }
 
 }

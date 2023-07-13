@@ -22,6 +22,8 @@ class Gps(private val context: Context) : Activity(), LocationListener {
 
     private var listener: LocationListener? = null
 
+    private var startTime: Double = 0.0
+
     init {
         // ロケーションの更新を受け取るためにリスナーを登録
     }
@@ -38,6 +40,7 @@ class Gps(private val context: Context) : Activity(), LocationListener {
 
     fun stopListening() {
         listener = null
+        startTime = 0.0
         locationManager.removeUpdates(this)
     }
 
@@ -63,14 +66,16 @@ class Gps(private val context: Context) : Activity(), LocationListener {
     }
 
     override fun onLocationChanged(location: Location) {
-        val latitude = location.latitude
-        val longitude = location.longitude
+        val lat = location.latitude
+        val lon = location.longitude
+        var t = location.time.toDouble()
+        if (startTime == 0.0){
+            startTime = t
+            t = 0.0
+        }
 
-        listener?.onLocationChanged(latitude, longitude)
+        listener?.onLocationChanged(lat, lon, t)
 
-        Log.d("Gps", "Latitude: $latitude, Longitude: $longitude")
-
-        // 位置情報の更新を受け取った後の処理を追加する場合はここに記述してください
     }
 
     override fun onProviderEnabled(provider: String) {
@@ -86,6 +91,6 @@ class Gps(private val context: Context) : Activity(), LocationListener {
     }
 
     interface LocationListener {
-        fun onLocationChanged(lat: Double, lon: Double)
+        fun onLocationChanged(lat: Double, lon: Double, t: Double)
     }
 }
