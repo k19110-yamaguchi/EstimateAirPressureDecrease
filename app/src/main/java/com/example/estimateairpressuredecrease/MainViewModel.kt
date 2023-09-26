@@ -5,6 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.chaquo.python.PyObject
+import com.chaquo.python.Python
+import com.chaquo.python.android.AndroidPlatform
+import com.example.estimateairpressuredecrease.room.dao.FeatureValueDao
 import com.example.estimateairpressuredecrease.room.dao.HomeDao
 import com.example.estimateairpressuredecrease.room.dao.SensorDao
 import com.example.estimateairpressuredecrease.room.entities.*
@@ -16,14 +20,16 @@ import java.io.File
 import java.io.FileWriter
 import java.time.LocalDateTime
 import javax.inject.Inject
+import java.nio.file.Paths
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val homeDao: HomeDao,
     private val sensorDao: SensorDao,
+    private val featureValueDao: FeatureValueDao,
 ) : ViewModel(){
 
-    val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
+    private val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
 
     //
     var isHome: Boolean by mutableStateOf(true)
@@ -40,6 +46,7 @@ class MainViewModel @Inject constructor(
     // Sensor
     // センシング中かどうか
     var isSensing: Boolean by mutableStateOf(false)
+    var isRequiredData: Boolean by mutableStateOf(false)
 
     var startDate: LocalDateTime by mutableStateOf(initDate)
     var stopDate: LocalDateTime by mutableStateOf(initDate)
@@ -51,7 +58,6 @@ class MainViewModel @Inject constructor(
     var zAccList: MutableList<Double> = mutableListOf()
     var accTime: Double by mutableStateOf(-1.0)
     var accTimeList: MutableList<Double> = mutableListOf()
-
 
     // Loc
     var latList: MutableList<Double> = mutableListOf()
@@ -71,6 +77,10 @@ class MainViewModel @Inject constructor(
     var barTime: Double by mutableStateOf(-1.0)
     var barTimeList: MutableList<Double> = mutableListOf()
 
+    // FeatureValue
+    var accSd: Double by mutableStateOf(0.0)
+    // 振幅スペクトル
+    var ampSptList: MutableList<Double> = mutableListOf()
 
 
     // Homeのデータを取得
@@ -82,9 +92,10 @@ class MainViewModel @Inject constructor(
     val graData = sensorDao.getGraData().distinctUntilChanged()
     val locData = sensorDao.getLocData().distinctUntilChanged()
     val barData = sensorDao.getBarData().distinctUntilChanged()
+    val featureValueData = featureValueDao.getFeatureValues().distinctUntilChanged()
 
     // python
-    var csvData: String by mutableStateOf("")
+
 
 
     // 初めての起動かどうか確認
@@ -99,7 +110,6 @@ class MainViewModel @Inject constructor(
 
     // 初期値を設定
     fun setHome(home: HomeData){
-        Log.d("setHome", home.isTrainingState.toString() +home.minProperPressure.toString() + home.inflatedDate.toString())
         isTrainingState = home.isTrainingState
         minProperPressure = home.minProperPressure
         inflatedDate = home.inflatedDate
@@ -116,13 +126,31 @@ class MainViewModel @Inject constructor(
     // データベースを更新
     fun updateHome() {
         viewModelScope.launch {
-            Log.d("updateHome", isTrainingState.toString() + minProperPressure.toString() + inflatedDate.toString())
             val newHome = HomeData(isTrainingState = isTrainingState, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
             homeDao.updateHomeData(newHome)
         }
     }
 
-    fun addData() {
+    // 推定に必要なデータがあるか調べる
+    fun checkRequiredData(){
+        if(accTime != -1.0 &&
+            graTime != -1.0 &&
+            locTime != -1.0 &&
+            barTime != -1.0){
+            isRequiredData = true
+        }
+    }
+
+    // 空気圧を入力したか
+    fun checkAirPressure(){
+        if(airPressure != 0){
+            addData()
+        }else{
+            Log.d("checkAirPressure", "空気圧の入力が正しくありません")
+        }
+    }
+
+    private fun addData() {
         addAcc()
         addGra()
         addLoc()
@@ -132,7 +160,7 @@ class MainViewModel @Inject constructor(
             val newSensor = SensorData(startDate = startDate, stopDate = stopDate, airPressure = airPressure)
             sensorDao.insertSensorData(newSensor)
         }
-        createCsv()
+        createFeatureValue()
         reset()
     }
 
@@ -172,51 +200,89 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun createCsv() {
-        createAccCsv()
-        val ravel = listOf(
-            "xAcc", "yAcc", "zAcc", "accTime",
-            "xGra", "yGra", "zGra", "graTime",
-            "lat", "lon", "locTime",
-            "bar", "barTime"
-        )
+    private fun addFeatureValue() {
+        viewModelScope.launch {
+            val newFeatureValue = FeatureValueData(accSd = accSd, ampSptList = ampSptList, airPressure = airPressure)
+            featureValueDao.insertFeatureValues(newFeatureValue)
+
+        }
     }
 
-    private fun createAccCsv() {
-        val ravel = listOf("x(m/s)", "y(m/s)", "z(m/s)", "t(s)")
-        val data = mutableListOf<List<Double>>()
-        val len = accTimeList.size
+    private fun createFeatureValue() {
+
+        // createAccCsv()
+        val fileNameList = listOf("acc", "gra", "loc", "bar")
+
+        var len = accTimeList.size
+        val accData = mutableListOf<List<Double>>()
         for(i in 0 until len){
-            data.add(listOf(xAccList[i], yAccList[i], zAccList[i], accTimeList[i]))
+            accData.add(listOf(xAccList[i], yAccList[i], zAccList[i], accTimeList[i]))
         }
 
-        val csvData = mutableListOf<List<String>>()
-        csvData.add(ravel)
-        csvData.addAll(data.map { it.map { it.toString() } })
-
-        val file = File(MainActivity.instance.getExternalFilesDir(null), "output.csv")
-        val writer = BufferedWriter(FileWriter(file))
-
-        for (row in csvData) {
-            writer.write(row.joinToString(","))
-            writer.newLine()
+        len = graTimeList.size
+        val graData = mutableListOf<List<Double>>()
+        for(i in 0 until len){
+            graData.add(listOf(xGraList[i], yGraList[i], zGraList[i], graTimeList[i]))
         }
-        writer.close()
+
+        len = locTimeList.size
+        val locData = mutableListOf<List<Double>>()
+        for(i in 0 until len){
+            locData.add(listOf(latList[i], lonList[i], locTimeList[i]))
+        }
+
+        len = barTimeList.size
+        val barData = mutableListOf<List<Double>>()
+        for(i in 0 until len){
+            barData.add(listOf(barList[i], barTimeList[i]))
+        }
+
+        val dataList = listOf(accData, graData, locData, barData)
+
+        val ravelList = listOf(
+            listOf("x(m/s)", "y(m/s)", "z(m/s)", "t(s)"),
+            listOf("x(m/s)", "y(m/s)", "z(m/s)", "t(s)"),
+            listOf("lat", "lon", "t(s)"),
+            listOf("bar(kPa)", "t(s)")
+        )
+
+        for(i in fileNameList.indices){
+            val csvData = mutableListOf<List<String>>()
+            csvData.add(ravelList[i])
+            csvData.addAll(dataList[i].map { it.map { it.toString() } })
+
+            val file = File(MainActivity.instance.getExternalFilesDir(null), startDate.toString() + "_" + fileNameList[i] + ".csv")
+            val writer = BufferedWriter(FileWriter(file))
+
+            for (row in csvData) {
+                writer.write(row.joinToString(","))
+                writer.newLine()
+            }
+            writer.close()
+
+        }
+
+        // Pythonコードを実行する前にPython.start()の呼び出しが必要
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(MainActivity.instance))
+        }
+        val py = Python.getInstance()
+        val module = py.getModule("test") // スクリプト名
+        val featureValueStr = module.callAttr("getFeatureValues", accData, graData, locData, barData, airPressure).toString()
+
+        // 最初と最後の[]を取り除き、","で分割
+        val featureValues = featureValueStr.substring(1, featureValueStr.length - 1).split(",").map { it.trim().toDouble() }
+
+        accSd = featureValues[0]
+        ampSptList = featureValues as MutableList<Double>
+        ampSptList.removeAt(0)
+        airPressure = 300
+
+        Log.d("runPython:accSd", accSd.toString())
+        Log.d("runPython:ampSptList", ampSptList.toString())
+        addFeatureValue()
+
     }
-
-    private fun createGraCsv() {
-        val ravel = listOf("x(m/s)", "y(m/s)", "z(m/s)", "t(s)")
-    }
-
-    private fun createLocCsv() {
-        val ravel = listOf("lat", "lon", "t(s)")
-    }
-
-    private fun createBarCsv() {
-        val ravel = listOf("bar(kPa)", "t(s)")
-    }
-
-
 
     private fun reset() {
         startDate = initDate
@@ -246,8 +312,45 @@ class MainViewModel @Inject constructor(
         barTime = -1.0
         barTimeList =  emptyList<Double>().toMutableList()
 
+        // 特徴量
+        accSd = 0.0
+        // 振幅スペクトル
+        ampSptList = emptyList<Double>().toMutableList()
+
         startDate = initDate
         stopDate = initDate
+
+        isRequiredData = false
+
         airPressure = 0
     }
+
+    fun runPython(){
+
+        val currentDirPath = Paths.get("").toAbsolutePath()
+        println("Current Directory Path: $currentDirPath")
+
+        // Pythonコードを実行する前にPython.start()の呼び出しが必要
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(MainActivity.instance))
+        }
+        val py = Python.getInstance()
+        val module = py.getModule("test") // スクリプト名
+        val featureValueStr = module.callAttr("getFeatureValues", 0, 0, 0, 0, 300).toString()
+        // 最初と最後の[]を取り除き、","で分割
+        val featureValues = featureValueStr.substring(1, featureValueStr.length - 1).split(",").map { it.trim().toDouble() }
+
+        accSd = featureValues[0]
+        ampSptList = featureValues as MutableList<Double>
+        ampSptList.removeAt(0)
+        airPressure = 300
+
+        Log.d("runPython:accSd", accSd.toString())
+        Log.d("runPython:ampSptList", ampSptList.toString())
+
+
+    }
+
+
+
 }

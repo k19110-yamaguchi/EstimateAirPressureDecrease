@@ -6,11 +6,11 @@ import androidx.room.PrimaryKey
 @Entity
 data class FeatureValueData(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    // 特徴量を抽出するのに用いたセンサデータのid
-    var sensorsId: Int,
     // 加速度標準偏差
     var accSd: Double,
     // 振幅スペクトル
     var ampSptList: List<Double>,
+    // 空気圧
+    var airPressure: Int,
 )
 

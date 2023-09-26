@@ -1,21 +1,13 @@
 package com.example.estimateairpressuredecrease.sensors
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
-import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
-import android.util.Log
-import androidx.core.app.ActivityCompat
 
-class Gps(private val context: Context) : Activity(), LocationListener {
-    companion object {
-        private const val PERMISSION_REQUEST_CODE = 1
-    }
+class Location(private val context: Context) :LocationListener {
 
     private val locationManager: LocationManager =
         context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -24,45 +16,16 @@ class Gps(private val context: Context) : Activity(), LocationListener {
 
     private var startTime: Double = 0.0
 
-    init {
-        // ロケーションの更新を受け取るためにリスナーを登録
-    }
     @SuppressLint("MissingPermission")
     fun startListening(listener: LocationListener) {
         this.listener = listener
-        locationManager.requestLocationUpdates(
-            LocationManager.GPS_PROVIDER,
-            1,
-            0f,
-            this
-        )
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0f, this)
     }
 
     fun stopListening() {
         listener = null
         startTime = 0.0
         locationManager.removeUpdates(this)
-    }
-
-    fun checkLocationPermission(): Boolean {
-        return ActivityCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    }
-
-   fun requestLocationPermission() {
-        ActivityCompat.requestPermissions(
-            context as Activity,
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ),
-            PERMISSION_REQUEST_CODE
-        )
     }
 
     override fun onLocationChanged(location: Location) {
@@ -74,7 +37,7 @@ class Gps(private val context: Context) : Activity(), LocationListener {
             t = 0.0
         }
 
-        listener?.onLocationChanged(lat, lon, t)
+        listener?.onLocationInfoChanged(lat, lon, t)
 
     }
 
@@ -91,6 +54,6 @@ class Gps(private val context: Context) : Activity(), LocationListener {
     }
 
     interface LocationListener {
-        fun onLocationChanged(lat: Double, lon: Double, t: Double)
+        fun onLocationInfoChanged(lat: Double, lon: Double, t: Double)
     }
 }

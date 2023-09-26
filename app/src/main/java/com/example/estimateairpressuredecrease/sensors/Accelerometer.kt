@@ -13,7 +13,6 @@ class Accelerometer(private val context: Context) : SensorEventListener {
     //
     private var accelerometerSensor: Sensor? = null
     //
-    // private val accelerationData = mutableListOf<Triple<Double, Double, Double>>()
     private var listener: AccListener? = null
 
     private var startTime: Double = 0.0

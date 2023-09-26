@@ -32,6 +32,8 @@ android {
         python {
             pip {
                 install "numpy"
+                install "pandas"
+                install "geopy"
             }
         }
     }
@@ -109,9 +111,6 @@ dependencies {
 
     // ステータスバーの色変更に必要
     implementation 'com.google.accompanist:accompanist-systemuicontroller:0.25.1'
-
-
-
 
 
 }
