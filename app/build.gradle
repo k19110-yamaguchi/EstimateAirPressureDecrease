@@ -34,6 +34,7 @@ android {
                 install "numpy"
                 install "pandas"
                 install "geopy"
+                install "scikit-learn"
             }
         }
     }

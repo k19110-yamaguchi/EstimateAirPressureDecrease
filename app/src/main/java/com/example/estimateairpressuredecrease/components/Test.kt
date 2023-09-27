@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.estimateairpressuredecrease.MainViewModel
-import com.example.estimateairpressuredecrease.room.entities.AccData
 import com.example.estimateairpressuredecrease.room.entities.FeatureValueData
 import com.example.estimateairpressuredecrease.ui.theme.element
 
@@ -29,4 +28,17 @@ fun Test(featureValueData: List<FeatureValueData>, viewModel: MainViewModel = hi
             Text(text = "python実行")
         }
     }
+}
+
+fun getEstimatedAirPressure(featureValueData: List<FeatureValueData>, viewModel: MainViewModel){
+    var maxSize = featureValueData.size
+    for((index, f) in featureValueData.withIndex()){
+        if(index == maxSize-1){
+            viewModel.estimateData.add(f)
+        }
+        viewModel.trainData.add(f)
+    }
+
+    viewModel.runPython()
+
 }

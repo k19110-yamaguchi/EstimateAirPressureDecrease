@@ -82,6 +82,8 @@ class MainViewModel @Inject constructor(
     // 振幅スペクトル
     var ampSptList: MutableList<Double> = mutableListOf()
 
+    var trainData: MutableList<FeatureValueData> = mutableListOf()
+    var estimateData: MutableList<FeatureValueData> = mutableListOf()
 
     // Homeのデータを取得
     val home = homeDao.getHomeData().distinctUntilChanged()
@@ -267,7 +269,7 @@ class MainViewModel @Inject constructor(
             Python.start(AndroidPlatform(MainActivity.instance))
         }
         val py = Python.getInstance()
-        val module = py.getModule("test") // スクリプト名
+        val module = py.getModule("createFeatureValue") // スクリプト名
         val featureValueStr = module.callAttr("getFeatureValues", accData, graData, locData, barData, airPressure).toString()
 
         // 最初と最後の[]を取り除き、","で分割
@@ -335,18 +337,9 @@ class MainViewModel @Inject constructor(
             Python.start(AndroidPlatform(MainActivity.instance))
         }
         val py = Python.getInstance()
-        val module = py.getModule("test") // スクリプト名
-        val featureValueStr = module.callAttr("getFeatureValues", 0, 0, 0, 0, 300).toString()
-        // 最初と最後の[]を取り除き、","で分割
-        val featureValues = featureValueStr.substring(1, featureValueStr.length - 1).split(",").map { it.trim().toDouble() }
-
-        accSd = featureValues[0]
-        ampSptList = featureValues as MutableList<Double>
-        ampSptList.removeAt(0)
-        airPressure = 300
-
-        Log.d("runPython:accSd", accSd.toString())
-        Log.d("runPython:ampSptList", ampSptList.toString())
+        val module = py.getModule("estimateAirPressure") // スクリプト名
+        val estimatedAirPressure = module.callAttr("estimateAirPressure", trainData, estimateData).toDouble()
+        Log.d("runPython:estimatedAirPressure", estimatedAirPressure.toString())
 
 
     }
