@@ -24,6 +24,8 @@ def getDrivingAccData(accData, locData):
         speed = (disData[i] / (locData[i+1][2] - locData[i][2])) * 3600
         speedRound = round(speed, 1)        
         speedData.append(speedRound)
+        print("speed")
+        print(speedRound)
 
     # 走行開始・終了時間を求める
     startTime = 0.0
@@ -35,6 +37,14 @@ def getDrivingAccData(accData, locData):
         if speedData[i] <= drivingThreshold and speedData[i-1] >= drivingThreshold:
             stopTime = locData[i][2]  
 
+    #### デバック用
+    print("startTime")
+    print(startTime)
+    startTime = locData[0][2]
+    stopTime = locData[locSize-1][2]
+
+    print("stopTime")
+    print(stopTime)
     # 走行区間の加速度を取得    
     accSize = len(accData)    
     
@@ -67,12 +77,14 @@ def getAmpSpec(drivingYAcc):
     fftAmpAbs = fftAbs / fftSize * 2
     
     # 周波数軸データの作成
-    # 加速度センサのサンプリング周期 0.0025s(2.5Hz)
+    # 加速度センサのサンプリング周期 0.025s(40Hz)
     dtSum = 0.0
     for i in range(drivingYAccSize - 1):
         dt = drivingYAcc[i+1] - drivingYAcc[i]
         dtSum += dt        
     dtAve = dtSum / (drivingYAccSize - 1)
+    if dtAve == 0:
+        return 0
     fq = np.linspace(0, 1.0/dtAve, fftSize)
 
     # 周波数の範囲
@@ -81,12 +93,13 @@ def getAmpSpec(drivingYAcc):
     res = []
     ampSum = 0
     fqNow = 0
-    count = 0    
+    count = 0 
     for i in range(fftSize):
+
+        count = count + 1
         if fqNow <= fq[i] and fq[i] < fqNow + fqWidth:
             ampSum = ampSum + fftAmpAbs[i]
-            count = count + 1
-
+            
         else:            
             res.append(ampSum / count)
             ampSum = 0
@@ -99,7 +112,7 @@ def getAmpSpec(drivingYAcc):
     return res
     
 
-def getFeatureValues(accDataArray, graDataArray, locDataArray, barDataArray, airPressure):     
+def createFeatureValue(accDataArray, graDataArray, locDataArray, barDataArray):         
     # java.util.ArrayListをlistの型に変換
     accData = changeJavaList(accDataArray) 
     graData = changeJavaList(graDataArray)
@@ -107,16 +120,22 @@ def getFeatureValues(accDataArray, graDataArray, locDataArray, barDataArray, air
     barData = changeJavaList(barDataArray)
 
     #走行中の加速度を取得
-    drivingAccData = getDrivingAccData()
+    drivingAccData = getDrivingAccData(accData, locData)
     
     # 走行中のy軸方向の加速度を取得
     drivingYAcc = getDrivingYAcc(drivingAccData)  
 
     # 加速度標準偏差の取得
-    AccSd = stdev(drivingYAcc)
+    if len(drivingYAcc) >= 2:
+        AccSd = stdev(drivingYAcc)
+
+    else:
+        return 0
 
     # 振幅スペクトルを取得 
     ampSpec = getAmpSpec(drivingYAcc)
+    if ampSpec == 0:
+        return 0
     
     # 特徴量の行を作成
     futureValues = [AccSd]

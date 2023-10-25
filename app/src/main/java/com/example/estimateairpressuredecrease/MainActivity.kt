@@ -12,13 +12,11 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
-import com.example.estimateairpressuredecrease.components.Home
-import com.example.estimateairpressuredecrease.components.Sensor
+import com.example.estimateairpressuredecrease.components.MainContent
 import com.example.estimateairpressuredecrease.sensors.*
 import com.example.estimateairpressuredecrease.ui.theme.EstimateAirPressureDecreaseTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -34,7 +32,7 @@ class MainActivity: ComponentActivity() {
 
     // センサを使うのに必要
     companion object {
-        lateinit var instance: MainActivity
+        lateinit var content: MainActivity
     }
 
     // 位置情報取得の許諾関係
@@ -68,8 +66,9 @@ class MainActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val locationPermissionGranted by mutableStateOf(checkLocationPermission())
-        instance = this
+        content = this
 
+        setMainContent()
         // 位置情報取得が許可されている場合
         if (locationPermissionGranted) {
             setMainContent()
@@ -116,7 +115,6 @@ class MainActivity: ComponentActivity() {
         }
     }
 
-
     //
     override fun onResume() {
         super.onResume()
@@ -135,9 +133,3 @@ class MainActivity: ComponentActivity() {
         bar = Barometric(this)
     }
 }
-
-@Composable
-fun MainContent(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric) {
-    Sensor(acc, gra, loc, bar)
-}
-

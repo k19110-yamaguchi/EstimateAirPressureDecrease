@@ -24,7 +24,7 @@ class Barometric(private val context: Context) : SensorEventListener {
     // 加速度取得を開始
     fun startListening(listener: BarListener) {
         this.listener = listener
-        sensorManager.registerListener(this, barometricSensor, SensorManager.SENSOR_DELAY_NORMAL)
+        sensorManager.registerListener(this, barometricSensor, SensorManager.SENSOR_DELAY_GAME)
     }
 
     // 加速度取得を

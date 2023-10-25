@@ -113,5 +113,8 @@ dependencies {
     // ステータスバーの色変更に必要
     implementation 'com.google.accompanist:accompanist-systemuicontroller:0.25.1'
 
+    // ファイル操作に必要
+    implementation 'com.opencsv:opencsv:5.8'
+
 
 }
