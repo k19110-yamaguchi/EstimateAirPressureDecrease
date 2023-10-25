@@ -29,13 +29,8 @@ fun InputAirPressure(
     var labelText = ""
     var airPressureTextFieldSize = 300.dp
 
-    // 最小適正空気圧入力時
-    if(isProperPressure){
-        labelText = "最小適正空気圧(kPa)を入力"
-    // 学習状態・空気圧入力時
-    }else{
-        labelText = "空気圧(kPa)を入力"
-    }
+    // 入力欄の色変更に必要
+    val interactionSource = remember { MutableInteractionSource() }
 
     // エラーが発生した時
     if(viewModel.errorInputAirPressure!= ""){
@@ -44,8 +39,84 @@ fun InputAirPressure(
         Spacer(modifier = Modifier.height(spaceSize))
 
     }
-    // 入力欄の色変更に必要
-    val interactionSource = remember { MutableInteractionSource() }
+
+    // 最小適正空気圧入力時
+    if(isProperPressure){
+        Text(text = "最小適正空気圧が記載されていない場合")
+
+        // 体重(kg)
+        OutlinedTextField(
+            modifier = Modifier.width(airPressureTextFieldSize),
+            value = viewModel.editingBodyWeight,
+            label = { Text("体重(kg)", fontSize = fontSize.small, fontWeight = FontWeight.Bold, color = element) },
+            textStyle = TextStyle(fontSize = fontSize.normal, color = Color.Black, textAlign = TextAlign.Center),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
+            interactionSource = interactionSource,
+            onValueChange = {
+                viewModel.editingBodyWeight = it
+            },
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                cursorColor = element, // カーソルの色を設定
+                focusedBorderColor = element, // フォーカスされた際の枠の色を設定
+                unfocusedBorderColor = element // フォーカスが外れた際の枠の色を設定
+            )
+        )
+
+        // 自転車質量(kg)
+        OutlinedTextField(
+            modifier = Modifier.width(airPressureTextFieldSize),
+            value = viewModel.editingBicycleWeight,
+            label = { Text("自転車質量(kg)", fontSize = fontSize.small, fontWeight = FontWeight.Bold, color = element) },
+            textStyle = TextStyle(fontSize = fontSize.normal, color = Color.Black, textAlign = TextAlign.Center),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
+            interactionSource = interactionSource,
+            onValueChange = {
+                viewModel.editingBicycleWeight = it
+            },
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                cursorColor = element, // カーソルの色を設定
+                focusedBorderColor = element, // フォーカスされた際の枠の色を設定
+                unfocusedBorderColor = element // フォーカスが外れた際の枠の色を設定
+            )
+        )
+
+        // タイヤ幅(mm)
+        OutlinedTextField(
+            modifier = Modifier.width(airPressureTextFieldSize),
+            value = viewModel.editingTireWidth,
+            label = { Text("タイヤ幅(mm)", fontSize = fontSize.small, fontWeight = FontWeight.Bold, color = element) },
+            textStyle = TextStyle(fontSize = fontSize.normal, color = Color.Black, textAlign = TextAlign.Center),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
+            interactionSource = interactionSource,
+            onValueChange = {
+                viewModel.editingTireWidth = it
+            },
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                cursorColor = element, // カーソルの色を設定
+                focusedBorderColor = element, // フォーカスされた際の枠の色を設定
+                unfocusedBorderColor = element // フォーカスが外れた際の枠の色を設定
+            )
+        )
+
+        Spacer(modifier = Modifier.height(spaceSize))
+        Button(
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = element,
+                contentColor = Color.White
+            ),
+            onClick = { viewModel.calcMinProperPressure() }
+        ) {
+            Text(text = "最小適正空気圧計算", fontSize = fontSize.normal)
+        }
+
+        Spacer(modifier = Modifier.height(spaceSize*2))
+
+        labelText = "最小適正空気圧(kPa)を入力"
+    // 学習状態・空気圧入力時
+    }else{
+        labelText = "空気圧(kPa)を入力"
+    }
+
 
     // 入力欄
     OutlinedTextField(

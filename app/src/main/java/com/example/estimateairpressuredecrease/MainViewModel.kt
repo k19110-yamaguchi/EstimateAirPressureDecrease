@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
 import java.nio.file.Paths
+import kotlin.math.round
 
 
 @HiltViewModel
@@ -35,7 +36,11 @@ class MainViewModel @Inject constructor(
 
     // InputAirPressure
     var editingAirPressure by mutableStateOf("")
+    var editingBodyWeight by mutableStateOf("")
+    var editingBicycleWeight by mutableStateOf("")
+    var editingTireWidth by mutableStateOf("")
     var errorInputAirPressure by mutableStateOf("")
+
 
     var errorData by mutableStateOf("")
 
@@ -150,6 +155,22 @@ class MainViewModel @Inject constructor(
         }
 
         editingAirPressure = ""
+
+    }
+
+    fun calcMinProperPressure(){
+        errorInputAirPressure = ""
+        try{
+            var sloop = 0.9 / (editingTireWidth.toDouble() - 11.2)
+            var weight = (editingBodyWeight.toDouble() + editingBicycleWeight.toDouble() + 46)
+            editingAirPressure = (10 * round(0.01 * 50 * 10 * sloop * weight)).toInt().toString()
+
+        }catch (e: NumberFormatException){
+            errorInputAirPressure = "数字(整数)を入力してください"
+        }
+        editingBodyWeight = ""
+        editingBicycleWeight = ""
+        editingTireWidth = ""
 
     }
 
