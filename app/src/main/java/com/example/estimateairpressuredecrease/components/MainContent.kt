@@ -11,7 +11,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.estimateairpressuredecrease.FontSize
@@ -85,8 +87,19 @@ fun MainContent(
                     Log.d("MainContent", "featureValueDataあり")
                     viewModel.checkStatus(featureValueData)
                 }
-
             }
+
+            if (!viewModel.isTrainingState){
+                // 危険かの判断
+                if(0 < viewModel.estimatedAirPressure && viewModel.estimatedAirPressure < viewModel.minProperPressure){
+                    Text(text = "推定空気圧: " + viewModel.estimatedAirPressure.toString() + "kPa 危険", fontSize = fontSize.normal, color = Color(255, 0, 0), fontWeight = FontWeight.Bold)
+                }else if(viewModel.minProperPressure <= viewModel.estimatedAirPressure){
+                    Text(text = "推定空気圧: " + viewModel.estimatedAirPressure.toString() + "kPa 安全", fontSize = fontSize.normal)
+
+                }
+            }
+
+            Spacer(modifier = Modifier.height(spaceSize))
 
 
             // 最小適正空気圧の欄
@@ -94,10 +107,12 @@ fun MainContent(
                 // 上下の真ん中
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+
                 // 最小適正空気圧表示欄
                 Text(text = "最小適正空気圧：" + viewModel.minProperPressure.toString() + "kPa", fontSize = fontSize.small)
 
                 Spacer(modifier = Modifier.width(spaceSize))
+
 
                 // センシング中の場合
                 if(viewModel.isSensing){

@@ -98,7 +98,12 @@ class MainViewModel @Inject constructor(
     // 振幅スペクトル
     var ampSptList: MutableList<Double> = mutableListOf()
 
-    var estimatedRange = 3
+    var estimatedRange = 10
+    val requiredFvSize = 3
+
+    // Test
+    var outOfSize by mutableStateOf(0)
+    var withinSize by mutableStateOf(0)
 
     // Homeのデータを取得
     val homeData = homeDao.getHomeData().distinctUntilChanged()
@@ -176,15 +181,15 @@ class MainViewModel @Inject constructor(
 
     // 学習状態から推定状態に変更できるか調べる
     fun checkStatus(featureValueData: List<FeatureValueData>){
-        val requiredFvSize = 2
-        var outOfSize = 0
-        var withinSize = 0
+        outOfSize = 0
+        withinSize = 0
         // 適正外、適正内のデータの数を調べる
         for (fv in featureValueData) {
+            Log.d("fv.airPressure", fv.id.toString() + "_" + fv.airPressure.toString())
             if (fv.airPressure >= minProperPressure) {
-                outOfSize += 1
-            } else {
                 withinSize += 1
+            } else {
+                outOfSize += 1
             }
         }
         // 必要サイズ以上になった場合
@@ -252,7 +257,7 @@ class MainViewModel @Inject constructor(
             val openCsv = OpenCsv()
             val newAcc = AccData(xAccList = xAccList, yAccList = yAccList, zAccList = zAccList, timeList = accTimeList)
             val newLoc = LocData(latList = latList, lonList = lonList, timeList = locTimeList)
-            openCsv.createCsv(startDate, newAcc, newLoc)
+            openCsv.createCsv(startDate, newAcc, newLoc, airPressure)
             if(!isTrainingState){
                 Log.d("addData", "推定中")
                 estimateAirPressure(fv)

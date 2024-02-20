@@ -28,16 +28,9 @@ fun Test(sensorData: List<SensorData>,
     Column() {
         Text(text = viewModel.errorData, color = Color.Red)
         Text(text = "データ数: ${featureValueData.size}")
+        Text(text = "必要特徴量サイズ: ${viewModel.requiredFvSize}")
+        Text(text = "範囲内: ${viewModel.withinSize} 範囲外: ${viewModel.outOfSize}")
         Log.d("Test", viewModel.estimatedAirPressure.toString())
 
-        if(!viewModel.isTrainingState){
-            // 危険かの判断
-            if(0 < viewModel.estimatedAirPressure && viewModel.estimatedAirPressure < viewModel.minProperPressure){
-                Text(text = "推定空気圧: " + viewModel.estimatedAirPressure.toString() + " 危険", fontSize = 20.sp)
-            }else if(viewModel.minProperPressure <= viewModel.estimatedAirPressure){
-                Text(text = "推定空気圧: " + viewModel.estimatedAirPressure.toString() + " 安全", fontSize = 20.sp)
-
-            }
-        }
     }
 }

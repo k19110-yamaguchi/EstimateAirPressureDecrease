@@ -22,10 +22,10 @@ class OpenCsv {
         return res
     }
 
-    fun createCsv(startDate: LocalDateTime, accData: AccData, locData: LocData){
+    fun createCsv(startDate: LocalDateTime, accData: AccData, locData: LocData, airPressure: Int){
         val accDataCsv: String = accData.xAccList[0].toString()
         val fileName = createFileName(startDate)
-        var filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "_acc" + extension
+        var filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "_" + airPressure.toString() + "_acc" + extension
 
         Log.d("accDataCsv", accDataCsv)
         var csvData = ""

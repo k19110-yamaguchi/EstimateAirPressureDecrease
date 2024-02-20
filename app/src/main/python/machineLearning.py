@@ -55,12 +55,12 @@ def createEVHeader():
 
 
 def createModel(trainDataArray, filePath):    
-     # 初期の特徴量データの取得
-    df = pd.read_csv(initFilePath)    
+    # 初期の特徴量データの取得
+    #df = pd.read_csv(initFilePath)    
     # 初期の説明変数の取得
-    ev = df.drop(SUST_SPEED_HEADER, axis=1).drop(AIR_PRESSURE_HEADER, axis=1)
+    #ev = df.drop(SUST_SPEED_HEADER, axis=1).drop(AIR_PRESSURE_HEADER, axis=1)
     # 初期の目的変数の取得
-    ov = df[[AIR_PRESSURE_HEADER]]  
+    #ov = df[[AIR_PRESSURE_HEADER]]  
     # 目的変数のヘッダーを生成
     evHeader = createEVHeader()  
     # 追加で集めた特徴量データの取得
@@ -74,10 +74,14 @@ def createModel(trainDataArray, filePath):
     
 
     # 追加で集めた学習データを説明・目的変数に分ける    
+    l = trainData[0]
+    m = l.pop(-1)
+    ev = pd.DataFrame([l], columns=evHeader)     
+    ov = pd.DataFrame([m], columns=[AIR_PRESSURE_HEADER])
     trainDataSize = len(trainData)        
-    for i in range(trainDataSize):  
+    for i in range(trainDataSize-1):  
         # 配列をDataFrameの型にする
-        l = trainData[i]
+        l = trainData[i+1]
         m = l.pop(-1)     
         # 説明変数に分ける           
         df1 = pd.DataFrame([l], columns=evHeader)        
