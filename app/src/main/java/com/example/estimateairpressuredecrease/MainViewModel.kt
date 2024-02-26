@@ -27,19 +27,96 @@ class MainViewModel @Inject constructor(
     private val featureValueDao: FeatureValueDao,
 ) : ViewModel(){
 
+    var common = Common()
+
+    // Main
+    // 画面の状態
+    // [ホーム:1,センシング:2、入力:3]
+    var screenStatus by mutableStateOf(1)
+    // [適正空気圧:1、測定空気圧:2]
+    var inputStatus by mutableStateOf(1)
+    private var isFirst by mutableStateOf(false)
+
+    // Input
+    // 入力している空気圧
+    var editingAirPressure by mutableStateOf("")
+    // 最小適正空気圧を求めるのに必要な情報
+    var editingBodyWeight by mutableStateOf("")
+    var editingBicycleWeight by mutableStateOf("")
+    var editingTireWidth by mutableStateOf("")
+    // 空気圧入力欄でのエラー
+    var errorInputAirPressure by mutableStateOf("")
+
+    // Main
+    // 最初の起動かどうか調査
+    fun checkIsInitialization(){
+        viewModelScope.launch {
+            // id:0 のhomeがnullだった場合
+            if (homeDao.getHomeById(0) == null){
+                common.log("初期起動")
+                isFirst = true
+                screenStatus = common.inputNum
+                inputStatus = common.inputProperPressureNum
+            }
+        }
+    }
+
+    // Input
+    // 最小適正空気圧を計算
+    fun calcMinProperPressure(){
+        errorInputAirPressure = ""
+        try{
+            var sloop = 0.9 / (editingTireWidth.toDouble() - 11.2)
+            var weight = (editingBodyWeight.toDouble() + editingBicycleWeight.toDouble() + 46)
+            editingAirPressure = (10 * round(0.01 * 50 * 10 * sloop * weight)).toInt().toString()
+
+        }catch (e: NumberFormatException){
+            errorInputAirPressure = "数字(整数)を入力してください"
+        }
+
+    }
+
+    // 入力された空気圧をデータベースに保存
+    fun inputAirPressure(){
+        errorInputAirPressure = ""
+        try{
+            // 最小適正空気圧入力時
+            if(inputStatus == common.inputProperPressureNum){
+                minProperPressure = editingAirPressure.toInt()
+                // 初回起動時
+                if(isFirst){
+                    createHome()
+                    // 初回以外時
+                }else{
+                    updateHome()
+                }
+                screenStatus = common.homeNum
+                // 学習状態・空気圧入力時
+            }else{
+                airPressure = editingAirPressure.toInt()
+                addData()
+
+            }
+
+            screenStatus = common.homeNum
+
+        }catch (e: NumberFormatException){
+            errorInputAirPressure = "数字(整数)を入力してください"
+        }
+
+        editingAirPressure = ""
+
+    }
+
+
+    // ↓ 書き換え前
+
     // 初期の日付
     private val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
 
     // MainContent
-    var isFirst by mutableStateOf(false)
     var isTrainingState by mutableStateOf(true)
 
-    // InputAirPressure
-    var editingAirPressure by mutableStateOf("")
-    var editingBodyWeight by mutableStateOf("")
-    var editingBicycleWeight by mutableStateOf("")
-    var editingTireWidth by mutableStateOf("")
-    var errorInputAirPressure by mutableStateOf("")
 
 
     var errorData by mutableStateOf("")
@@ -122,62 +199,7 @@ class MainViewModel @Inject constructor(
 
     // python
 
-    // 初めての起動かどうか確認
-    fun checkIsFirst(){
-        viewModelScope.launch {
-            // id:0 のhomeがnullだった場合
-            if (homeDao.getHomeById(0) == null){
-                isFirst = true
-            }else{
-                isFirst = false
-            }
-        }
-    }
 
-    // 入力された空気圧をデータベースに保存
-    fun inputAirPressure(isFirst: Boolean, isProper: Boolean){
-        errorInputAirPressure = ""
-        try{
-            // 最小適正空気圧入力時
-            if(isProper){
-                minProperPressure = editingAirPressure.toInt()
-                // 初回起動時
-                if(isFirst){
-                    createHome()
-                // 初回以外時
-                }else{
-                    updateHome()
-                }
-                isInputtingMinProperPressure = false
-            // 学習状態・空気圧入力時
-            }else{
-                airPressure = editingAirPressure.toInt()
-                addData()
-                isInputtingAirPressure = false
-            }
-        }catch (e: NumberFormatException){
-            errorInputAirPressure = "数字(整数)を入力してください"
-        }
-
-        editingAirPressure = ""
-
-    }
-
-    fun calcMinProperPressure(){
-        errorInputAirPressure = ""
-        try{
-            var sloop = 0.9 / (editingTireWidth.toDouble() - 11.2)
-            var weight = (editingBodyWeight.toDouble() + editingBicycleWeight.toDouble() + 46)
-            editingAirPressure = (10 * round(0.01 * 50 * 10 * sloop * weight)).toInt().toString()
-
-        }catch (e: NumberFormatException){
-            errorInputAirPressure = "数字(整数)を入力してください"
-        }
-        editingBodyWeight = ""
-        editingBicycleWeight = ""
-        editingTireWidth = ""
-
-    }
 
     // 学習状態から推定状態に変更できるか調べる
     fun checkStatus(featureValueData: List<FeatureValueData>){

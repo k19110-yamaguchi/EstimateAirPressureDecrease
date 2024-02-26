@@ -1,36 +1,72 @@
 package com.example.estimateairpressuredecrease.components
 
-import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.estimateairpressuredecrease.FontSize
+import com.example.estimateairpressuredecrease.Common
 import com.example.estimateairpressuredecrease.MainViewModel
-import com.example.estimateairpressuredecrease.room.entities.FeatureValueData
+import com.example.estimateairpressuredecrease.components.input.InputPressure
 import com.example.estimateairpressuredecrease.sensors.Accelerometer
 import com.example.estimateairpressuredecrease.sensors.Barometric
 import com.example.estimateairpressuredecrease.sensors.Gravity
 import com.example.estimateairpressuredecrease.sensors.Location
-import com.example.estimateairpressuredecrease.ui.theme.element
-import kotlinx.coroutines.launch
 
 @Composable
 fun MainContent(
     acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric,
-    fontSize: FontSize = FontSize(), viewModel: MainViewModel = hiltViewModel()
+    common: Common = Common(), viewModel: MainViewModel = hiltViewModel()
 ){
+
+    viewModel.checkIsInitialization()
+
+    when (viewModel.screenStatus) {
+        // ホーム画面を表示
+        common.homeNum -> {
+            common.log("ホーム画面")
+            Text(text = "ホーム画面", fontSize = common.largeFont)
+            Spacer(modifier = Modifier.height(common.space))
+
+            Button(onClick = {viewModel.screenStatus = common.sensingNum}) {
+                Text(text = "センシングへ")
+            }
+
+            Button(onClick = {
+                viewModel.screenStatus = common.inputNum
+                viewModel.inputStatus = common.inputProperPressureNum
+            }) {
+                Text(text = "適正空気圧入力へ")
+            }
+        }
+
+        // センシング画面を表示
+        common.sensingNum -> {
+            common.log("センシング画面")
+            Text(text = "センシング画面", fontSize = common.largeFont)
+            Spacer(modifier = Modifier.height(common.space))
+
+            Button(onClick = {
+                viewModel.screenStatus = common.inputNum
+                viewModel.inputStatus = common.inputPressureNum
+            }) {
+                Text(text = "測定空気圧入力へ")
+            }
+        }
+
+        // 入力画面を表示
+        common.inputNum -> {
+            InputPressure(viewModel = viewModel)
+        }
+
+        else -> {
+            common.log("画面の遷移で異常")
+        }
+    }
+
+    /*
+
     val spaceSize = 20.dp
 
     // ホーム画面の情報を取得
@@ -162,6 +198,7 @@ fun MainContent(
 
         }
     }
+     */
 
 }
 

@@ -4,7 +4,9 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import com.example.estimateairpressuredecrease.room.entities.AccData
+import com.example.estimateairpressuredecrease.room.entities.FeatureValueData
 import com.example.estimateairpressuredecrease.room.entities.LocData
+import com.example.estimateairpressuredecrease.room.entities.SensorData
 import java.io.BufferedWriter
 import java.io.FileWriter
 import java.io.PrintWriter
@@ -22,12 +24,16 @@ class OpenCsv {
         return res
     }
 
+    fun createFvDataCsv(featureValueData: FeatureValueData, startDate: LocalDateTime, airPressure: Int){
+        val fileName = createFileName(startDate)
+
+
+    }
+
     fun createCsv(startDate: LocalDateTime, accData: AccData, locData: LocData, airPressure: Int){
-        val accDataCsv: String = accData.xAccList[0].toString()
         val fileName = createFileName(startDate)
         var filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "_" + airPressure.toString() + "_acc" + extension
 
-        Log.d("accDataCsv", accDataCsv)
         var csvData = ""
         csvData += "time(s),xAcc(m/s^2),yAcc(m/s^2),zAcc(m/s^2),\n"
         for(i in 0 until accData.timeList.size){

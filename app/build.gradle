@@ -117,5 +117,4 @@ dependencies {
 
     // パーミッション関係に必要
     implementation "com.google.accompanist:accompanist-permissions:0.28.0"
-
 }
