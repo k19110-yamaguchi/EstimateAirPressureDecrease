@@ -1,4 +1,4 @@
-package com.example.estimateairpressuredecrease.components.input
+package com.example.estimateairpressuredecrease.components.screen
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -20,7 +20,7 @@ import com.example.estimateairpressuredecrease.MainViewModel
 import com.example.estimateairpressuredecrease.ui.theme.element
 
 @Composable
-fun InputPressure(viewModel: MainViewModel, common: Common = Common()){
+fun Input(viewModel: MainViewModel, common: Common = Common()){
     var labelText = ""
 
     when (viewModel.inputStatus){

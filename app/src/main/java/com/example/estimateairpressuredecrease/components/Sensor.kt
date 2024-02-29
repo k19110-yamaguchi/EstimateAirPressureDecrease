@@ -162,7 +162,6 @@ fun stopSensing(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric
     bar.stopListening()
     Log.d("stopSensing", "センシング終了2")
 
-
 }
 
 private fun Double.round(decimals: Int): Double {

@@ -1,14 +1,12 @@
 package com.example.estimateairpressuredecrease.components
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.estimateairpressuredecrease.Common
 import com.example.estimateairpressuredecrease.MainViewModel
-import com.example.estimateairpressuredecrease.components.input.InputPressure
+import com.example.estimateairpressuredecrease.components.screen.Home
+import com.example.estimateairpressuredecrease.components.screen.Input
+import com.example.estimateairpressuredecrease.components.screen.Sensing
 import com.example.estimateairpressuredecrease.sensors.Accelerometer
 import com.example.estimateairpressuredecrease.sensors.Barometric
 import com.example.estimateairpressuredecrease.sensors.Gravity
@@ -17,47 +15,26 @@ import com.example.estimateairpressuredecrease.sensors.Location
 @Composable
 fun MainContent(
     acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric,
-    common: Common = Common(), viewModel: MainViewModel = hiltViewModel()
+    viewModel: MainViewModel = hiltViewModel(), common: Common = Common()
 ){
 
+    // 初回起動か調べる
     viewModel.checkIsInitialization()
 
     when (viewModel.screenStatus) {
         // ホーム画面を表示
         common.homeNum -> {
-            common.log("ホーム画面")
-            Text(text = "ホーム画面", fontSize = common.largeFont)
-            Spacer(modifier = Modifier.height(common.space))
-
-            Button(onClick = {viewModel.screenStatus = common.sensingNum}) {
-                Text(text = "センシングへ")
-            }
-
-            Button(onClick = {
-                viewModel.screenStatus = common.inputNum
-                viewModel.inputStatus = common.inputProperPressureNum
-            }) {
-                Text(text = "適正空気圧入力へ")
-            }
+            Home(viewModel)
         }
 
         // センシング画面を表示
         common.sensingNum -> {
-            common.log("センシング画面")
-            Text(text = "センシング画面", fontSize = common.largeFont)
-            Spacer(modifier = Modifier.height(common.space))
-
-            Button(onClick = {
-                viewModel.screenStatus = common.inputNum
-                viewModel.inputStatus = common.inputPressureNum
-            }) {
-                Text(text = "測定空気圧入力へ")
-            }
+            Sensing(viewModel)
         }
 
         // 入力画面を表示
         common.inputNum -> {
-            InputPressure(viewModel = viewModel)
+            Input(viewModel = viewModel)
         }
 
         else -> {

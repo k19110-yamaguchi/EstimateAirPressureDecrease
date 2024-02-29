@@ -26,8 +26,7 @@ class MainViewModel @Inject constructor(
     private val sensorDao: SensorDao,
     private val featureValueDao: FeatureValueDao,
 ) : ViewModel(){
-
-    var common = Common()
+    private var common = Common()
 
     // Main
     // 画面の状態
@@ -36,6 +35,22 @@ class MainViewModel @Inject constructor(
     // [適正空気圧:1、測定空気圧:2]
     var inputStatus by mutableStateOf(1)
     private var isFirst by mutableStateOf(false)
+
+    //Home
+    // 学習状態かどうか
+    var isTrainingState by mutableStateOf(true)
+    // 適正外のデータ数
+    var outOfSize by mutableStateOf(0)
+    // 適正内のデータ数
+    var withinSize by mutableStateOf(0)
+    // 推定に必要な適正外、適正内の特徴量の数
+    val requiredFvSize = 3
+    // 推定空気圧
+    var estimatedAirPressure: Int by mutableStateOf(0)
+    // 初期の日付
+    private val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
+    // 空気を注入した時期
+    var inflatedDate: LocalDateTime by mutableStateOf(initDate)
 
     // Input
     // 入力している空気圧
@@ -46,6 +61,10 @@ class MainViewModel @Inject constructor(
     var editingTireWidth by mutableStateOf("")
     // 空気圧入力欄でのエラー
     var errorInputAirPressure by mutableStateOf("")
+    // 最小適正空気圧
+    var minProperPressure by mutableStateOf(0)
+    // 測定空気圧
+    private var sensingPressure by mutableStateOf(0)
 
     // Main
     // 最初の起動かどうか調査
@@ -61,24 +80,53 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // Home
+    // 初期値を設定
+    fun setHome(home: HomeData){
+        isTrainingState = home.isTrainingState
+        minProperPressure = home.minProperPressure
+        estimatedAirPressure = home.estimatedAirPressure
+        inflatedDate = home.inflatedDate
+    }
+
+    // 学習状態から推定状態に変更できるか調べる
+    fun checkState(featureValueData: List<FeatureValueData>){
+        outOfSize = 0
+        withinSize = 0
+        // 適正外、適正内のデータの数を調べる
+        for (fv in featureValueData) {
+            if (fv.airPressure >= minProperPressure) {
+                withinSize += 1
+            } else {
+                outOfSize += 1
+            }
+        }
+        common.log("適正外のデータ数: $outOfSize")
+        common.log("適正内のデータ数: $withinSize")
+        // 必要サイズ以上になった場合
+        if(outOfSize >= requiredFvSize && withinSize >= requiredFvSize){
+            createModel(featureValueData)
+            isTrainingState = false
+            updateHome()
+        }
+    }
+
     // Input
     // 最小適正空気圧を計算
     fun calcMinProperPressure(){
-        errorInputAirPressure = ""
         try{
             var sloop = 0.9 / (editingTireWidth.toDouble() - 11.2)
             var weight = (editingBodyWeight.toDouble() + editingBicycleWeight.toDouble() + 46)
             editingAirPressure = (10 * round(0.01 * 50 * 10 * sloop * weight)).toInt().toString()
+            errorInputAirPressure = ""
 
         }catch (e: NumberFormatException){
             errorInputAirPressure = "数字(整数)を入力してください"
         }
-
     }
 
     // 入力された空気圧をデータベースに保存
     fun inputAirPressure(){
-        errorInputAirPressure = ""
         try{
             // 最小適正空気圧入力時
             if(inputStatus == common.inputProperPressureNum){
@@ -90,48 +138,28 @@ class MainViewModel @Inject constructor(
                 }else{
                     updateHome()
                 }
-                screenStatus = common.homeNum
-                // 学習状態・空気圧入力時
+
+            // 学習状態・空気圧入力時
             }else{
-                airPressure = editingAirPressure.toInt()
+                sensingPressure = editingAirPressure.toInt()
                 addData()
-
             }
-
             screenStatus = common.homeNum
 
         }catch (e: NumberFormatException){
             errorInputAirPressure = "数字(整数)を入力してください"
         }
-
-        editingAirPressure = ""
-
     }
 
 
     // ↓ 書き換え前
 
-    // 初期の日付
-    private val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
 
     // MainContent
-    var isTrainingState by mutableStateOf(true)
-
 
 
     var errorData by mutableStateOf("")
 
-
-    // テキストフィールドに入力された最小適正空気圧
-    var editingMinProperPressure by mutableStateOf("")
-    // 最小適正空気圧
-    var minProperPressure by mutableStateOf(0)
-    // 推定空気圧
-    var estimatedAirPressure: Int by mutableStateOf(0)
-    // 空気を注入した時期
-    var inflatedDate: LocalDateTime by mutableStateOf(initDate)
-    // 最小適正空気圧を入力しているか
-    var isInputtingMinProperPressure by mutableStateOf(false)
     // 空気圧を入力している最中
     var isInputtingAirPressure by mutableStateOf(false)
 
@@ -174,13 +202,8 @@ class MainViewModel @Inject constructor(
     var accSd: Double by mutableStateOf(0.0)
     // 振幅スペクトル
     var ampSptList: MutableList<Double> = mutableListOf()
-
     var estimatedRange = 10
-    val requiredFvSize = 3
 
-    // Test
-    var outOfSize by mutableStateOf(0)
-    var withinSize by mutableStateOf(0)
 
     // Homeのデータを取得
     val homeData = homeDao.getHomeData().distinctUntilChanged()
@@ -200,35 +223,7 @@ class MainViewModel @Inject constructor(
     // python
 
 
-
-    // 学習状態から推定状態に変更できるか調べる
-    fun checkStatus(featureValueData: List<FeatureValueData>){
-        outOfSize = 0
-        withinSize = 0
-        // 適正外、適正内のデータの数を調べる
-        for (fv in featureValueData) {
-            Log.d("fv.airPressure", fv.id.toString() + "_" + fv.airPressure.toString())
-            if (fv.airPressure >= minProperPressure) {
-                withinSize += 1
-            } else {
-                outOfSize += 1
-            }
-        }
-        // 必要サイズ以上になった場合
-        if(outOfSize >= requiredFvSize && withinSize >= requiredFvSize){
-           createModel(featureValueData)
-            isTrainingState = false
-            updateHome()
-        }
-    }
-
     // 初期値を設定
-    fun setHome(home: HomeData){
-        isTrainingState = home.isTrainingState
-        minProperPressure = home.minProperPressure
-        estimatedAirPressure = home.estimatedAirPressure
-        inflatedDate = home.inflatedDate
-    }
 
     // データベースを作成
     private fun createHome() {
