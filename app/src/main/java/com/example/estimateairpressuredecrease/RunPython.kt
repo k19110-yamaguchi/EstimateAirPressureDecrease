@@ -23,10 +23,10 @@ class RunPython {
         val module = py.getModule("analyzeData") // スクリプト名
         val featureValueStr = module.callAttr("createFeatureValue", newAcc, newGra, newLoc, newBar).toString()
         // 最初と最後の[]を取り除き、","で分割
-        if(featureValueStr != "0"){
-            return featureValueStr.substring(1, featureValueStr.length - 1).split(",").map { it.trim().toDouble() }
+        return if(featureValueStr != "0"){
+            featureValueStr.substring(1, featureValueStr.length - 1).split(",").map { it.trim().toDouble() }
         }else{
-            return emptyList()
+            emptyList()
         }
     }
 

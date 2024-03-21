@@ -4,10 +4,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Button
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
-import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,14 +22,12 @@ fun Input(viewModel: MainViewModel, common: Common = Common()){
 
     when (viewModel.inputStatus){
         common.inputProperPressureNum -> {
-            common.log("適正空気圧入力画面")
             Text(text = "適正空気圧入力画面", fontSize = common.largeFont)
             Spacer(modifier = Modifier.height(common.space))
 
             labelText = "適正空気圧(kPa)"
         }
         common.inputPressureNum -> {
-            common.log("測定空気圧入力画面")
             Text(text = "測定空気圧入力画面", fontSize = common.largeFont)
             Spacer(modifier = Modifier.height(common.space))
 
@@ -40,7 +35,7 @@ fun Input(viewModel: MainViewModel, common: Common = Common()){
         }
 
         else -> {
-            common.log("入力画面の遷移で異常")
+            Text(text = "入力画面の遷移で異常", fontSize = common.smallFont)
         }
     }
     
@@ -64,7 +59,12 @@ fun Input(viewModel: MainViewModel, common: Common = Common()){
         )
     )
 
-    Button(onClick = {
+    Button(
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = element,
+            contentColor = Color.White
+        ),
+        onClick = {
         common.log("${labelText}: ${viewModel.editingAirPressure}")
         viewModel.inputAirPressure()
     }) {
@@ -126,7 +126,12 @@ fun Input(viewModel: MainViewModel, common: Common = Common()){
         )
         
         // 最小適正空気圧を計算
-        Button(onClick = {
+        Button(
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = element,
+                contentColor = Color.White
+            ),
+            onClick = {
             common.log("体重(kg): ${viewModel.editingBodyWeight}")
             common.log("自転車質量(kg): ${viewModel.editingBicycleWeight}")
             common.log("タイヤ幅(mm): ${viewModel.editingTireWidth}")
