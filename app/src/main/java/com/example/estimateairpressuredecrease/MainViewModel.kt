@@ -46,8 +46,6 @@ class MainViewModel @Inject constructor(
     var withinSize by mutableStateOf(0)
     // 推定に必要な適正外、適正内の特徴量の数
     val requiredFvSize = 5
-    // 推定空気圧
-    var estimatedAirPressure: Int by mutableStateOf(0)
     // 初期の日付
     private val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
     // 空気を注入した時期
@@ -78,6 +76,9 @@ class MainViewModel @Inject constructor(
     var stopDate: LocalDateTime by mutableStateOf(initDate)
     // 測定時の空気圧
     var airPressure: Int by mutableStateOf(0)
+    // 測定時の空気圧
+    var estimatedAirPressure: Int by mutableStateOf(0)
+
 
     // Acc
     var xAccList: MutableList<Double> = mutableListOf()
@@ -133,6 +134,23 @@ class MainViewModel @Inject constructor(
         inflatedDate = home.inflatedDate
     }
 
+    // データベースを作成
+    private fun createHome() {
+        viewModelScope.launch {
+            val newHome = HomeData(isTrainingState = isTrainingState, estimatedAirPressure = estimatedAirPressure, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
+            homeDao.createHomeDB(newHome)
+        }
+    }
+
+    // データベースを更新
+    private fun updateHome() {
+        viewModelScope.launch {
+            Log.d("updateHome", estimatedAirPressure.toString())
+            val newHome = HomeData(isTrainingState = isTrainingState, estimatedAirPressure = estimatedAirPressure, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
+            homeDao.updateHomeData(newHome)
+        }
+    }
+
     // 学習状態から推定状態に変更できるか調べる
     fun checkState(featureValueData: List<FeatureValueData>){
         outOfSize = 0
@@ -152,6 +170,20 @@ class MainViewModel @Inject constructor(
             isTrainingState = false
             updateHome()
         }
+    }
+
+    // 空気注入時期の更新
+    fun updateInflateDate(){
+        inflatedDate = LocalDateTime.now()
+        updateHome()
+    }
+
+    fun showInflateDate(): String{
+        val year = inflatedDate.toString().substring(0, 4)
+        val month = inflatedDate.toString().substring(5, 7)
+        val day = inflatedDate.toString().substring(8, 10)
+        return "${month}月${day}日"
+
     }
 
     // Input
@@ -196,23 +228,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // データベースを作成
-    private fun createHome() {
-        viewModelScope.launch {
-            val newHome = HomeData(isTrainingState = isTrainingState, estimatedAirPressure = estimatedAirPressure, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
-            homeDao.createHomeDB(newHome)
-        }
-    }
-
-    // データベースを更新
-    private fun updateHome() {
-        viewModelScope.launch {
-            Log.d("updateHome", estimatedAirPressure.toString())
-            val newHome = HomeData(isTrainingState = isTrainingState, estimatedAirPressure = estimatedAirPressure, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
-            homeDao.updateHomeData(newHome)
-        }
-    }
-
     private fun resetInput(){
         editingAirPressure = ""
         editingBodyWeight = ""
@@ -249,7 +264,7 @@ class MainViewModel @Inject constructor(
             val newGra = GraData(xGraList = xGraList, yGraList = yGraList, zGraList = zGraList, timeList = graTimeList)
             val newLoc = LocData(latList = latList, lonList = lonList, timeList = locTimeList)
             val newBar = BarData(barList = barList, timeList = barTimeList)
-            val newSensor = SensorData(startDate = startDate, stopDate = stopDate, airPressure = airPressure)
+            val newSensor = SensorData(startDate = startDate, stopDate = stopDate, airPressure = airPressure, estimatedAirPressure = estimatedAirPressure)
             val newFeatureValue = FeatureValueData(accSd = accSd, ampSptList = ampSptList, airPressure = airPressure)
 
             // データベースに保存
@@ -267,7 +282,6 @@ class MainViewModel @Inject constructor(
 
             // 推定状態の場合
             if(!isTrainingState){
-
                 estimateAirPressure(fv)
             }
         }else{
@@ -413,7 +427,6 @@ class MainViewModel @Inject constructor(
     }
 
 
-
     // ↓ 書き換え前
 
     // Homeのデータを取得
@@ -444,7 +457,6 @@ class MainViewModel @Inject constructor(
     }
 
 
-
     private fun createModel(featureValueData: List<FeatureValueData>){
         val fvList: MutableList<List<Double>> = selectFv(featureValueData)
         val runPython = RunPython()
@@ -469,16 +481,11 @@ class MainViewModel @Inject constructor(
 
     private fun selectFv(featureValueData: List<FeatureValueData>): MutableList<List<Double>> {
         val len = featureValueData.size
-        Log.d("fv_len", len.toString())
         val fvList = mutableListOf<List<Double>>()
-        //
+        // モデル作成時の特徴量をListに変換
         if(isTrainingState){
             for(i in 0 until len){
                 val ampSpcSize = featureValueData[i].ampSptList.size
-                Log.d("ampSpcSize", ampSpcSize.toString())
-                print(fv)
-                Log.d("fv_index", i.toString())
-                Log.d("fv", featureValueData[i].toString())
                 var l = mutableListOf<Double>()
                 l.add(featureValueData[i].accSd)
                 for(j in 0 until ampSpcSize){
@@ -487,6 +494,7 @@ class MainViewModel @Inject constructor(
                 l.add(featureValueData[i].airPressure.toDouble())
                 fvList.add(l)
             }
+        //
         }else {
             for(i in len - estimatedRange until len){
                 val ampSpcSize = featureValueData[i].ampSptList.size

@@ -37,7 +37,8 @@ class RunPython {
         }
         Log.d("filePath", filePath)
         val py = Python.getInstance()
-        val module = py.getModule("machineLearning") // スクリプト名
+        // スクリプト名
+        val module = py.getModule("machineLearning")
         module.callAttr("createModel", TrainingFv, filePath)
     }
 

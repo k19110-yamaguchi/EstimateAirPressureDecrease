@@ -36,10 +36,11 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
     val featureValueData by viewModel.featureValueData.collectAsState(initial = emptyList())
     if(homeData.isNotEmpty()){
         viewModel.setHome(homeData[0])
+        // 学習→推定状態に移るかどうか
+        if(viewModel.isTrainingState){
+            viewModel.checkState(featureValueData)
+        }
     }
-
-    // 学習→推定状態に移るかどうか
-    viewModel.checkState(featureValueData)
 
     // 状態の表示
     if(viewModel.isTrainingState) {
@@ -47,6 +48,28 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
     } else {
         Text(text = "推定状態", fontSize = common.largeFont)
         // todo 推定結果を表示
+    }
+
+    Spacer(modifier = Modifier.height(common.space))
+
+    // 空気注入時期
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = "空気注入時期: ${viewModel.showInflateDate()}", fontSize = common.smallFont)
+
+        Spacer(modifier = Modifier.width(common.space))
+
+        Button(
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = element,
+                contentColor = Color.White
+            ),
+            onClick = {
+                viewModel.updateInflateDate()
+            }) {
+            Text(text = "空気\n注入", fontSize = common.smallFont)
+        }
     }
 
     Spacer(modifier = Modifier.height(common.space))
