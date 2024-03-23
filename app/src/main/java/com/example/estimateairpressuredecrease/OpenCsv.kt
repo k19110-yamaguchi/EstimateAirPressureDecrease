@@ -10,11 +10,14 @@ import java.io.PrintWriter
 import java.time.LocalDateTime
 
 class OpenCsv {
-    private val fileAppend : Boolean = true //true=追記, false=上書き
+    //true=追記, false=上書き
+    private val fileAppend : Boolean = true
     val context: Context = MainActivity.content
+    // 拡張子
     private val extension : String = ".csv"
     // 内部ストレージのDocumentのURL
 
+    // 保存するフォルダ名の作成
     private fun createFileName(startDate: LocalDateTime): String {
         return startDate.toString()
             .replace("-", "")
@@ -23,7 +26,7 @@ class OpenCsv {
             .substring(0, 14)
     }
 
-
+    // 加速度のcsv作成
     private fun createAccDataCsv(accData: AccData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/acc" + extension
         val header = "time(s),xAcc(m/s^2),yAcc(m/s^2),zAcc(m/s^2),"
@@ -42,6 +45,7 @@ class OpenCsv {
 
     }
 
+    // 重力加速度のcsv作成
     private fun createGraDataCsv(graData: GraData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "_gra" + extension
         val header = "time(s),xGra(m/s^2),yGra(m/s^2),zGra(m/s^2),"
@@ -60,6 +64,7 @@ class OpenCsv {
 
     }
 
+    // 位置情報のcsv作成
     private fun createLocDataCsv(locData: LocData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "gra" + extension
         val header = "time(s),lat(°),lon(°),"
@@ -77,6 +82,7 @@ class OpenCsv {
 
     }
 
+    // 気圧のcsv作成
     private fun createBarDataCsv(barData: BarData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/gra" + extension
         val header = "time(s),bar(kPa),"
@@ -93,7 +99,7 @@ class OpenCsv {
 
     }
 
-    // 特徴量
+    // 特徴量のcsv作成
     private fun createFeatureValueDataCsv(featureValueData: FeatureValueData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/gra" + extension
 
@@ -119,17 +125,20 @@ class OpenCsv {
 
     }
 
-
+    // センサデータのcsv作成
     fun createCsv(startDate: LocalDateTime, accData: AccData, graData: GraData,locData: LocData, barData: BarData, featureValueData: FeatureValueData){
         val fileName = createFileName(startDate)
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName
         val f = File(filePath)
         // ディレクトリ存在チェック
         if (!f.exists()) {
+            // フォルダの作成
             f.mkdirs()
         } else {
 
         }
+
+        // センサデータのcsvファイルの作成
         createAccDataCsv(accData, fileName)
         createGraDataCsv(graData, fileName)
         createLocDataCsv(locData,fileName)

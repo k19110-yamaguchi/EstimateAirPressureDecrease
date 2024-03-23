@@ -188,6 +188,8 @@ class MainViewModel @Inject constructor(
                 addData()
             }
             screenStatus = common.homeNum
+            resetInput()
+
 
         }catch (e: NumberFormatException){
             errorInputAirPressure = "数字(整数)を入力してください"
@@ -211,6 +213,15 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    private fun resetInput(){
+        editingAirPressure = ""
+        editingBodyWeight = ""
+        editingBicycleWeight = ""
+        editingTireWidth = ""
+        errorInputAirPressure = ""
+
+    }
+
     // Sensing
     // 推定に必要なデータがあるか調べる
     fun checkRequiredData(){
@@ -222,16 +233,18 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // データベースにセンサデータを追加
     private fun addData() {
+        // テストデータを作成する
         // createTestData()
         // 特徴量を取得
         var successCreateFv = createFeatureValue()
-        // var successCreateFv = true
 
         // 特徴量の取得に成功した場合
         if(successCreateFv){
             common.log("特徴量の取得に成功")
             homeMessage = "特徴量の取得に成功"
+            // 保存するデータをエンティティ構造に変換
             val newAcc = AccData(xAccList = xAccList, yAccList = yAccList, zAccList = zAccList, timeList = accTimeList)
             val newGra = GraData(xGraList = xGraList, yGraList = yGraList, zGraList = zGraList, timeList = graTimeList)
             val newLoc = LocData(latList = latList, lonList = lonList, timeList = locTimeList)
@@ -261,9 +274,10 @@ class MainViewModel @Inject constructor(
             common.log("特徴量の取得に失敗")
             homeMessage = "特徴量の取得に失敗"
         }
-        reset()
+        resetSensing()
     }
 
+    // 加速度データをデータベースに追加
     private fun addAcc(newAcc: AccData) {
         viewModelScope.launch {
             sensorDao.insertAccData(newAcc)
@@ -271,53 +285,133 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // 重力加速度データをデータベースに追加
     private fun addGra(newGra: GraData) {
         viewModelScope.launch {
             sensorDao.insertGraData(newGra)
         }
     }
 
+    // 位置情報データをデータベースに追加
     private fun addLoc(newLoc: LocData) {
         viewModelScope.launch {
             sensorDao.insertLocData(newLoc)
         }
     }
 
+    // 気圧データをデータベースに追加
     private fun addBar(newBar: BarData) {
         viewModelScope.launch {
             sensorDao.insertBarData(newBar)
         }
     }
 
+    // センサデータをデータベースに追加
     private fun addSensor(newSensor: SensorData) {
         viewModelScope.launch {
             sensorDao.insertSensorData(newSensor)
         }
     }
 
+    // 特徴量データをデータベースに追加
     private fun addFeatureValue(newFeatureValue: FeatureValueData) {
         viewModelScope.launch {
             featureValueDao.insertFeatureValues(newFeatureValue)
         }
     }
 
+    // 特徴量を取得
     private fun createFeatureValue(): Boolean {
+        // リストに変換
         val newAcc = createList("Acc")
         val newGra = createList("Gra")
         val newLoc = createList("Loc")
         val newBar = createList("Bar")
 
+        // Pythonを用いて特徴量を取得
         val runPython = RunPython()
         val featureValue = runPython.createFeatureValue(newAcc, newGra, newLoc, newBar)
+        // 特徴量が正しく取得できた場合
         return if(featureValue.isNotEmpty()){
             accSd = featureValue[0]
             ampSptList = featureValue as MutableList<Double>
             ampSptList.removeAt(0)
             true
+        // 特徴量が正しく取得できなかった場合
         }else{
             false
         }
     }
+
+
+    // センサデータをリストに変換
+    private fun createList(sensorName: String): MutableList<List<Double>> {
+        val newList = mutableListOf<List<Double>>()
+        when (sensorName) {
+            "Acc" -> {
+                var len = accTimeList.size
+                for(i in 0 until len){
+                    newList.add(listOf(xAccList[i], yAccList[i], zAccList[i], accTimeList[i]))
+                }
+            }
+            "Gra" -> {
+                var len = graTimeList.size
+                for(i in 0 until len){
+                    newList.add(listOf(xGraList[i], yGraList[i], zGraList[i], graTimeList[i]))
+                }
+            }
+            "Loc" -> {
+                var len = locTimeList.size
+                for(i in 0 until len){
+                    newList.add(listOf(latList[i], lonList[i], locTimeList[i]))
+                }
+            }
+            "Bar" -> {
+                var len = barTimeList.size
+                for(i in 0 until len){
+                    newList.add(listOf(barList[i], barTimeList[i]))
+                }
+            }
+        }
+        return newList
+    }
+
+    private fun resetSensing() {
+        startDate = initDate
+        stopDate = initDate
+        airPressure = 0
+
+        xAccList = emptyList<Double>().toMutableList()
+        yAccList = emptyList<Double>().toMutableList()
+        zAccList = emptyList<Double>().toMutableList()
+        accTime = -1.0
+        accTimeList = emptyList<Double>().toMutableList()
+
+        latList =  emptyList<Double>().toMutableList()
+        lonList = emptyList<Double>().toMutableList()
+        locTime = -1.0
+        locTimeList = emptyList<Double>().toMutableList()
+
+        // Gra
+        xGraList =  emptyList<Double>().toMutableList()
+        yGraList =  emptyList<Double>().toMutableList()
+        zGraList =  emptyList<Double>().toMutableList()
+        graTime = -1.0
+        graTimeList =  emptyList<Double>().toMutableList()
+
+        // Bar
+        barList =  emptyList<Double>().toMutableList()
+        barTime = -1.0
+        barTimeList =  emptyList<Double>().toMutableList()
+
+        // 特徴量
+        accSd = 0.0
+        // 振幅スペクトル
+        ampSptList = emptyList<Double>().toMutableList()
+        isRequiredData = false
+
+    }
+
 
 
     // ↓ 書き換え前
@@ -406,78 +500,4 @@ class MainViewModel @Inject constructor(
         }
         return fvList
     }
-
-    private fun createList(sensorName: String): MutableList<List<Double>> {
-        val newList = mutableListOf<List<Double>>()
-        when (sensorName) {
-            "Acc" -> {
-                var len = accTimeList.size
-                for(i in 0 until len){
-                    newList.add(listOf(xAccList[i], yAccList[i], zAccList[i], accTimeList[i]))
-                }
-            }
-            "Gra" -> {
-                var len = graTimeList.size
-                for(i in 0 until len){
-                    newList.add(listOf(xGraList[i], yGraList[i], zGraList[i], graTimeList[i]))
-                }
-            }
-            "Loc" -> {
-                var len = locTimeList.size
-                for(i in 0 until len){
-                    newList.add(listOf(latList[i], lonList[i], locTimeList[i]))
-                }
-            }
-            "Bar" -> {
-                var len = barTimeList.size
-                for(i in 0 until len){
-                    newList.add(listOf(barList[i], barTimeList[i]))
-                }
-            }
-        }
-        return newList
-
-    }
-
-    private fun reset() {
-        startDate = initDate
-        stopDate = initDate
-        airPressure = 0
-
-        xAccList = emptyList<Double>().toMutableList()
-        yAccList = emptyList<Double>().toMutableList()
-        zAccList = emptyList<Double>().toMutableList()
-        accTime = -1.0
-        accTimeList = emptyList<Double>().toMutableList()
-
-        latList =  emptyList<Double>().toMutableList()
-        lonList = emptyList<Double>().toMutableList()
-        locTime = -1.0
-        locTimeList = emptyList<Double>().toMutableList()
-
-        // Gra
-        xGraList =  emptyList<Double>().toMutableList()
-        yGraList =  emptyList<Double>().toMutableList()
-        zGraList =  emptyList<Double>().toMutableList()
-        graTime = -1.0
-        graTimeList =  emptyList<Double>().toMutableList()
-
-        // Bar
-        barList =  emptyList<Double>().toMutableList()
-        barTime = -1.0
-        barTimeList =  emptyList<Double>().toMutableList()
-
-        // 特徴量
-        accSd = 0.0
-        // 振幅スペクトル
-        ampSptList = emptyList<Double>().toMutableList()
-
-        startDate = initDate
-        stopDate = initDate
-
-        isRequiredData = false
-
-        airPressure = 0
-    }
-
 }
