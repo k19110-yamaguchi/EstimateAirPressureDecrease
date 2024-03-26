@@ -12,8 +12,6 @@ data class HomeData(
     var isTrainingState: Boolean,
     // 最小適正空気圧
     var minProperPressure: Int,
-    // 推定空気圧
-    var estimatedAirPressure: Int,
     // 空気を注入した日付
     var inflatedDate: LocalDateTime,
 )

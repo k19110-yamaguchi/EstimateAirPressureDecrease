@@ -127,14 +127,13 @@ class MainViewModel @Inject constructor(
     fun setHome(home: HomeData){
         isTrainingState = home.isTrainingState
         minProperPressure = home.minProperPressure
-        estimatedAirPressure = home.estimatedAirPressure
         inflatedDate = home.inflatedDate
     }
 
     // データベースを作成
     private fun createHome() {
         viewModelScope.launch {
-            val newHome = HomeData(isTrainingState = isTrainingState, estimatedAirPressure = estimatedAirPressure, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
+            val newHome = HomeData(isTrainingState = isTrainingState, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
             homeDao.createHomeDB(newHome)
         }
     }
@@ -142,7 +141,7 @@ class MainViewModel @Inject constructor(
     // データベースを更新
     private fun updateHome() {
         viewModelScope.launch {
-            val newHome = HomeData(isTrainingState = isTrainingState, estimatedAirPressure = estimatedAirPressure, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
+            val newHome = HomeData(isTrainingState = isTrainingState, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
             homeDao.updateHomeData(newHome)
         }
     }
