@@ -106,7 +106,6 @@ class MainViewModel @Inject constructor(
     // FeatureValue
     var fv : List<FeatureValueData> by mutableStateOf(emptyList())
     var accSd: Double by mutableStateOf(0.0)
-    // 振幅スペクトル
     var ampSptList: MutableList<Double> = mutableListOf()
     var estimatedRange = 10
 

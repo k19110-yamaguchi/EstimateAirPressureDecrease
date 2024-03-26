@@ -39,6 +39,10 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
         viewModel.setHome(homeData[0])
         // 学習→推定状態に移るかどうか
         if(viewModel.isTrainingState){
+            // 特徴量の取得
+            if(featureValueData.isNotEmpty()){
+                viewModel.fv = featureValueData
+            }
             viewModel.checkState(featureValueData)
         }
 
@@ -48,6 +52,7 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
         } else {
             Text(text = "推定状態", fontSize = common.largeFont)
             if(sensorData.isNotEmpty()){
+                // 推定結果の表示
                 val estimatedAirPressureText = viewModel.showEstimatedAirPressure(sensorData)
                 if(estimatedAirPressureText != ""){
                     Text(text = "最小適正空気圧: ${estimatedAirPressureText}kPa", fontSize = common.smallFont)
@@ -57,15 +62,8 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
                 }
 
             }
-            // todo 推定結果を表示
         }
     }
-
-    if(featureValueData.isNotEmpty()){
-        viewModel.fv = featureValueData
-
-    }
-
 
     Spacer(modifier = Modifier.height(common.space))
 
