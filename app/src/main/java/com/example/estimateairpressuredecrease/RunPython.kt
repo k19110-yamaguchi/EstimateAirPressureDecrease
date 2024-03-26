@@ -42,17 +42,18 @@ class RunPython {
         module.callAttr("createModel", TrainingFv, filePath)
     }
 
-    fun estimateAirPressure(EstimatedFv: MutableList<List<Double>>): List<Int>{
+    // 特徴量から空気圧を推定
+    fun estimateAirPressure(EstimatedFv: MutableList<List<Double>>): Int{
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
         }
         val py = Python.getInstance()
-        val module = py.getModule("machineLearning") // スクリプト名
-        var estimatedAirPressureStr = module.callAttr("estimateAirPressure", EstimatedFv, filePath).toString()
-        println(estimatedAirPressureStr)
+        // スクリプト名
+        val module = py.getModule("machineLearning")
+        var estimatedAirPressure = module.callAttr("estimateAirPressure", EstimatedFv, filePath).toString()
         // 最初と最後の[]を取り除き、","で分割
-        return estimatedAirPressureStr.substring(1, estimatedAirPressureStr.length - 1).split(",").map { it.trim().toFloat().toInt() }
+        return estimatedAirPressure.toInt()
 
     }
 }

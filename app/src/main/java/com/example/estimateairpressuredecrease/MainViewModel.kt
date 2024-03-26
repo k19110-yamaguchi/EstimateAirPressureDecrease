@@ -5,8 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.chaquo.python.Python
-import com.chaquo.python.android.AndroidPlatform
 import com.example.estimateairpressuredecrease.room.dao.FeatureValueDao
 import com.example.estimateairpressuredecrease.room.dao.HomeDao
 import com.example.estimateairpressuredecrease.room.dao.SensorDao
@@ -16,8 +14,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
-import java.nio.file.Paths
-import java.time.LocalDate
 import kotlin.math.round
 
 
@@ -52,6 +48,8 @@ class MainViewModel @Inject constructor(
     var inflatedDate: LocalDateTime by mutableStateOf(initDate)
     // メッセージ
     var homeMessage by mutableStateOf("")
+    // 空気圧推定に必要な推定空気圧の数
+    val requiredAirPressureSize = 3
 
     // Input
     // 入力している空気圧
@@ -76,7 +74,7 @@ class MainViewModel @Inject constructor(
     var stopDate: LocalDateTime by mutableStateOf(initDate)
     // 測定時の空気圧
     var airPressure: Int by mutableStateOf(0)
-    // 測定時の空気圧
+    // 推定空気圧
     var estimatedAirPressure: Int by mutableStateOf(0)
 
 
@@ -145,7 +143,6 @@ class MainViewModel @Inject constructor(
     // データベースを更新
     private fun updateHome() {
         viewModelScope.launch {
-            Log.d("updateHome", estimatedAirPressure.toString())
             val newHome = HomeData(isTrainingState = isTrainingState, estimatedAirPressure = estimatedAirPressure, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
             homeDao.updateHomeData(newHome)
         }
@@ -184,6 +181,33 @@ class MainViewModel @Inject constructor(
         val day = inflatedDate.toString().substring(8, 10)
         return "${month}月${day}日"
 
+    }
+
+    fun showEstimatedAirPressure(sensorData: List<SensorData>): String{
+        val l :MutableList<Int> = mutableListOf()
+        val sensorDataSize = sensorData.size
+        for(i in 0 until requiredAirPressureSize) {
+            val index = sensorDataSize - 1 - i
+            if (inflatedDate.isAfter(sensorData[index].startDate)){
+                var airPressure = sensorData[index].estimatedAirPressure
+                if (airPressure == 0) {
+                    airPressure = sensorData[index].airPressure
+                }
+                l.add(airPressure)
+            }else{
+                break
+            }
+        }
+
+        return if(l.isNotEmpty()){
+            var sum = 0
+            for(ap in l){
+                sum += ap
+            }
+            (sum/l.size).toString()
+        }else{
+            ""
+        }
     }
 
     // Input
@@ -267,6 +291,11 @@ class MainViewModel @Inject constructor(
             val newSensor = SensorData(startDate = startDate, stopDate = stopDate, airPressure = airPressure, estimatedAirPressure = estimatedAirPressure)
             val newFeatureValue = FeatureValueData(accSd = accSd, ampSptList = ampSptList, airPressure = airPressure)
 
+            // 推定状態の場合
+            if(!isTrainingState){
+                estimateAirPressure(newFeatureValue)
+            }
+
             // データベースに保存
             addAcc(newAcc)
             addGra(newGra)
@@ -280,10 +309,6 @@ class MainViewModel @Inject constructor(
             openCsv.createCsv(startDate, newAcc, newGra, newLoc, newBar, newFeatureValue)
             common.log("ファイルの作成に成功")
 
-            // 推定状態の場合
-            if(!isTrainingState){
-                estimateAirPressure(fv)
-            }
         }else{
             common.log("特徴量の取得に失敗")
             homeMessage = "特徴量の取得に失敗"
@@ -356,7 +381,6 @@ class MainViewModel @Inject constructor(
             false
         }
     }
-
 
     // センサデータをリストに変換
     private fun createList(sensorName: String): MutableList<List<Double>> {
@@ -458,25 +482,40 @@ class MainViewModel @Inject constructor(
 
 
     private fun createModel(featureValueData: List<FeatureValueData>){
-        val fvList: MutableList<List<Double>> = selectFv(featureValueData)
+        // モデル作成時の特徴量をListに変換
+        val len = featureValueData.size
+        val fvList = mutableListOf<List<Double>>()
+        for(i in 0 until len){
+            val ampSpcSize = featureValueData[i].ampSptList.size
+            var l = mutableListOf<Double>()
+            l.add(featureValueData[i].accSd)
+            for(j in 0 until ampSpcSize){
+                l.add(featureValueData[i].ampSptList[j])
+            }
+            l.add(featureValueData[i].airPressure.toDouble())
+            fvList.add(l)
+        }
+
         val runPython = RunPython()
         runPython.createModel(fvList)
         Log.d("createModel", "モデル作成成功")
     }
 
-    private fun estimateAirPressure(featureValueData: List<FeatureValueData>) {
-        val fvList: MutableList<List<Double>> = selectFv(featureValueData)
+    private fun estimateAirPressure(featureValueData: FeatureValueData) {
+        // 空気圧推定時の特徴量をListに変換
         val runPython = RunPython()
-        val estimatedAirPressureList = runPython.estimateAirPressure(fvList)
-        var sum = 0
-        for(l in estimatedAirPressureList){
-            Log.d("l", l.toString())
-            sum += l
+        var l = mutableListOf<Double>()
+        val fvList = mutableListOf<List<Double>>()
+        val ampSpcSize = featureValueData.ampSptList.size
+        l.add(featureValueData.accSd)
+        for(i in 0 until ampSpcSize){
+            l.add(featureValueData.ampSptList[i])
         }
-        Log.d("sum", sum.toString())
-        Log.d("size", estimatedAirPressureList.size.toString())
-        estimatedAirPressure = sum / estimatedAirPressureList.size
-        updateHome()
+        fvList.add(l)
+
+        // 推定空気圧を取得
+        estimatedAirPressure = runPython.estimateAirPressure(fvList)
+
     }
 
     private fun selectFv(featureValueData: List<FeatureValueData>): MutableList<List<Double>> {

@@ -33,6 +33,7 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
 
     // ホーム画面の情報を取得
     val homeData by viewModel.homeData.collectAsState(initial = emptyList())
+    val sensorData by viewModel.sensorData.collectAsState(initial = emptyList())
     val featureValueData by viewModel.featureValueData.collectAsState(initial = emptyList())
     if(homeData.isNotEmpty()){
         viewModel.setHome(homeData[0])
@@ -40,15 +41,31 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
         if(viewModel.isTrainingState){
             viewModel.checkState(featureValueData)
         }
+
+        // 状態の表示
+        if(viewModel.isTrainingState) {
+            Text(text = "学習状態", fontSize = common.largeFont)
+        } else {
+            Text(text = "推定状態", fontSize = common.largeFont)
+            if(sensorData.isNotEmpty()){
+                val estimatedAirPressureText = viewModel.showEstimatedAirPressure(sensorData)
+                if(estimatedAirPressureText != ""){
+                    Text(text = "最小適正空気圧: ${estimatedAirPressureText}kPa", fontSize = common.smallFont)
+                }
+                if(estimatedAirPressureText.toInt() < viewModel.minProperPressure){
+                    Text(text = "空気を注入してください", fontSize = common.largeFont, color = Color.Red)
+                }
+
+            }
+            // todo 推定結果を表示
+        }
     }
 
-    // 状態の表示
-    if(viewModel.isTrainingState) {
-        Text(text = "学習状態", fontSize = common.largeFont)
-    } else {
-        Text(text = "推定状態", fontSize = common.largeFont)
-        // todo 推定結果を表示
+    if(featureValueData.isNotEmpty()){
+        viewModel.fv = featureValueData
+
     }
+
 
     Spacer(modifier = Modifier.height(common.space))
 
