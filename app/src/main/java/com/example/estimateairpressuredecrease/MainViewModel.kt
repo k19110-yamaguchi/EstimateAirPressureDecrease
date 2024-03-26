@@ -5,8 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.chaquo.python.Python
-import com.chaquo.python.android.AndroidPlatform
 import com.example.estimateairpressuredecrease.room.dao.FeatureValueDao
 import com.example.estimateairpressuredecrease.room.dao.HomeDao
 import com.example.estimateairpressuredecrease.room.dao.SensorDao
@@ -16,7 +14,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
-import java.nio.file.Paths
 import kotlin.math.round
 
 
@@ -26,46 +23,60 @@ class MainViewModel @Inject constructor(
     private val sensorDao: SensorDao,
     private val featureValueDao: FeatureValueDao,
 ) : ViewModel(){
+    private var common = Common()
 
+    // Main
+    // 画面の状態
+    // [ホーム:1,センシング:2、入力:3]
+    var screenStatus by mutableStateOf(common.homeNum)
+    // [適正空気圧:1、測定空気圧:2]
+    var inputStatus by mutableStateOf(common.inputProperPressureNum)
+    private var isFirst by mutableStateOf(false)
+
+    //Home
+    // 学習状態かどうか
+    var isTrainingState by mutableStateOf(true)
+    // 適正外のデータ数
+    var outOfSize by mutableStateOf(0)
+    // 適正内のデータ数
+    var withinSize by mutableStateOf(0)
+    // 推定に必要な適正外、適正内の特徴量の数
+    val requiredFvSize = 5
     // 初期の日付
     private val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
+    // 空気を注入した時期
+    var inflatedDate: LocalDateTime by mutableStateOf(initDate)
+    // メッセージ
+    var homeMessage by mutableStateOf("")
+    // 空気圧推定に必要な推定空気圧の数
+    val requiredAirPressureSize = 3
 
-    // MainContent
-    var isFirst by mutableStateOf(false)
-    var isTrainingState by mutableStateOf(true)
-
-    // InputAirPressure
+    // Input
+    // 入力している空気圧
     var editingAirPressure by mutableStateOf("")
+    // 最小適正空気圧を求めるのに必要な情報
     var editingBodyWeight by mutableStateOf("")
     var editingBicycleWeight by mutableStateOf("")
     var editingTireWidth by mutableStateOf("")
+    // 空気圧入力欄でのエラー
     var errorInputAirPressure by mutableStateOf("")
-
-
-    var errorData by mutableStateOf("")
-
-
-    // テキストフィールドに入力された最小適正空気圧
-    var editingMinProperPressure by mutableStateOf("")
     // 最小適正空気圧
     var minProperPressure by mutableStateOf(0)
+    // 測定空気圧
+    private var sensingPressure by mutableStateOf(0)
+
+    // Sensing
+    // 推定に必要なデータがあるか
+    var isRequiredData: Boolean by mutableStateOf(false)
+    // 測定開始時刻
+    var startDate: LocalDateTime by mutableStateOf(initDate)
+    // 測定終了時刻
+    var stopDate: LocalDateTime by mutableStateOf(initDate)
+    // 測定時の空気圧
+    var airPressure: Int by mutableStateOf(0)
     // 推定空気圧
     var estimatedAirPressure: Int by mutableStateOf(0)
-    // 空気を注入した時期
-    var inflatedDate: LocalDateTime by mutableStateOf(initDate)
-    // 最小適正空気圧を入力しているか
-    var isInputtingMinProperPressure by mutableStateOf(false)
-    // 空気圧を入力している最中
-    var isInputtingAirPressure by mutableStateOf(false)
 
-    // Sensor
-    // センシング中かどうか
-    var isSensing: Boolean by mutableStateOf(false)
-    var isRequiredData: Boolean by mutableStateOf(false)
-
-    var startDate: LocalDateTime by mutableStateOf(initDate)
-    var stopDate: LocalDateTime by mutableStateOf(initDate)
-    var airPressure: Int by mutableStateOf(0)
 
     // Acc
     var xAccList: MutableList<Double> = mutableListOf()
@@ -95,111 +106,23 @@ class MainViewModel @Inject constructor(
     // FeatureValue
     var fv : List<FeatureValueData> by mutableStateOf(emptyList())
     var accSd: Double by mutableStateOf(0.0)
-    // 振幅スペクトル
     var ampSptList: MutableList<Double> = mutableListOf()
-
     var estimatedRange = 10
-    val requiredFvSize = 3
 
-    // Test
-    var outOfSize by mutableStateOf(0)
-    var withinSize by mutableStateOf(0)
-
-    // Homeのデータを取得
-    val homeData = homeDao.getHomeData().distinctUntilChanged()
-
-    //
-
-    val sensorData = sensorDao.getSensorData().distinctUntilChanged()
-    //
-    val accData = sensorDao.getAccData().distinctUntilChanged()
-
-    //
-    val locData = sensorDao.getLocData().distinctUntilChanged()
-
-    // のデータ取得
-    val featureValueData = featureValueDao.getFeatureValues().distinctUntilChanged()
-
-    // python
-
-    // 初めての起動かどうか確認
-    fun checkIsFirst(){
+    // Main
+    // 最初の起動かどうか調査
+    fun checkIsInitialization(){
         viewModelScope.launch {
             // id:0 のhomeがnullだった場合
             if (homeDao.getHomeById(0) == null){
                 isFirst = true
-            }else{
-                isFirst = false
+                screenStatus = common.inputNum
+                inputStatus = common.inputProperPressureNum
             }
         }
     }
 
-    // 入力された空気圧をデータベースに保存
-    fun inputAirPressure(isFirst: Boolean, isProper: Boolean){
-        errorInputAirPressure = ""
-        try{
-            // 最小適正空気圧入力時
-            if(isProper){
-                minProperPressure = editingAirPressure.toInt()
-                // 初回起動時
-                if(isFirst){
-                    createHome()
-                // 初回以外時
-                }else{
-                    updateHome()
-                }
-                isInputtingMinProperPressure = false
-            // 学習状態・空気圧入力時
-            }else{
-                airPressure = editingAirPressure.toInt()
-                addData()
-                isInputtingAirPressure = false
-            }
-        }catch (e: NumberFormatException){
-            errorInputAirPressure = "数字(整数)を入力してください"
-        }
-
-        editingAirPressure = ""
-
-    }
-
-    fun calcMinProperPressure(){
-        errorInputAirPressure = ""
-        try{
-            var sloop = 0.9 / (editingTireWidth.toDouble() - 11.2)
-            var weight = (editingBodyWeight.toDouble() + editingBicycleWeight.toDouble() + 46)
-            editingAirPressure = (10 * round(0.01 * 50 * 10 * sloop * weight)).toInt().toString()
-
-        }catch (e: NumberFormatException){
-            errorInputAirPressure = "数字(整数)を入力してください"
-        }
-        editingBodyWeight = ""
-        editingBicycleWeight = ""
-        editingTireWidth = ""
-
-    }
-
-    // 学習状態から推定状態に変更できるか調べる
-    fun checkStatus(featureValueData: List<FeatureValueData>){
-        outOfSize = 0
-        withinSize = 0
-        // 適正外、適正内のデータの数を調べる
-        for (fv in featureValueData) {
-            Log.d("fv.airPressure", fv.id.toString() + "_" + fv.airPressure.toString())
-            if (fv.airPressure >= minProperPressure) {
-                withinSize += 1
-            } else {
-                outOfSize += 1
-            }
-        }
-        // 必要サイズ以上になった場合
-        if(outOfSize >= requiredFvSize && withinSize >= requiredFvSize){
-           createModel(featureValueData)
-            isTrainingState = false
-            updateHome()
-        }
-    }
-
+    // Home
     // 初期値を設定
     fun setHome(home: HomeData){
         isTrainingState = home.isTrainingState
@@ -219,13 +142,125 @@ class MainViewModel @Inject constructor(
     // データベースを更新
     private fun updateHome() {
         viewModelScope.launch {
-            Log.d("updateHome", estimatedAirPressure.toString())
             val newHome = HomeData(isTrainingState = isTrainingState, estimatedAirPressure = estimatedAirPressure, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
             homeDao.updateHomeData(newHome)
         }
     }
 
+    // 学習状態から推定状態に変更できるか調べる
+    fun checkState(featureValueData: List<FeatureValueData>){
+        outOfSize = 0
+        withinSize = 0
+        // 適正外、適正内のデータの数を調べる
+        for (fv in featureValueData) {
+            if (fv.airPressure >= minProperPressure) {
+                withinSize += 1
+            } else {
+                outOfSize += 1
+            }
+        }
 
+        // 必要サイズ以上になった場合
+        if(outOfSize >= requiredFvSize && withinSize >= requiredFvSize){
+            createModel(featureValueData)
+            isTrainingState = false
+            updateHome()
+        }
+    }
+
+    // 空気注入時期の更新
+    fun updateInflateDate(){
+        inflatedDate = LocalDateTime.now()
+        updateHome()
+    }
+
+    fun showInflateDate(): String{
+        val year = inflatedDate.toString().substring(0, 4)
+        val month = inflatedDate.toString().substring(5, 7)
+        val day = inflatedDate.toString().substring(8, 10)
+        return "${month}月${day}日"
+
+    }
+
+    fun showEstimatedAirPressure(sensorData: List<SensorData>): String{
+        val l :MutableList<Int> = mutableListOf()
+        val sensorDataSize = sensorData.size
+        for(i in 0 until requiredAirPressureSize) {
+            val index = sensorDataSize - 1 - i
+            if (inflatedDate.isAfter(sensorData[index].startDate)){
+                var airPressure = sensorData[index].estimatedAirPressure
+                if (airPressure == 0) {
+                    airPressure = sensorData[index].airPressure
+                }
+                l.add(airPressure)
+            }else{
+                break
+            }
+        }
+
+        return if(l.isNotEmpty()){
+            var sum = 0
+            for(ap in l){
+                sum += ap
+            }
+            (sum/l.size).toString()
+        }else{
+            ""
+        }
+    }
+
+    // Input
+    // 最小適正空気圧を計算
+    fun calcMinProperPressure(){
+        try{
+            var sloop = 0.9 / (editingTireWidth.toDouble() - 11.2)
+            var weight = (editingBodyWeight.toDouble() + editingBicycleWeight.toDouble() + 46)
+            editingAirPressure = (10 * round(0.01 * 50 * 10 * sloop * weight)).toInt().toString()
+            errorInputAirPressure = ""
+
+        }catch (e: NumberFormatException){
+            errorInputAirPressure = "数字(整数)を入力してください"
+        }
+    }
+
+    // 入力された空気圧をデータベースに保存
+    fun inputAirPressure(){
+        try{
+            // 最小適正空気圧入力時
+            if(inputStatus == common.inputProperPressureNum){
+                minProperPressure = editingAirPressure.toInt()
+                // 初回起動時
+                if(isFirst){
+                    createHome()
+                    // 初回以外時
+                }else{
+                    updateHome()
+                }
+
+            // 学習状態・空気圧入力時
+            }else{
+                sensingPressure = editingAirPressure.toInt()
+                addData()
+            }
+            screenStatus = common.homeNum
+            resetInput()
+
+
+        }catch (e: NumberFormatException){
+            errorInputAirPressure = "数字(整数)を入力してください"
+        }
+    }
+
+    private fun resetInput(){
+        editingAirPressure = ""
+        editingBodyWeight = ""
+        editingBicycleWeight = ""
+        editingTireWidth = ""
+        errorInputAirPressure = ""
+
+    }
+
+    // Sensing
     // 推定に必要なデータがあるか調べる
     fun checkRequiredData(){
         if(accTime != -1.0 &&
@@ -236,159 +271,117 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun createTestData(){
-        latList = listOf(35.188842,35.188878, 35.188914, 35.188953, 35.188991, 35.189028, 35.189066, 35.189105, 35.189145, 35.189183) as MutableList<Double>
-        lonList = listOf(137.105494,137.105483, 137.105470, 137.105459, 137.105450, 137.105440, 137.105429, 137.105416, 137.105404, 137.1053935) as MutableList<Double>
-        locTimeList = listOf(1.44, 2.46, 3.44, 4.45, 5.45, 6.46, 7.45, 8.45, 9.44, 10.46) as MutableList<Double>
-    }
-
-    fun addData() {
+    // データベースにセンサデータを追加
+    private fun addData() {
+        // テストデータを作成する
         // createTestData()
+        // 特徴量を取得
         var successCreateFv = createFeatureValue()
+
+        // 特徴量の取得に成功した場合
         if(successCreateFv){
+            common.log("特徴量の取得に成功")
+            homeMessage = "特徴量の取得に成功"
+            // 保存するデータをエンティティ構造に変換
+            val newAcc = AccData(xAccList = xAccList, yAccList = yAccList, zAccList = zAccList, timeList = accTimeList)
+            val newGra = GraData(xGraList = xGraList, yGraList = yGraList, zGraList = zGraList, timeList = graTimeList)
+            val newLoc = LocData(latList = latList, lonList = lonList, timeList = locTimeList)
+            val newBar = BarData(barList = barList, timeList = barTimeList)
+            val newSensor = SensorData(startDate = startDate, stopDate = stopDate, airPressure = airPressure, estimatedAirPressure = estimatedAirPressure)
+            val newFeatureValue = FeatureValueData(accSd = accSd, ampSptList = ampSptList, airPressure = airPressure)
+
+            // 推定状態の場合
+            if(!isTrainingState){
+                estimateAirPressure(newFeatureValue)
+            }
+
             // データベースに保存
-            addAcc()
-            addGra()
-            addLoc()
-            addBar()
-            addSensor()
+            addAcc(newAcc)
+            addGra(newGra)
+            addLoc(newLoc)
+            addBar(newBar)
+            addSensor(newSensor)
+            addFeatureValue(newFeatureValue)
 
             // ファイルの作成
             val openCsv = OpenCsv()
-            val newAcc = AccData(xAccList = xAccList, yAccList = yAccList, zAccList = zAccList, timeList = accTimeList)
-            val newLoc = LocData(latList = latList, lonList = lonList, timeList = locTimeList)
-            openCsv.createCsv(startDate, newAcc, newLoc, airPressure)
-            if(!isTrainingState){
-                Log.d("addData", "推定中")
-                estimateAirPressure(fv)
-                Log.d("addData", "推定終了")
-            }
-        }
+            openCsv.createCsv(startDate, newAcc, newGra, newLoc, newBar, newFeatureValue)
+            common.log("ファイルの作成に成功")
 
-        reset()
+        }else{
+            common.log("特徴量の取得に失敗")
+            homeMessage = "特徴量の取得に失敗"
+        }
+        resetSensing()
     }
 
-    private fun addAcc() {
+    // 加速度データをデータベースに追加
+    private fun addAcc(newAcc: AccData) {
         viewModelScope.launch {
-            val newAcc = AccData(xAccList = xAccList, yAccList = yAccList, zAccList = zAccList, timeList = accTimeList)
             sensorDao.insertAccData(newAcc)
 
         }
     }
 
-    private fun addGra() {
+    // 重力加速度データをデータベースに追加
+    private fun addGra(newGra: GraData) {
         viewModelScope.launch {
-            val newGra = GraData(xGraList = xGraList, yGraList = yGraList, zGraList = zGraList, timeList = graTimeList)
             sensorDao.insertGraData(newGra)
         }
     }
 
-    private fun addLoc() {
+    // 位置情報データをデータベースに追加
+    private fun addLoc(newLoc: LocData) {
         viewModelScope.launch {
-            val newLoc = LocData(latList = latList, lonList = lonList, timeList = locTimeList)
             sensorDao.insertLocData(newLoc)
         }
     }
 
-    private fun addBar() {
+    // 気圧データをデータベースに追加
+    private fun addBar(newBar: BarData) {
         viewModelScope.launch {
-            val newBar = BarData(barList = barList, timeList = barTimeList)
             sensorDao.insertBarData(newBar)
         }
     }
 
-    private fun addSensor() {
+    // センサデータをデータベースに追加
+    private fun addSensor(newSensor: SensorData) {
         viewModelScope.launch {
-            val newSensor = SensorData(startDate = startDate, stopDate = stopDate, airPressure = airPressure)
             sensorDao.insertSensorData(newSensor)
         }
     }
 
-    private fun addFeatureValue() {
+    // 特徴量データをデータベースに追加
+    private fun addFeatureValue(newFeatureValue: FeatureValueData) {
         viewModelScope.launch {
-            val newFeatureValue = FeatureValueData(accSd = accSd, ampSptList = ampSptList, airPressure = airPressure)
             featureValueDao.insertFeatureValues(newFeatureValue)
-
         }
     }
 
+    // 特徴量を取得
     private fun createFeatureValue(): Boolean {
+        // リストに変換
         val newAcc = createList("Acc")
         val newGra = createList("Gra")
         val newLoc = createList("Loc")
         val newBar = createList("Bar")
 
+        // Pythonを用いて特徴量を取得
         val runPython = RunPython()
         val featureValue = runPython.createFeatureValue(newAcc, newGra, newLoc, newBar)
-        if(featureValue.isNotEmpty()){
+        // 特徴量が正しく取得できた場合
+        return if(featureValue.isNotEmpty()){
             accSd = featureValue[0]
             ampSptList = featureValue as MutableList<Double>
             ampSptList.removeAt(0)
-            addFeatureValue()
+            true
+        // 特徴量が正しく取得できなかった場合
         }else{
-            errorData = "特徴量が取得できなかった"
-            Log.d("createFeatureValue", errorData)
-            return false
+            false
         }
-        return true
     }
 
-    private fun createModel(featureValueData: List<FeatureValueData>){
-        val fvList: MutableList<List<Double>> = selectFv(featureValueData)
-        val runPython = RunPython()
-        runPython.createModel(fvList)
-        Log.d("createModel", "モデル作成成功")
-    }
-
-    private fun estimateAirPressure(featureValueData: List<FeatureValueData>) {
-        val fvList: MutableList<List<Double>> = selectFv(featureValueData)
-        val runPython = RunPython()
-        val estimatedAirPressureList = runPython.estimateAirPressure(fvList)
-        var sum = 0
-        for(l in estimatedAirPressureList){
-            Log.d("l", l.toString())
-            sum += l
-        }
-        Log.d("sum", sum.toString())
-        Log.d("size", estimatedAirPressureList.size.toString())
-        estimatedAirPressure = sum / estimatedAirPressureList.size
-        updateHome()
-    }
-
-    private fun selectFv(featureValueData: List<FeatureValueData>): MutableList<List<Double>> {
-        val len = featureValueData.size
-        Log.d("fv_len", len.toString())
-        val fvList = mutableListOf<List<Double>>()
-        //
-        if(isTrainingState){
-            for(i in 0 until len){
-                val ampSpcSize = featureValueData[i].ampSptList.size
-                Log.d("ampSpcSize", ampSpcSize.toString())
-                print(fv)
-                Log.d("fv_index", i.toString())
-                Log.d("fv", featureValueData[i].toString())
-                var l = mutableListOf<Double>()
-                l.add(featureValueData[i].accSd)
-                for(j in 0 until ampSpcSize){
-                    l.add(featureValueData[i].ampSptList[j])
-                }
-                l.add(featureValueData[i].airPressure.toDouble())
-                fvList.add(l)
-            }
-        }else {
-            for(i in len - estimatedRange until len){
-                val ampSpcSize = featureValueData[i].ampSptList.size
-                var l = mutableListOf<Double>()
-                l.add(featureValueData[i].accSd)
-                for(j in 0 until ampSpcSize){
-                    l.add(featureValueData[i].ampSptList[j])
-                }
-                fvList.add(l)
-            }
-        }
-        return fvList
-    }
-
+    // センサデータをリストに変換
     private fun createList(sensorName: String): MutableList<List<Double>> {
         val newList = mutableListOf<List<Double>>()
         when (sensorName) {
@@ -418,10 +411,9 @@ class MainViewModel @Inject constructor(
             }
         }
         return newList
-
     }
 
-    private fun reset() {
+    private fun resetSensing() {
         startDate = initDate
         stopDate = initDate
         airPressure = 0
@@ -453,13 +445,105 @@ class MainViewModel @Inject constructor(
         accSd = 0.0
         // 振幅スペクトル
         ampSptList = emptyList<Double>().toMutableList()
-
-        startDate = initDate
-        stopDate = initDate
-
         isRequiredData = false
 
-        airPressure = 0
     }
 
+
+    // ↓ 書き換え前
+
+    // Homeのデータを取得
+    val homeData = homeDao.getHomeData().distinctUntilChanged()
+
+    //
+
+    val sensorData = sensorDao.getSensorData().distinctUntilChanged()
+    //
+    val accData = sensorDao.getAccData().distinctUntilChanged()
+
+    //
+    val locData = sensorDao.getLocData().distinctUntilChanged()
+
+    // のデータ取得
+    val featureValueData = featureValueDao.getFeatureValues().distinctUntilChanged()
+
+    // python
+
+
+    // 初期値を設定
+
+
+    private fun createTestData(){
+        latList = listOf(35.188842,35.188878, 35.188914, 35.188953, 35.188991, 35.189028, 35.189066, 35.189105, 35.189145, 35.189183) as MutableList<Double>
+        lonList = listOf(137.105494,137.105483, 137.105470, 137.105459, 137.105450, 137.105440, 137.105429, 137.105416, 137.105404, 137.1053935) as MutableList<Double>
+        locTimeList = listOf(1.44, 2.46, 3.44, 4.45, 5.45, 6.46, 7.45, 8.45, 9.44, 10.46) as MutableList<Double>
+    }
+
+
+    private fun createModel(featureValueData: List<FeatureValueData>){
+        // モデル作成時の特徴量をListに変換
+        val len = featureValueData.size
+        val fvList = mutableListOf<List<Double>>()
+        for(i in 0 until len){
+            val ampSpcSize = featureValueData[i].ampSptList.size
+            var l = mutableListOf<Double>()
+            l.add(featureValueData[i].accSd)
+            for(j in 0 until ampSpcSize){
+                l.add(featureValueData[i].ampSptList[j])
+            }
+            l.add(featureValueData[i].airPressure.toDouble())
+            fvList.add(l)
+        }
+
+        val runPython = RunPython()
+        runPython.createModel(fvList)
+        Log.d("createModel", "モデル作成成功")
+    }
+
+    private fun estimateAirPressure(featureValueData: FeatureValueData) {
+        // 空気圧推定時の特徴量をListに変換
+        val runPython = RunPython()
+        var l = mutableListOf<Double>()
+        val fvList = mutableListOf<List<Double>>()
+        val ampSpcSize = featureValueData.ampSptList.size
+        l.add(featureValueData.accSd)
+        for(i in 0 until ampSpcSize){
+            l.add(featureValueData.ampSptList[i])
+        }
+        fvList.add(l)
+
+        // 推定空気圧を取得
+        estimatedAirPressure = runPython.estimateAirPressure(fvList)
+
+    }
+
+    private fun selectFv(featureValueData: List<FeatureValueData>): MutableList<List<Double>> {
+        val len = featureValueData.size
+        val fvList = mutableListOf<List<Double>>()
+        // モデル作成時の特徴量をListに変換
+        if(isTrainingState){
+            for(i in 0 until len){
+                val ampSpcSize = featureValueData[i].ampSptList.size
+                var l = mutableListOf<Double>()
+                l.add(featureValueData[i].accSd)
+                for(j in 0 until ampSpcSize){
+                    l.add(featureValueData[i].ampSptList[j])
+                }
+                l.add(featureValueData[i].airPressure.toDouble())
+                fvList.add(l)
+            }
+        //
+        }else {
+            for(i in len - estimatedRange until len){
+                val ampSpcSize = featureValueData[i].ampSptList.size
+                var l = mutableListOf<Double>()
+                l.add(featureValueData[i].accSd)
+                for(j in 0 until ampSpcSize){
+                    l.add(featureValueData[i].ampSptList[j])
+                }
+                fvList.add(l)
+            }
+        }
+        return fvList
+    }
 }

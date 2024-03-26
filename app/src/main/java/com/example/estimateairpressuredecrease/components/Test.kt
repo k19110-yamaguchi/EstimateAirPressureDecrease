@@ -26,7 +26,7 @@ fun Test(sensorData: List<SensorData>,
          viewModel: MainViewModel = hiltViewModel()){
 
     Column() {
-        Text(text = viewModel.errorData, color = Color.Red)
+
         Text(text = "データ数: ${featureValueData.size}")
         Text(text = "必要特徴量サイズ: ${viewModel.requiredFvSize}")
         Text(text = "範囲内: ${viewModel.withinSize} 範囲外: ${viewModel.outOfSize}")
