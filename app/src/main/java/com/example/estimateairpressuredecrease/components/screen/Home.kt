@@ -42,6 +42,15 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
             // 特徴量の取得
             if(featureValueData.isNotEmpty()){
                 viewModel.fv = featureValueData
+                var count = 0
+                for(i in viewModel.fv){
+                    if(i.airPressure > viewModel.minProperPressure){
+                        count++
+                    }
+                }
+                common.log(viewModel.fv[0].airPressure.toString())
+                Text(text = "適正内の特徴量データ数:${count}")
+                Text(text = "適正外の特徴量データ数:${viewModel.fv.size-count}")
             }
             viewModel.checkState(featureValueData)
         }
@@ -71,7 +80,12 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "空気注入時期: ${viewModel.showInflateDate()}", fontSize = common.smallFont)
+        if(viewModel.inflatedDate == viewModel.initDate){
+            Text(text = "空気を注入してください", fontSize = common.smallFont)
+        }else{
+            Text(text = "空気注入時期: ${viewModel.showInflateDate()}", fontSize = common.smallFont)
+        }
+
 
         Spacer(modifier = Modifier.width(common.space))
 

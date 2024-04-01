@@ -39,7 +39,7 @@ fun MainContent(
         }
 
         else -> {
-            Text(text = "画面の遷移で異常", fontSize = common.smallFont)
+
         }
     }
 }

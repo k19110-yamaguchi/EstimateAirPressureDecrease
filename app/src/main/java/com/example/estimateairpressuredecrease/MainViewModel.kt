@@ -43,7 +43,7 @@ class MainViewModel @Inject constructor(
     // 推定に必要な適正外、適正内の特徴量の数
     val requiredFvSize = 5
     // 初期の日付
-    private val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
+    val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
     // 空気を注入した時期
     var inflatedDate: LocalDateTime by mutableStateOf(initDate)
     // メッセージ
@@ -118,6 +118,7 @@ class MainViewModel @Inject constructor(
                 isFirst = true
                 screenStatus = common.inputNum
                 inputStatus = common.inputProperPressureNum
+            }else{
             }
         }
     }
@@ -290,7 +291,7 @@ class MainViewModel @Inject constructor(
             val newFeatureValue = FeatureValueData(accSd = accSd, ampSptList = ampSptList, airPressure = airPressure)
 
             // 推定状態の場合
-            if(!isTrainingState){
+            if(isTrainingState){
                 estimateAirPressure(newFeatureValue)
             }
 
