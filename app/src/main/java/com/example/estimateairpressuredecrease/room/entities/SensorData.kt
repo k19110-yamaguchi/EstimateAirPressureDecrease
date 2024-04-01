@@ -12,7 +12,7 @@ data class SensorData (
     // 測定終了時間
     var stopDate: LocalDateTime,
     // 測定時の空気圧(学習の場合は入力が必要)
-    var airPressure: Int = 0,
+    var sensingAirPressure: Int = 0,
     // 推定空気圧
     var estimatedAirPressure: Int = 0,
 )

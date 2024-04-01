@@ -63,7 +63,7 @@ class MainViewModel @Inject constructor(
     // 最小適正空気圧
     var minProperPressure by mutableStateOf(0)
     // 測定空気圧
-    private var sensingPressure by mutableStateOf(0)
+    private var sensingAirPressure by mutableStateOf(0)
 
     // Sensing
     // 推定に必要なデータがあるか
@@ -72,8 +72,6 @@ class MainViewModel @Inject constructor(
     var startDate: LocalDateTime by mutableStateOf(initDate)
     // 測定終了時刻
     var stopDate: LocalDateTime by mutableStateOf(initDate)
-    // 測定時の空気圧
-    var airPressure: Int by mutableStateOf(0)
     // 推定空気圧
     var estimatedAirPressure: Int by mutableStateOf(0)
 
@@ -190,7 +188,7 @@ class MainViewModel @Inject constructor(
             if (inflatedDate.isAfter(sensorData[index].startDate)){
                 var airPressure = sensorData[index].estimatedAirPressure
                 if (airPressure == 0) {
-                    airPressure = sensorData[index].airPressure
+                    airPressure = sensorData[index].sensingAirPressure
                 }
                 l.add(airPressure)
             }else{
@@ -239,7 +237,7 @@ class MainViewModel @Inject constructor(
 
             // 学習状態・空気圧入力時
             }else{
-                sensingPressure = editingAirPressure.toInt()
+                sensingAirPressure = editingAirPressure.toInt()
                 addData()
             }
             screenStatus = common.homeNum
@@ -287,11 +285,11 @@ class MainViewModel @Inject constructor(
             val newGra = GraData(xGraList = xGraList, yGraList = yGraList, zGraList = zGraList, timeList = graTimeList)
             val newLoc = LocData(latList = latList, lonList = lonList, timeList = locTimeList)
             val newBar = BarData(barList = barList, timeList = barTimeList)
-            val newSensor = SensorData(startDate = startDate, stopDate = stopDate, airPressure = airPressure, estimatedAirPressure = estimatedAirPressure)
-            val newFeatureValue = FeatureValueData(accSd = accSd, ampSptList = ampSptList, airPressure = airPressure)
+            val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure)
+            val newFeatureValue = FeatureValueData(accSd = accSd, ampSptList = ampSptList, airPressure = sensingAirPressure)
 
             // 推定状態の場合
-            if(isTrainingState){
+            if(!isTrainingState){
                 estimateAirPressure(newFeatureValue)
             }
 
@@ -416,7 +414,8 @@ class MainViewModel @Inject constructor(
     private fun resetSensing() {
         startDate = initDate
         stopDate = initDate
-        airPressure = 0
+        sensingAirPressure = 0
+        estimatedAirPressure = 0
 
         xAccList = emptyList<Double>().toMutableList()
         yAccList = emptyList<Double>().toMutableList()
