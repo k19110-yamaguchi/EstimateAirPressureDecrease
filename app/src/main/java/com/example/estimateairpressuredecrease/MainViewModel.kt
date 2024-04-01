@@ -49,7 +49,7 @@ class MainViewModel @Inject constructor(
     // メッセージ
     var homeMessage by mutableStateOf("")
     // 空気圧推定に必要な推定空気圧の数
-    val requiredAirPressureSize = 3
+    private val requiredAirPressureSize = 3
 
     // Input
     // 入力している空気圧

@@ -47,7 +47,7 @@ class OpenCsv {
 
     // 重力加速度のcsv作成
     private fun createGraDataCsv(graData: GraData, fileName: String){
-        val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "_gra" + extension
+        val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/gra" + extension
         val header = "time(s),xGra(m/s^2),yGra(m/s^2),zGra(m/s^2),"
         var csvData = header + "\n"
         for(i in 0 until graData.timeList.size){
@@ -66,14 +66,14 @@ class OpenCsv {
 
     // 位置情報のcsv作成
     private fun createLocDataCsv(locData: LocData, fileName: String){
-        val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "gra" + extension
+        val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/loc" + extension
         val header = "time(s),lat(°),lon(°),"
         var csvData = header + "\n"
         for(i in 0 until locData.timeList.size){
             csvData +=
                 locData.timeList[i].toString() + "," +
-                        locData.latList[i].toString() + "," +
-                        locData.lonList[i].toString() + "," + "\n"
+                locData.latList[i].toString() + "," +
+                locData.lonList[i].toString() + "," + "\n"
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
@@ -84,7 +84,7 @@ class OpenCsv {
 
     // 気圧のcsv作成
     private fun createBarDataCsv(barData: BarData, fileName: String){
-        val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/gra" + extension
+        val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/bar" + extension
         val header = "time(s),bar(kPa),"
         var csvData = header + "\n"
         for(i in 0 until barData.timeList.size){
@@ -101,7 +101,7 @@ class OpenCsv {
 
     // 特徴量のcsv作成
     private fun createFeatureValueDataCsv(featureValueData: FeatureValueData, fileName: String){
-        val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/gra" + extension
+        val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/fv" + extension
 
         var header = "accSd(m/s^2),"
         val fqMax = 40
