@@ -24,8 +24,6 @@ def getDrivingAccData(accData, locData):
         speed = (disData[i] / (locData[i+1][2] - locData[i][2])) * 3600
         speedRound = round(speed, 1)        
         speedData.append(speedRound)
-        print("speed")
-        print(speedRound)
 
     # 走行開始・終了時間を求める
     startTime = 0.0
@@ -36,15 +34,11 @@ def getDrivingAccData(accData, locData):
             startTime = locData[i][2]
         if speedData[i] <= drivingThreshold and speedData[i-1] >= drivingThreshold:
             stopTime = locData[i][2]  
-
+        
     #### デバック用
-    print("startTime")
-    print(startTime)
-    startTime = locData[0][2]
-    stopTime = locData[locSize-1][2]
+    #startTime = locData[0][2]
+    #stopTime = locData[locSize-1][2]
 
-    print("stopTime")
-    print(stopTime)
     # 走行区間の加速度を取得    
     accSize = len(accData)    
     
@@ -66,8 +60,7 @@ def getDrivingYAcc(drivingAccData):
     return res
     
 
-def getAmpSpec(drivingYAcc):
-    drivingYAccSize = len(drivingYAcc)
+def getAmpSpec(drivingYAcc):    
     # FFT
     fft = np.fft.fft(drivingYAcc)
     fftAbs = np.abs(fft)
@@ -77,15 +70,9 @@ def getAmpSpec(drivingYAcc):
     fftAmpAbs = fftAbs / fftSize * 2
     
     # 周波数軸データの作成
-    # 加速度センサのサンプリング周期 0.025s(40Hz)
-    dtSum = 0.0
-    for i in range(drivingYAccSize - 1):
-        dt = drivingYAcc[i+1] - drivingYAcc[i]
-        dtSum += dt        
-    dtAve = dtSum / (drivingYAccSize - 1)
-    if dtAve == 0:
-        return 0
-    fq = np.linspace(0, 1.0/dtAve, fftSize)
+    # 加速度センサのサンプリング周期 0.02s(50Hz)
+    dt = 0.02
+    fq = np.linspace(0, 1.0/dt, fftSize)
 
     # 周波数の範囲
     fqWidth = 0.5    
@@ -94,16 +81,19 @@ def getAmpSpec(drivingYAcc):
     ampSum = 0
     fqNow = 0
     count = 0 
-    for i in range(fftSize):
-
-        count = count + 1
-        if fqNow <= fq[i] and fq[i] < fqNow + fqWidth:
+    for i in range(fftSize):        
+        if fqNow <= fq[i] and fq[i] < fqNow + fqWidth:            
             ampSum = ampSum + fftAmpAbs[i]
+            count = count + 1
             
-        else:            
-            res.append(ampSum / count)
-            ampSum = 0
-            count = 0
+        else:    
+            if count == 0:
+                res.append(0)
+            else:
+                res.append(ampSum / count)
+                ampSum = 0
+                count = 0
+                   
             fqNow = fqNow + fqWidth
 
             if fqNow >= fqMax:
@@ -121,6 +111,8 @@ def createFeatureValue(accDataArray, graDataArray, locDataArray, barDataArray):
 
     #走行中の加速度を取得
     drivingAccData = getDrivingAccData(accData, locData)
+    # デバック用
+    #drivingAccData = accData
     
     # 走行中のy軸方向の加速度を取得
     drivingYAcc = getDrivingYAcc(drivingAccData)  
@@ -134,6 +126,7 @@ def createFeatureValue(accDataArray, graDataArray, locDataArray, barDataArray):
 
     # 振幅スペクトルを取得 
     ampSpec = getAmpSpec(drivingYAcc)
+    
     if ampSpec == 0:
         return 0
     

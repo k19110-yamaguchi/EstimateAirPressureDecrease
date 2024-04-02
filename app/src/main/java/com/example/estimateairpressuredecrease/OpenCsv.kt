@@ -100,7 +100,7 @@ class OpenCsv {
     }
 
     // 特徴量のcsv作成
-    private fun createFeatureValueDataCsv(featureValueData: FeatureValueData, fileName: String){
+    private fun createFeatureValueDataCsv(featureValueData: FeatureValueData, fileName: String, common: Common = Common()){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/fv" + extension
 
         var header = "accSd(m/s^2),"
@@ -109,11 +109,13 @@ class OpenCsv {
         for(i in 0 until (fqMax/fqWidth).toInt()){
             header += (i*fqWidth).toString() + "~" + ((i+1)*fqWidth).toString() + "(Hz),"
         }
+        header += "airPressure,"
 
         var csvData = header + "\n"
         csvData += featureValueData.accSd.toString() + ","
 
         for(i in 0 until featureValueData.ampSptList.size){
+            common.log("fvAmp[${i}]: ${featureValueData.ampSptList[i]}")
             csvData += featureValueData.ampSptList[i].toString() + ","
         }
         csvData += "\n"
