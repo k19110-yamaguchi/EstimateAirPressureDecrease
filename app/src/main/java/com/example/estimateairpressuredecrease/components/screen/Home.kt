@@ -52,7 +52,7 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
                 Text(text = "適正内の特徴量データ数:${count}")
                 Text(text = "適正外の特徴量データ数:${viewModel.fv.size-count}")
             }
-            viewModel.checkState(featureValueData)
+            //viewModel.checkState(featureValueData)
         }
 
         // 状態の表示

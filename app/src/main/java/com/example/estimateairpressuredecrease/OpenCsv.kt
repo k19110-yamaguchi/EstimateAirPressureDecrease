@@ -118,6 +118,7 @@ class OpenCsv {
             common.log("fvAmp[${i}]: ${featureValueData.ampSptList[i]}")
             csvData += featureValueData.ampSptList[i].toString() + ","
         }
+        csvData += featureValueData.airPressure.toString() + ","
         csvData += "\n"
 
         var fw = FileWriter(filePath, fileAppend)
