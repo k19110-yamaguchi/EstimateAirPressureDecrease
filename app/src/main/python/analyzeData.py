@@ -55,7 +55,8 @@ def getDrivingYAcc(drivingAccData):
     drivingAccSize = len(drivingAccData)
     res = []
     for i in range(drivingAccSize):
-        res.append(drivingAccData[i][1])
+        # 重力加速度成分を除く
+        res.append(drivingAccData[i][1]-9.8)
 
     return res
     
