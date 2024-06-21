@@ -21,7 +21,7 @@ def getDrivingAccData(accData, locData):
     # 時速を求める
     speedData = [0.0]
     for i in range(locSize - 1):
-        speed = (disData[i] / (locData[i+1][2] - locData[i][2])) * 3600
+        speed = (disData[i+1] / (locData[i+1][2] - locData[i][2])) * 3600
         speedRound = round(speed, 1)        
         speedData.append(speedRound)
 
