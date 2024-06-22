@@ -41,18 +41,9 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
         if(viewModel.isTrainingState){
             // 特徴量の取得
             if(featureValueData.isNotEmpty()){
-                viewModel.fv = featureValueData
-                var count = 0
-                for(i in viewModel.fv){
-                    if(i.airPressure > viewModel.minProperPressure){
-                        count++
-                    }
-                }
-
-                Text(text = "適正内の特徴量データ数:${count}")
-                Text(text = "適正外の特徴量データ数:${viewModel.fv.size-count}")
+                //viewModel.checkState(featureValueData)
             }
-            //viewModel.checkState(featureValueData)
+
         }
 
         // 状態の表示

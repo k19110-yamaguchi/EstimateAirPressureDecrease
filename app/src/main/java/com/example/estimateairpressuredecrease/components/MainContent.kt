@@ -27,17 +27,14 @@ fun MainContent(
         common.homeNum -> {
             Home(acc, gra, loc, bar, viewModel)
         }
-
         // センシング画面を表示
         common.sensingNum -> {
             Sensing(acc, gra, loc, bar, viewModel)
         }
-
         // 入力画面を表示
         common.inputNum -> {
             Input(viewModel)
         }
-
         else -> {
 
         }

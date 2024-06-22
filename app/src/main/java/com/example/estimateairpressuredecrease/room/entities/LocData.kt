@@ -12,4 +12,9 @@ data class LocData(
     var lonList: List<Double>,
     // 位置情報を取得した時間
     var timeList: List<Double>,
+    // 移動した距離
+    var disList: List<Double>,
+    // 移動した時速
+    var speedList: List<Double>,
+
 )

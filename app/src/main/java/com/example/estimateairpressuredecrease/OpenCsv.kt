@@ -67,13 +67,15 @@ class OpenCsv {
     // 位置情報のcsv作成
     private fun createLocDataCsv(locData: LocData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/loc" + extension
-        val header = "time(s),lat(°),lon(°),"
+        val header = "time(s),lat(°),lon(°),dis(km),speed(km/h),"
         var csvData = header + "\n"
         for(i in 0 until locData.timeList.size){
             csvData +=
                 locData.timeList[i].toString() + "," +
-                locData.latList[i].toString() + "," +
-                locData.lonList[i].toString() + "," + "\n"
+                        locData.latList[i].toString() + "," +
+                        locData.lonList[i].toString() + "," +
+                        locData.disList[i].toString() + "," +
+                        locData.speedList[i].toString() + "," + "\n"
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
@@ -104,12 +106,12 @@ class OpenCsv {
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/fv" + extension
 
         var header = "accSd(m/s^2),"
-        val fqMax = 40
+        val fqMax = 20
         val fqWidth = 0.5
         for(i in 0 until (fqMax/fqWidth).toInt()){
             header += (i*fqWidth).toString() + "~" + ((i+1)*fqWidth).toString() + "(Hz),"
         }
-        header += "airPressure,"
+        header += "sensingAirPressure(kPa),estimatedAirPressure(kPa)"
 
         var csvData = header + "\n"
         csvData += featureValueData.accSd.toString() + ","
@@ -118,7 +120,17 @@ class OpenCsv {
             common.log("fvAmp[${i}]: ${featureValueData.ampSptList[i]}")
             csvData += featureValueData.ampSptList[i].toString() + ","
         }
-        csvData += featureValueData.airPressure.toString() + ","
+        csvData += featureValueData.sensingAirPressure.toString() + ","
+        csvData += featureValueData.estimatedAirPressure.toString() + ","
+        csvData += "\n"
+        csvData += "startGetFv,"
+        for(i in 0 until featureValueData.startGetFv.size){
+            csvData += featureValueData.startGetFv[i].toString() + ","
+        }
+        csvData += "stopGetFv,"
+        for(i in 0 until featureValueData.stopGetFv.size){
+            csvData += featureValueData.stopGetFv[i].toString() + ","
+        }
         csvData += "\n"
 
         var fw = FileWriter(filePath, fileAppend)

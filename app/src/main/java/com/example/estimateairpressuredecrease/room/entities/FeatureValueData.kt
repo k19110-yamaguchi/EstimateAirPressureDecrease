@@ -10,7 +10,13 @@ data class FeatureValueData(
     var accSd: Double,
     // 振幅スペクトル
     var ampSptList: List<Double>,
-    // 空気圧
-    var airPressure: Int,
+    // 実際の空気圧
+    var sensingAirPressure: Int,
+    // 推定した空気圧
+    var estimatedAirPressure: Int,
+    // 特徴量に使用した開始時刻
+    var startGetFv: List<Double>,
+    // 特徴量に使用した終了時刻
+    var stopGetFv: List<Double>,
 )
 
