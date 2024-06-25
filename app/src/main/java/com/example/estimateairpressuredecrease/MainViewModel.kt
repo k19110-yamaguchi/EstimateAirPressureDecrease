@@ -1,4 +1,5 @@
 package com.example.estimateairpressuredecrease
+import android.content.IntentSender.OnFinished
 import android.location.Location
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -71,6 +72,8 @@ class MainViewModel @Inject constructor(
 
     // Sensing
     val sensorData = sensorDao.getSensorData().distinctUntilChanged()
+    // データを保存するまでの時間(s)
+    val saveTime: Double = 10.0
     // 推定に必要なデータがあるか
     var isRequiredData: Boolean by mutableStateOf(false)
     // 測定開始時刻
@@ -82,32 +85,47 @@ class MainViewModel @Inject constructor(
 
 
     // Acc
+    var xAcc :Double by mutableStateOf(-1.0)
+    var yAcc :Double by mutableStateOf(-1.0)
+    var zAcc :Double by mutableStateOf(-1.0)
+    var accTime: Double by mutableStateOf(-1.0)
     val accData = sensorDao.getAccData().distinctUntilChanged()
     var xAccList: MutableList<Double> = mutableListOf()
     var yAccList: MutableList<Double> = mutableListOf()
     var zAccList: MutableList<Double> = mutableListOf()
-    var accTime: Double by mutableStateOf(-1.0)
     var accTimeList: MutableList<Double> = mutableListOf()
 
+
     // Loc
+    var lat: Double by mutableStateOf(-1.0)
+    var lon: Double by mutableStateOf(-1.0)
+    var dis: Double by mutableStateOf(-1.0)
+    var speed: Double by mutableStateOf(-1.0)
+    var locTime: Double by mutableStateOf(-1.0)
     val locData = sensorDao.getLocData().distinctUntilChanged()
     var latList: MutableList<Double> = mutableListOf()
     var lonList: MutableList<Double> = mutableListOf()
-    var locTime: Double by mutableStateOf(-1.0)
     var locTimeList: MutableList<Double> = mutableListOf()
     var disList: MutableList<Double> = mutableListOf()
     var speedList: MutableList<Double> = mutableListOf()
 
+
     // Gra
+    var xGra :Double by mutableStateOf(-1.0)
+    var yGra :Double by mutableStateOf(-1.0)
+    var zGra :Double by mutableStateOf(-1.0)
+    var graTime: Double by mutableStateOf(-1.0)
     var xGraList: MutableList<Double> = mutableListOf()
     var yGraList: MutableList<Double> = mutableListOf()
     var zGraList: MutableList<Double> = mutableListOf()
-    var graTime: Double by mutableStateOf(-1.0)
     var graTimeList: MutableList<Double> = mutableListOf()
 
+
+
     // Bar
-    var barList: MutableList<Double> = mutableListOf()
+    var bar: Double by mutableStateOf(-1.0)
     var barTime: Double by mutableStateOf(-1.0)
+    var barList: MutableList<Double> = mutableListOf()
     var barTimeList: MutableList<Double> = mutableListOf()
 
     // FeatureValue
@@ -251,7 +269,7 @@ class MainViewModel @Inject constructor(
             // 学習状態・空気圧入力時
             }else{
                 sensingAirPressure = editingAirPressure.toInt()
-                addData()
+                addData(true)
             }
             screenStatus = common.homeNum
             resetInput()
@@ -274,14 +292,14 @@ class MainViewModel @Inject constructor(
     // Sensing
     // 推定に必要なデータがあるか調べる
     fun checkRequiredData(){
-        if(locTimeList.size > 10){
+        if(accTime > 10){
             isRequiredData = true
         }
     }
 
 
     // データベースにセンサデータを追加
-    private fun addData() {
+    fun addData(isFinished: Boolean = false) {
         // テストデータを作成する
         // createTestData()
 
@@ -293,17 +311,23 @@ class MainViewModel @Inject constructor(
         val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure)
 
         // データベースに保存
-        addAcc(newAcc)
-        addGra(newGra)
-        addLoc(newLoc)
-        addBar(newBar)
-        addSensor(newSensor)
+        //addAcc(newAcc)
+        //addGra(newGra)
+        //addLoc(newLoc)
+        //addBar(newBar)
+        //addSensor(newSensor)
 
         // ファイルの作成
         val openCsv = OpenCsv()
         openCsv.createSensorDataCsv(startDate, newAcc, newGra, newLoc, newBar)
         common.log("ファイルの作成に成功")
-        resetSensing()
+
+        if(isFinished){
+            resetSensing()
+        }else{
+            resetSensorData()
+        }
+
     }
 
     // 加速度データをデータベースに追加
@@ -404,45 +428,49 @@ class MainViewModel @Inject constructor(
         return newList
     }
 
+    private fun resetSensorData(){
+        xAccList = emptyList<Double>().toMutableList()
+        yAccList = emptyList<Double>().toMutableList()
+        zAccList = emptyList<Double>().toMutableList()
+        accTimeList = emptyList<Double>().toMutableList()
+
+        xGraList =  emptyList<Double>().toMutableList()
+        yGraList =  emptyList<Double>().toMutableList()
+        zGraList =  emptyList<Double>().toMutableList()
+        graTimeList =  emptyList<Double>().toMutableList()
+
+        barList =  emptyList<Double>().toMutableList()
+        barTimeList =  emptyList<Double>().toMutableList()
+
+    }
+
     private fun resetSensing() {
+        resetSensorData()
         startDate = initDate
         stopDate = initDate
         sensingAirPressure = 0
         estimatedAirPressure = 0
 
-        xAccList = emptyList<Double>().toMutableList()
-        yAccList = emptyList<Double>().toMutableList()
-        zAccList = emptyList<Double>().toMutableList()
+        xAcc = -1.0
+        yAcc = -1.0
+        zAcc = -1.0
         accTime = -1.0
-        accTimeList = emptyList<Double>().toMutableList()
 
-        latList =  emptyList<Double>().toMutableList()
-        lonList = emptyList<Double>().toMutableList()
+        lat = -1.0
+        lon = -1.0
         locTime = -1.0
-        locTimeList = emptyList<Double>().toMutableList()
-        disList = emptyList<Double>().toMutableList()
-        speedList = emptyList<Double>().toMutableList()
+        dis = -1.0
+        speed = -1.0
 
         // Gra
-        xGraList =  emptyList<Double>().toMutableList()
-        yGraList =  emptyList<Double>().toMutableList()
-        zGraList =  emptyList<Double>().toMutableList()
+        xGra = -1.0
+        yGra = -1.0
+        zGra = -1.0
         graTime = -1.0
-        graTimeList =  emptyList<Double>().toMutableList()
 
         // Bar
-        barList =  emptyList<Double>().toMutableList()
+        bar = -1.0
         barTime = -1.0
-        barTimeList =  emptyList<Double>().toMutableList()
-
-        // 特徴量
-        accSd = 0.0
-        // 振幅スペクトル
-        ampSptList = emptyList<Double>().toMutableList()
-        isRequiredData = false
-        startGetFv = emptyList<Double>().toMutableList()
-        stopGetFv = emptyList<Double>().toMutableList()
-
     }
 
 

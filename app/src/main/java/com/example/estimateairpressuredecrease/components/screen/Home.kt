@@ -128,26 +128,41 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
 private fun startSensing(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewModel: MainViewModel, common: Common = Common()){
     // 現在時刻(開始)を取得
     viewModel.startDate = LocalDateTime.now()
+    var count = 1
 
     // 加速度を取得
     acc.startListening(object : Accelerometer.AccListener {
         override fun onAccelerationChanged(x: Double, y: Double, z: Double, t: Double) {
-            viewModel.xAccList.add(x.round(5))
-            viewModel.yAccList.add(y.round(5))
-            viewModel.zAccList.add(z.round(5))
+            viewModel.xAcc = x.round(5)
+            viewModel.yAcc = y.round(5)
+            viewModel.zAcc = z.round(5)
             viewModel.accTime = t.round(2)
+
+            viewModel.xAccList.add(viewModel.xAcc)
+            viewModel.yAccList.add(viewModel.yAcc)
+            viewModel.zAccList.add(viewModel.zAcc)
             viewModel.accTimeList.add(viewModel.accTime)
-            Log.d("accTime", viewModel.accTime.toString())
+
+            if(viewModel.accTimeList.last() > viewModel.saveTime*count){
+                viewModel.addData()
+                common.log("${count}:　加速度データを保存")
+                count ++
+
+            }
         }
     })
 
     // 重力加速度を取得
     gra.startListening(object : Gravity.GravityListener {
         override fun onGravityChanged(x: Double, y: Double, z: Double, t: Double) {
-            viewModel.xGraList.add(x.round(5))
-            viewModel.yGraList.add(y.round(5))
-            viewModel.zGraList.add(z.round(5))
+            viewModel.xGra = x.round(5)
+            viewModel.yGra = y.round(5)
+            viewModel.zGra = z.round(5)
             viewModel.graTime = t.round(2)
+
+            viewModel.xGraList.add(viewModel.xGra)
+            viewModel.yGraList.add(viewModel.yGra)
+            viewModel.zGraList.add(viewModel.zGra)
             viewModel.graTimeList.add(viewModel.graTime)
         }
     })
@@ -155,43 +170,57 @@ private fun startSensing(acc: Accelerometer, gra: Gravity, loc: Location, bar: B
     // 位置情報を取得
     loc.startListening(object : Location.LocationListener {
         override fun onLocationInfoChanged(lat: Double, lon: Double, t: Double) {
-            viewModel.latList.add(lat.round(6))
-            viewModel.lonList.add(lon.round(6))
+            val prevLat = viewModel.lat
+            val prevLon = viewModel.lon
+            val prevTime = viewModel.locTime
+            viewModel.lat = lat.round(6)
+            viewModel.lon = lon.round(6)
             viewModel.locTime = t.round(2)
+
+            viewModel.latList.add(viewModel.lat)
+            viewModel.lonList.add(viewModel.lon)
             viewModel.locTimeList.add(viewModel.locTime)
+
+            // 距離，速度を求める
             Log.d("LocationTime", t.toString())
             val size = viewModel.locTimeList.size
-            if(size == 1){
+            if(count == 1 && size == 1){
                 viewModel.disList.add(0.0)
                 viewModel.speedList.add(0.0)
             }else if(size > 1){
-                viewModel.disList.add(getDis(viewModel.latList, viewModel.lonList))
-                viewModel.speedList.add((getSpeed(viewModel.disList, viewModel.locTimeList)))
+                viewModel.dis = getDis(prevLat, prevLon, viewModel.lat, viewModel.lon)
+                viewModel.speed = getSpeed(viewModel.dis, prevTime, viewModel.locTime)
+                viewModel.disList.add(viewModel.dis)
+                viewModel.speedList.add(viewModel.speed)
             }
-
         }
     })
 
     // 気圧を取得
     bar.startListening(object : Barometric.BarListener {
         override fun onBarometricChanged(bar: Double, t: Double) {
-            viewModel.barList.add(bar.round(1))
+            viewModel.bar = bar.round(1)
             viewModel.barTime = t.round(2)
+
+            viewModel.barList.add(bar.round(1))
             viewModel.barTimeList.add(viewModel.barTime)
+            if(viewModel.barList.isNotEmpty()){
+                common.log("${count}: ${viewModel.barList}")
+            }else{
+                common.log("空です!!")
+            }
         }
     })
 }
 
-private fun getDis(lat: MutableList<Double>, lon: MutableList<Double>): Double{
+private fun getDis(startLat: Double, startLon: Double, endLat: Double, endLon: Double): Double{
     val dis = FloatArray(3)
-    android.location.Location.distanceBetween(lat[lat.lastIndex], lon[lon.lastIndex], lat[lat.lastIndex-1], lon[lon.lastIndex-1], dis)
+    android.location.Location.distanceBetween(startLat, startLon, endLat, endLon, dis)
     return (dis[0].toDouble() * 0.001).round(5)
-
 }
 
-private fun getSpeed(dis: MutableList<Double>, t: MutableList<Double>): Double {
-    return (dis[dis.lastIndex] / (t[t.lastIndex] - t[t.lastIndex - 1]) * 3600).round(1)
-
+private fun getSpeed(dis: Double, startTime: Double, endTime: Double): Double {
+    return (dis / (endTime - startTime) * 3600).round(1)
 }
 
 // 四捨五入を行う関数

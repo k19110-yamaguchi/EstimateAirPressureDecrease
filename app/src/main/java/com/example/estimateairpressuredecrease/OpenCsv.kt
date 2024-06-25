@@ -15,7 +15,6 @@ class OpenCsv {
     val context: Context = MainActivity.content
     // 拡張子
     private val extension : String = ".csv"
-    // 内部ストレージのDocumentのURL
 
     // 保存するフォルダ名の作成
     private fun createFileName(startDate: LocalDateTime): String {
@@ -26,11 +25,22 @@ class OpenCsv {
             .substring(0, 14)
     }
 
+    private fun isFileExists(file: File): Boolean {
+        return file.exists() && !file.isDirectory
+    }
+
     // 加速度のcsv作成
     private fun createAccDataCsv(accData: AccData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/acc" + extension
-        val header = "time(s),xAcc(m/s^2),yAcc(m/s^2),zAcc(m/s^2),"
-        var csvData = header + "\n"
+        var csvData = ""
+
+        // ファイルが存在するか調べる
+        val file = File(filePath)
+        if(!isFileExists(file)){
+            val header = "time(s),xAcc(m/s^2),yAcc(m/s^2),zAcc(m/s^2),"
+            csvData += header + "\n"
+        }
+
         for(i in 0 until accData.timeList.size){
             csvData +=
                 accData.timeList[i].toString() + "," +
@@ -48,8 +58,15 @@ class OpenCsv {
     // 重力加速度のcsv作成
     private fun createGraDataCsv(graData: GraData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/gra" + extension
-        val header = "time(s),xGra(m/s^2),yGra(m/s^2),zGra(m/s^2),"
-        var csvData = header + "\n"
+        var csvData = ""
+
+        // ファイルが存在するか調べる
+        val file = File(filePath)
+        if(!isFileExists(file)){
+            val header = "time(s),xAcc(m/s^2),yAcc(m/s^2),zAcc(m/s^2),"
+            csvData += header + "\n"
+        }
+
         for(i in 0 until graData.timeList.size){
             csvData +=
                 graData.timeList[i].toString() + "," +
@@ -67,8 +84,15 @@ class OpenCsv {
     // 位置情報のcsv作成
     private fun createLocDataCsv(locData: LocData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/loc" + extension
-        val header = "time(s),lat(°),lon(°),dis(km),speed(km/h),"
-        var csvData = header + "\n"
+        var csvData = ""
+
+        // ファイルが存在するか調べる
+        val file = File(filePath)
+        if(!isFileExists(file)){
+            val header = "time(s),lat(°),lon(°),dis(km),speed(km/h),"
+            var csvData = header + "\n"
+        }
+
         for(i in 0 until locData.timeList.size){
             csvData +=
                 locData.timeList[i].toString() + "," +
@@ -87,8 +111,15 @@ class OpenCsv {
     // 気圧のcsv作成
     private fun createBarDataCsv(barData: BarData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/bar" + extension
-        val header = "time(s),bar(kPa),"
-        var csvData = header + "\n"
+        var csvData = ""
+
+        // ファイルが存在するか調べる
+        val file = File(filePath)
+        if(!isFileExists(file)){
+            val header = "time(s),bar(kPa),"
+            var csvData = header + "\n"
+        }
+
         for(i in 0 until barData.timeList.size){
             csvData +=
                 barData.timeList[i].toString() + "," +
