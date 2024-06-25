@@ -34,17 +34,10 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
     // ホーム画面の情報を取得
     val homeData by viewModel.homeData.collectAsState(initial = emptyList())
     val sensorData by viewModel.sensorData.collectAsState(initial = emptyList())
-    val featureValueData by viewModel.featureValueData.collectAsState(initial = emptyList())
+
+
     if(homeData.isNotEmpty()){
         viewModel.setHome(homeData[0])
-        // 学習→推定状態に移るかどうか
-        if(viewModel.isTrainingState){
-            // 特徴量の取得
-            if(featureValueData.isNotEmpty()){
-                //viewModel.checkState(featureValueData)
-            }
-
-        }
 
         // 状態の表示
         if(viewModel.isTrainingState) {
@@ -60,7 +53,6 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
                 if(estimatedAirPressureText.toInt() < viewModel.minProperPressure){
                     Text(text = "空気を注入してください", fontSize = common.largeFont, color = Color.Red)
                 }
-
             }
         }
     }
@@ -168,6 +160,15 @@ private fun startSensing(acc: Accelerometer, gra: Gravity, loc: Location, bar: B
             viewModel.locTime = t.round(2)
             viewModel.locTimeList.add(viewModel.locTime)
             Log.d("LocationTime", t.toString())
+            val size = viewModel.locTimeList.size
+            if(size == 1){
+                viewModel.disList.add(0.0)
+                viewModel.speedList.add(0.0)
+            }else if(size > 1){
+                viewModel.disList.add(getDis(viewModel.latList, viewModel.lonList))
+                viewModel.speedList.add((getSpeed(viewModel.disList, viewModel.locTimeList)))
+            }
+
         }
     })
 
@@ -179,6 +180,18 @@ private fun startSensing(acc: Accelerometer, gra: Gravity, loc: Location, bar: B
             viewModel.barTimeList.add(viewModel.barTime)
         }
     })
+}
+
+private fun getDis(lat: MutableList<Double>, lon: MutableList<Double>): Double{
+    val dis = FloatArray(3)
+    android.location.Location.distanceBetween(lat[lat.lastIndex], lon[lon.lastIndex], lat[lat.lastIndex-1], lon[lon.lastIndex-1], dis)
+    return (dis[0].toDouble() * 0.001).round(5)
+
+}
+
+private fun getSpeed(dis: MutableList<Double>, t: MutableList<Double>): Double {
+    return (dis[dis.lastIndex] / (t[t.lastIndex] - t[t.lastIndex - 1]) * 3600).round(1)
+
 }
 
 // 四捨五入を行う関数

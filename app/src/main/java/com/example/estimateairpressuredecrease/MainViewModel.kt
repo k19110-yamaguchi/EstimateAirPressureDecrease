@@ -1,4 +1,5 @@
 package com.example.estimateairpressuredecrease
+import android.location.Location
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -156,7 +157,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // 学習状態から推定状態に変更できるか調べる
+    // todo: 学習状態から推定状態に変更できるか調べる
     fun checkIsEstState(featureValueData: List<FeatureValueData>){
         outOfSize = 0
         withinSize = 0
@@ -171,6 +172,7 @@ class MainViewModel @Inject constructor(
 
         // 必要サイズ以上になった場合
         if(outOfSize >= requiredFvSize && withinSize >= requiredFvSize){
+            // todo: モデルの作成
             createModel(featureValueData)
             isTrainingState = false
             updateHome()
@@ -272,57 +274,35 @@ class MainViewModel @Inject constructor(
     // Sensing
     // 推定に必要なデータがあるか調べる
     fun checkRequiredData(){
-        if(accTime != -1.0 &&
-            graTime != -1.0 &&
-            locTime != -1.0 &&
-            barTime != -1.0){
+        if(locTimeList.size > 10){
             isRequiredData = true
         }
     }
+
 
     // データベースにセンサデータを追加
     private fun addData() {
         // テストデータを作成する
         // createTestData()
-        // todo: 位置情報から距離，速度を取得
 
-        // 特徴量を取得
-        var successCreateFv = createFeatureValue()
+        // 新しいデータの要素
+        val newAcc = AccData(xAccList = xAccList, yAccList = yAccList, zAccList = zAccList, timeList = accTimeList)
+        val newGra = GraData(xGraList = xGraList, yGraList = yGraList, zGraList = zGraList, timeList = graTimeList)
+        val newLoc = LocData(latList = latList, lonList = lonList, timeList = locTimeList, disList = disList, speedList = speedList)
+        val newBar = BarData(barList = barList, timeList = barTimeList)
+        val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure)
 
-        // 特徴量の取得に成功した場合
-        if(successCreateFv){
-            common.log("特徴量の取得に成功")
-            homeMessage = "特徴量の取得に成功"
-            // 保存するデータをエンティティ構造に変換
-            val newAcc = AccData(xAccList = xAccList, yAccList = yAccList, zAccList = zAccList, timeList = accTimeList)
-            val newGra = GraData(xGraList = xGraList, yGraList = yGraList, zGraList = zGraList, timeList = graTimeList)
-            val newLoc = LocData(latList = latList, lonList = lonList, timeList = locTimeList, disList = disList, speedList = speedList)
-            val newBar = BarData(barList = barList, timeList = barTimeList)
-            val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure)
-            val newFeatureValue = FeatureValueData(accSd = accSd, ampSptList = ampSptList, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure, startGetFv = startGetFv, stopGetFv = stopGetFv)
+        // データベースに保存
+        addAcc(newAcc)
+        addGra(newGra)
+        addLoc(newLoc)
+        addBar(newBar)
+        addSensor(newSensor)
 
-            // 推定状態の場合
-            if(!isTrainingState){
-                estimateAirPressure(newFeatureValue)
-            }
-
-            // データベースに保存
-            addAcc(newAcc)
-            addGra(newGra)
-            addLoc(newLoc)
-            addBar(newBar)
-            addSensor(newSensor)
-            addFeatureValue(newFeatureValue)
-
-            // ファイルの作成
-            val openCsv = OpenCsv()
-            openCsv.createCsv(startDate, newAcc, newGra, newLoc, newBar, newFeatureValue)
-            common.log("ファイルの作成に成功")
-
-        }else{
-            common.log("特徴量の取得に失敗")
-            homeMessage = "特徴量の取得に失敗"
-        }
+        // ファイルの作成
+        val openCsv = OpenCsv()
+        openCsv.createSensorDataCsv(startDate, newAcc, newGra, newLoc, newBar)
+        common.log("ファイルの作成に成功")
         resetSensing()
     }
 

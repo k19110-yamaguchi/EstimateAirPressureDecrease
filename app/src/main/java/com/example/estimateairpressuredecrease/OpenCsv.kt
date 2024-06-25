@@ -141,7 +141,7 @@ class OpenCsv {
     }
 
     // センサデータのcsv作成
-    fun createCsv(startDate: LocalDateTime, accData: AccData, graData: GraData,locData: LocData, barData: BarData, featureValueData: FeatureValueData){
+    fun createSensorDataCsv(startDate: LocalDateTime, accData: AccData, graData: GraData,locData: LocData, barData: BarData){
         val fileName = createFileName(startDate)
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName
         val f = File(filePath)
@@ -158,7 +158,6 @@ class OpenCsv {
         createGraDataCsv(graData, fileName)
         createLocDataCsv(locData,fileName)
         createBarDataCsv(barData, fileName)
-        createFeatureValueDataCsv(featureValueData, fileName)
 
     }
 }

@@ -44,7 +44,7 @@ fun SensorDataText(viewModel: MainViewModel, common: Common = Common()){
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(text = "y軸重力加速度(m/s):", fontSize = common.smallFont)
-            Text(text = String.format("%.5f", viewModel.xGraList.last()), fontSize = common.smallFont)
+            Text(text = String.format("%.5f", viewModel.yGraList.last()), fontSize = common.smallFont)
 
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -67,6 +67,18 @@ fun SensorDataText(viewModel: MainViewModel, common: Common = Common()){
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(text = "経度:", fontSize = common.smallFont)
             Text(text = String.format("%.6f", viewModel.lonList.last()), fontSize = common.smallFont)
+
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = "距離(km):", fontSize = common.smallFont)
+            Text(text = String.format("%.5f", viewModel.disList.last()), fontSize = common.smallFont)
+
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = "速度(km/h):", fontSize = common.smallFont)
+            Text(text = String.format("%.6f", viewModel.speedList.last()), fontSize = common.smallFont)
 
         }
 
