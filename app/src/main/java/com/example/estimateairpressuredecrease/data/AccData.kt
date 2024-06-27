@@ -1,11 +1,6 @@
-package com.example.estimateairpressuredecrease.room.entities
+package com.example.estimateairpressuredecrease.data
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity
 data class AccData(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     // X軸の加速度
     var xAccList: List<Double>,
     // Y軸の加速度
@@ -14,4 +9,5 @@ data class AccData(
     var zAccList: List<Double>,
     // 加速度を取得した時間
     var timeList: List<Double>,
+
 )

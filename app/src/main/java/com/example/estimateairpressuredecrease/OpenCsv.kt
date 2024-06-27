@@ -2,7 +2,7 @@ package com.example.estimateairpressuredecrease
 
 import android.content.Context
 import android.os.Environment
-import com.example.estimateairpressuredecrease.room.entities.*
+import com.example.estimateairpressuredecrease.data.*
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -90,7 +90,7 @@ class OpenCsv {
         val file = File(filePath)
         if(!isFileExists(file)){
             val header = "time(s),lat(°),lon(°),dis(km),speed(km/h),"
-            var csvData = header + "\n"
+            csvData = header + "\n"
         }
 
         for(i in 0 until locData.timeList.size){
@@ -132,6 +132,7 @@ class OpenCsv {
 
     }
 
+    /*
     // 特徴量のcsv作成
     private fun createFeatureValueDataCsv(featureValueData: FeatureValueData, fileName: String, common: Common = Common()){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/fv" + extension
@@ -170,9 +171,10 @@ class OpenCsv {
         pw.close()
 
     }
+    */
 
     // センサデータのcsv作成
-    fun createSensorDataCsv(startDate: LocalDateTime, accData: AccData, graData: GraData,locData: LocData, barData: BarData){
+    fun createSensorDataCsv(startDate: LocalDateTime, accData: AccData, graData: GraData, locData: LocData, barData: BarData): String{
         val fileName = createFileName(startDate)
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName
         val f = File(filePath)
@@ -190,5 +192,8 @@ class OpenCsv {
         createLocDataCsv(locData,fileName)
         createBarDataCsv(barData, fileName)
 
+        return filePath
+
     }
+
 }

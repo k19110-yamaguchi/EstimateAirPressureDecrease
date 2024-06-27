@@ -14,6 +14,7 @@ import com.example.estimateairpressuredecrease.MainViewModel
 
 @Composable
 fun SensorDataText(viewModel: MainViewModel, common: Common = Common()){
+
     if (viewModel.accTime != -1.0) {
         Text(text = "センシング中 ${viewModel.accTime.toInt()}s", fontSize = 30.sp)
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -71,14 +72,14 @@ fun SensorDataText(viewModel: MainViewModel, common: Common = Common()){
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = "距離(km):", fontSize = common.smallFont)
-            Text(text = String.format("%.5f", viewModel.dis), fontSize = common.smallFont)
+            Text(text = "距離(m):", fontSize = common.smallFont)
+            Text(text = String.format("%.1f", viewModel.dis*1000), fontSize = common.smallFont)
 
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(text = "速度(km/h):", fontSize = common.smallFont)
-            Text(text = String.format("%.6f", viewModel.speed), fontSize = common.smallFont)
+            Text(text = String.format("%.1f", viewModel.speed), fontSize = common.smallFont)
 
         }
 
@@ -98,7 +99,5 @@ fun SensorDataText(viewModel: MainViewModel, common: Common = Common()){
     }else{
         Text(text = "気圧未取得", color = Color.Red, fontSize = common.smallFont)
     }
-
-
 }
 

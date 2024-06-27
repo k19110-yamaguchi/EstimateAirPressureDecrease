@@ -19,14 +19,14 @@ import com.example.estimateairpressuredecrease.MainViewModel
 import com.example.estimateairpressuredecrease.sensors.Accelerometer
 import com.example.estimateairpressuredecrease.sensors.Barometric
 import com.example.estimateairpressuredecrease.sensors.Gravity
-import com.example.estimateairpressuredecrease.sensors.Location
+import com.example.estimateairpressuredecrease.sensors.Gps
 import com.example.estimateairpressuredecrease.ui.theme.element
 import java.time.LocalDateTime
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Composable
-fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewModel: MainViewModel, common:Common = Common()) {
+fun Home(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel: MainViewModel, common:Common = Common()) {
     Text(text = "ホーム画面", fontSize = common.largeFont)
 
     Spacer(modifier = Modifier.height(common.space))
@@ -125,50 +125,13 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewM
 }
 
 // センシングを開始
-private fun startSensing(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewModel: MainViewModel, common: Common = Common()){
+private fun startSensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel: MainViewModel, common: Common = Common()){
     // 現在時刻(開始)を取得
     viewModel.startDate = LocalDateTime.now()
     var count = 1
 
-    // 加速度を取得
-    acc.startListening(object : Accelerometer.AccListener {
-        override fun onAccelerationChanged(x: Double, y: Double, z: Double, t: Double) {
-            viewModel.xAcc = x.round(5)
-            viewModel.yAcc = y.round(5)
-            viewModel.zAcc = z.round(5)
-            viewModel.accTime = t.round(2)
-
-            viewModel.xAccList.add(viewModel.xAcc)
-            viewModel.yAccList.add(viewModel.yAcc)
-            viewModel.zAccList.add(viewModel.zAcc)
-            viewModel.accTimeList.add(viewModel.accTime)
-
-            if(viewModel.accTimeList.last() > viewModel.saveTime*count){
-                viewModel.addData()
-                common.log("${count}:　加速度データを保存")
-                count ++
-
-            }
-        }
-    })
-
-    // 重力加速度を取得
-    gra.startListening(object : Gravity.GravityListener {
-        override fun onGravityChanged(x: Double, y: Double, z: Double, t: Double) {
-            viewModel.xGra = x.round(5)
-            viewModel.yGra = y.round(5)
-            viewModel.zGra = z.round(5)
-            viewModel.graTime = t.round(2)
-
-            viewModel.xGraList.add(viewModel.xGra)
-            viewModel.yGraList.add(viewModel.yGra)
-            viewModel.zGraList.add(viewModel.zGra)
-            viewModel.graTimeList.add(viewModel.graTime)
-        }
-    })
-
     // 位置情報を取得
-    loc.startListening(object : Location.LocationListener {
+    loc.startListening(object : Gps.LocationListener {
         override fun onLocationInfoChanged(lat: Double, lon: Double, t: Double) {
             val prevLat = viewModel.lat
             val prevLon = viewModel.lon
@@ -193,6 +156,51 @@ private fun startSensing(acc: Accelerometer, gra: Gravity, loc: Location, bar: B
                 viewModel.disList.add(viewModel.dis)
                 viewModel.speedList.add(viewModel.speed)
             }
+
+            if(viewModel.locTime == 0.0){
+                startSensing2(acc, gra, bar, viewModel, common)
+
+            }
+
+            if(viewModel.locTimeList.last() > viewModel.saveTime*count){
+                viewModel.addSensorData()
+                common.log("${count}:　センサデータを追記")
+                count ++
+
+            }
+        }
+    })
+}
+
+fun startSensing2(acc: Accelerometer, gra: Gravity, bar: Barometric, viewModel: MainViewModel, common: Common = Common()){
+    // 加速度を取得
+    acc.startListening(object : Accelerometer.AccListener {
+        override fun onAccelerationChanged(x: Double, y: Double, z: Double, t: Double) {
+            viewModel.xAcc = x.round(5)
+            viewModel.yAcc = y.round(5)
+            viewModel.zAcc = z.round(5)
+            viewModel.accTime = t.round(2)
+
+            viewModel.xAccList.add(viewModel.xAcc)
+            viewModel.yAccList.add(viewModel.yAcc)
+            viewModel.zAccList.add(viewModel.zAcc)
+            viewModel.accTimeList.add(viewModel.accTime)
+
+        }
+    })
+
+    // 重力加速度を取得
+    gra.startListening(object : Gravity.GravityListener {
+        override fun onGravityChanged(x: Double, y: Double, z: Double, t: Double) {
+            viewModel.xGra = x.round(5)
+            viewModel.yGra = y.round(5)
+            viewModel.zGra = z.round(5)
+            viewModel.graTime = t.round(2)
+
+            viewModel.xGraList.add(viewModel.xGra)
+            viewModel.yGraList.add(viewModel.yGra)
+            viewModel.zGraList.add(viewModel.zGra)
+            viewModel.graTimeList.add(viewModel.graTime)
         }
     })
 
@@ -204,15 +212,12 @@ private fun startSensing(acc: Accelerometer, gra: Gravity, loc: Location, bar: B
 
             viewModel.barList.add(bar.round(1))
             viewModel.barTimeList.add(viewModel.barTime)
-            if(viewModel.barList.isNotEmpty()){
-                common.log("${count}: ${viewModel.barList}")
-            }else{
-                common.log("空です!!")
-            }
         }
     })
 }
 
+
+// todo: 距離，速度の求め方
 private fun getDis(startLat: Double, startLon: Double, endLat: Double, endLon: Double): Double{
     val dis = FloatArray(3)
     android.location.Location.distanceBetween(startLat, startLon, endLat, endLon, dis)

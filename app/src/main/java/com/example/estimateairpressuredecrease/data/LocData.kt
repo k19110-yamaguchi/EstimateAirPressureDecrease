@@ -1,11 +1,6 @@
-package com.example.estimateairpressuredecrease.room.entities
+package com.example.estimateairpressuredecrease.data
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity
 data class LocData(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     // 緯度
     var latList: List<Double>,
     // 経度
@@ -17,4 +12,4 @@ data class LocData(
     // 移動した時速
     var speedList: List<Double>,
 
-)
+    )

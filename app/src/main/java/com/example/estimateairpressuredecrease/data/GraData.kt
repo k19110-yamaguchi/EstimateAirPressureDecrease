@@ -1,11 +1,6 @@
-package com.example.estimateairpressuredecrease.room.entities
+package com.example.estimateairpressuredecrease.data
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity
 data class GraData(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     // X軸の重力加速度
     var xGraList: List<Double>,
     // Y軸の重力加速度
@@ -14,4 +9,5 @@ data class GraData(
     var zGraList: List<Double>,
     // 重力加速度を取得した時間
     var timeList: List<Double>,
-)
+
+    )

@@ -1,13 +1,14 @@
 package com.example.estimateairpressuredecrease
-import android.content.IntentSender.OnFinished
-import android.location.Location
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.estimateairpressuredecrease.room.dao.FeatureValueDao
+import com.example.estimateairpressuredecrease.data.AccData
+import com.example.estimateairpressuredecrease.data.BarData
+import com.example.estimateairpressuredecrease.data.GraData
+import com.example.estimateairpressuredecrease.data.LocData
 import com.example.estimateairpressuredecrease.room.dao.HomeDao
 import com.example.estimateairpressuredecrease.room.dao.SensorDao
 import com.example.estimateairpressuredecrease.room.entities.*
@@ -23,7 +24,6 @@ import kotlin.math.round
 class MainViewModel @Inject constructor(
     private val homeDao: HomeDao,
     private val sensorDao: SensorDao,
-    private val featureValueDao: FeatureValueDao,
 ) : ViewModel(){
     private var common = Common()
 
@@ -45,12 +45,11 @@ class MainViewModel @Inject constructor(
     // 適正内のデータ数
     var withinSize by mutableStateOf(0)
     // 推定に必要な適正外、適正内の特徴量の数
-    val requiredFvSize = 5
+    val requiredFvSize = 10
     // 初期の日付
     val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
     // 空気を注入した時期
     var inflatedDate: LocalDateTime by mutableStateOf(initDate)
-
     // メッセージ
     var homeMessage by mutableStateOf("")
     // 空気圧推定の数
@@ -89,7 +88,6 @@ class MainViewModel @Inject constructor(
     var yAcc :Double by mutableStateOf(-1.0)
     var zAcc :Double by mutableStateOf(-1.0)
     var accTime: Double by mutableStateOf(-1.0)
-    val accData = sensorDao.getAccData().distinctUntilChanged()
     var xAccList: MutableList<Double> = mutableListOf()
     var yAccList: MutableList<Double> = mutableListOf()
     var zAccList: MutableList<Double> = mutableListOf()
@@ -102,7 +100,6 @@ class MainViewModel @Inject constructor(
     var dis: Double by mutableStateOf(-1.0)
     var speed: Double by mutableStateOf(-1.0)
     var locTime: Double by mutableStateOf(-1.0)
-    val locData = sensorDao.getLocData().distinctUntilChanged()
     var latList: MutableList<Double> = mutableListOf()
     var lonList: MutableList<Double> = mutableListOf()
     var locTimeList: MutableList<Double> = mutableListOf()
@@ -129,7 +126,6 @@ class MainViewModel @Inject constructor(
     var barTimeList: MutableList<Double> = mutableListOf()
 
     // FeatureValue
-    val featureValueData = featureValueDao.getFeatureValues().distinctUntilChanged()
     var accSd: Double by mutableStateOf(0.0)
     var ampSptList: MutableList<Double> = mutableListOf()
     var startGetFv: MutableList<Double> = mutableListOf()
@@ -176,11 +172,16 @@ class MainViewModel @Inject constructor(
     }
 
     // todo: 学習状態から推定状態に変更できるか調べる
-    fun checkIsEstState(featureValueData: List<FeatureValueData>){
+    // todo: 推定状態に移行するとき，推定に適した場所を抽出
+    // todo: 推定に適した場所をから特徴量を抽出
+    // todo: モデルの作成
+    // todo: 空気圧を推定
+    // todo: 空気圧注入を促す
+    fun checkIsEstState(sensorData: List<SensorData>){
         outOfSize = 0
         withinSize = 0
         // 適正外、適正内のデータの数を調べる
-        for (fv in featureValueData) {
+        for (fv in sensorData) {
             if (fv.sensingAirPressure >= minProperPressure) {
                 withinSize += 1
             } else {
@@ -190,8 +191,7 @@ class MainViewModel @Inject constructor(
 
         // 必要サイズ以上になった場合
         if(outOfSize >= requiredFvSize && withinSize >= requiredFvSize){
-            // todo: モデルの作成
-            createModel(featureValueData)
+            //createModel(featureValueData)
             isTrainingState = false
             updateHome()
         }
@@ -269,7 +269,7 @@ class MainViewModel @Inject constructor(
             // 学習状態・空気圧入力時
             }else{
                 sensingAirPressure = editingAirPressure.toInt()
-                addData(true)
+                addSensorData(true)
             }
             screenStatus = common.homeNum
             resetInput()
@@ -291,15 +291,16 @@ class MainViewModel @Inject constructor(
 
     // Sensing
     // 推定に必要なデータがあるか調べる
+    // todo: 推定に必要なデータ数を決める
     fun checkRequiredData(){
-        if(accTime > 10){
+        if(locTime > 10){
             isRequiredData = true
         }
     }
 
 
-    // データベースにセンサデータを追加
-    fun addData(isFinished: Boolean = false) {
+    // センサデータを追加
+    fun addSensorData(isFinished: Boolean = false) {
         // テストデータを作成する
         // createTestData()
 
@@ -308,21 +309,15 @@ class MainViewModel @Inject constructor(
         val newGra = GraData(xGraList = xGraList, yGraList = yGraList, zGraList = zGraList, timeList = graTimeList)
         val newLoc = LocData(latList = latList, lonList = lonList, timeList = locTimeList, disList = disList, speedList = speedList)
         val newBar = BarData(barList = barList, timeList = barTimeList)
-        val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure)
-
-        // データベースに保存
-        //addAcc(newAcc)
-        //addGra(newGra)
-        //addLoc(newLoc)
-        //addBar(newBar)
-        //addSensor(newSensor)
 
         // ファイルの作成
         val openCsv = OpenCsv()
-        openCsv.createSensorDataCsv(startDate, newAcc, newGra, newLoc, newBar)
-        common.log("ファイルの作成に成功")
+        val sensorDataPath = openCsv.createSensorDataCsv(startDate, newAcc, newGra, newLoc, newBar)
+        common.log("センサデータを保存")
 
         if(isFinished){
+            val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure, sensorDataPath = sensorDataPath)
+            addSensor(newSensor)
             resetSensing()
         }else{
             resetSensorData()
@@ -330,34 +325,6 @@ class MainViewModel @Inject constructor(
 
     }
 
-    // 加速度データをデータベースに追加
-    private fun addAcc(newAcc: AccData) {
-        viewModelScope.launch {
-            sensorDao.insertAccData(newAcc)
-
-        }
-    }
-
-    // 重力加速度データをデータベースに追加
-    private fun addGra(newGra: GraData) {
-        viewModelScope.launch {
-            sensorDao.insertGraData(newGra)
-        }
-    }
-
-    // 位置情報データをデータベースに追加
-    private fun addLoc(newLoc: LocData) {
-        viewModelScope.launch {
-            sensorDao.insertLocData(newLoc)
-        }
-    }
-
-    // 気圧データをデータベースに追加
-    private fun addBar(newBar: BarData) {
-        viewModelScope.launch {
-            sensorDao.insertBarData(newBar)
-        }
-    }
 
     // センサデータをデータベースに追加
     private fun addSensor(newSensor: SensorData) {
@@ -366,12 +333,6 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // 特徴量データをデータベースに追加
-    private fun addFeatureValue(newFeatureValue: FeatureValueData) {
-        viewModelScope.launch {
-            featureValueDao.insertFeatureValues(newFeatureValue)
-        }
-    }
 
     // 特徴量を取得
     private fun createFeatureValue(): Boolean {
@@ -475,7 +436,7 @@ class MainViewModel @Inject constructor(
 
 
     // ↓ 書き換え前
-
+    /*
     private fun createTestData(){
         latList = listOf(35.188842,35.188878, 35.188914, 35.188953, 35.188991, 35.189028, 35.189066, 35.189105, 35.189145, 35.189183) as MutableList<Double>
         lonList = listOf(137.105494,137.105483, 137.105470, 137.105459, 137.105450, 137.105440, 137.105429, 137.105416, 137.105404, 137.1053935) as MutableList<Double>
@@ -549,4 +510,5 @@ class MainViewModel @Inject constructor(
         }
         return fvList
     }
+ */
 }

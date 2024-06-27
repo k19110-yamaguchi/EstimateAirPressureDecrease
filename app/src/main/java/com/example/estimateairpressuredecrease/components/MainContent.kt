@@ -1,6 +1,5 @@
 package com.example.estimateairpressuredecrease.components
 
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.estimateairpressuredecrease.Common
@@ -11,11 +10,11 @@ import com.example.estimateairpressuredecrease.components.screen.sensing.Sensing
 import com.example.estimateairpressuredecrease.sensors.Accelerometer
 import com.example.estimateairpressuredecrease.sensors.Barometric
 import com.example.estimateairpressuredecrease.sensors.Gravity
-import com.example.estimateairpressuredecrease.sensors.Location
+import com.example.estimateairpressuredecrease.sensors.Gps
 
 @Composable
 fun MainContent(
-    acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric,
+    acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric,
     viewModel: MainViewModel = hiltViewModel(), common: Common = Common()
 ){
 
