@@ -171,26 +171,32 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // todo: csvファイルからセンサデータを取得
     // todo: 学習状態から推定状態に変更できるか調べる
     // todo: 推定状態に移行するとき，推定に適した場所を抽出
     // todo: 推定に適した場所をから特徴量を抽出
     // todo: モデルの作成
     // todo: 空気圧を推定
     // todo: 空気圧注入を促す
-    fun checkIsEstState(sensorData: List<SensorData>){
+
+    fun countWithinData(sensorData: List<SensorData>){
         outOfSize = 0
         withinSize = 0
         // 適正外、適正内のデータの数を調べる
-        for (fv in sensorData) {
-            if (fv.sensingAirPressure >= minProperPressure) {
+        for (sd in sensorData) {
+            if (sd.sensingAirPressure >= minProperPressure) {
                 withinSize += 1
             } else {
                 outOfSize += 1
             }
         }
+    }
 
+    fun checkIsEstState(sensorData: List<SensorData>){
         // 必要サイズ以上になった場合
         if(outOfSize >= requiredFvSize && withinSize >= requiredFvSize){
+            // 特徴量を計算
+            calcFeatureValue(sensorData)
             //createModel(featureValueData)
             isTrainingState = false
             updateHome()
@@ -335,14 +341,12 @@ class MainViewModel @Inject constructor(
 
 
     // 特徴量を取得
-    private fun createFeatureValue(): Boolean {
-        // リストに変換
-        val newAcc = createList("Acc")
-        val newGra = createList("Gra")
-        val newLoc = createList("Loc")
-        val newBar = createList("Bar")
+    private fun calcFeatureValue(sensorData: List<SensorData>) {
+
+
 
         // Pythonを用いて特徴量を取得
+        /*
         val runPython = RunPython()
         val featureValue = runPython.createFeatureValue(newAcc, newGra, newLoc, newBar)
         // 特徴量が正しく取得できた場合
@@ -355,6 +359,8 @@ class MainViewModel @Inject constructor(
         }else{
             false
         }
+         */
+
     }
 
     // センサデータをリストに変換
@@ -399,6 +405,12 @@ class MainViewModel @Inject constructor(
         yGraList =  emptyList<Double>().toMutableList()
         zGraList =  emptyList<Double>().toMutableList()
         graTimeList =  emptyList<Double>().toMutableList()
+
+        latList = emptyList<Double>().toMutableList()
+        lonList = emptyList<Double>().toMutableList()
+        locTimeList = emptyList<Double>().toMutableList()
+        disList = emptyList<Double>().toMutableList()
+        speedList = emptyList<Double>().toMutableList()
 
         barList =  emptyList<Double>().toMutableList()
         barTimeList =  emptyList<Double>().toMutableList()

@@ -37,8 +37,8 @@ class OpenCsv {
         // ファイルが存在するか調べる
         val file = File(filePath)
         if(!isFileExists(file)){
-            val header = "time(s),xAcc(m/s^2),yAcc(m/s^2),zAcc(m/s^2),"
-            csvData += header + "\n"
+            val header = "time(s),x(m/s^2),y(m/s^2),z(m/s^2),"
+            csvData = header + "\n"
         }
 
         for(i in 0 until accData.timeList.size){
@@ -50,7 +50,7 @@ class OpenCsv {
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
-        pw.println(csvData)
+        pw.print(csvData)
         pw.close()
 
     }
@@ -63,8 +63,8 @@ class OpenCsv {
         // ファイルが存在するか調べる
         val file = File(filePath)
         if(!isFileExists(file)){
-            val header = "time(s),xAcc(m/s^2),yAcc(m/s^2),zAcc(m/s^2),"
-            csvData += header + "\n"
+            val header = "time(s),x(m/s^2),y(m/s^2),z(m/s^2),"
+            csvData = header + "\n"
         }
 
         for(i in 0 until graData.timeList.size){
@@ -76,7 +76,7 @@ class OpenCsv {
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
-        pw.println(csvData)
+        pw.print(csvData)
         pw.close()
 
     }
@@ -94,16 +94,17 @@ class OpenCsv {
         }
 
         for(i in 0 until locData.timeList.size){
+            val formattedString = String.format("%.5f", locData.disList[i])
             csvData +=
                 locData.timeList[i].toString() + "," +
                         locData.latList[i].toString() + "," +
                         locData.lonList[i].toString() + "," +
-                        locData.disList[i].toString() + "," +
+                        formattedString + "," +
                         locData.speedList[i].toString() + "," + "\n"
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
-        pw.println(csvData)
+        pw.print(csvData)
         pw.close()
 
     }
@@ -117,7 +118,7 @@ class OpenCsv {
         val file = File(filePath)
         if(!isFileExists(file)){
             val header = "time(s),bar(kPa),"
-            var csvData = header + "\n"
+            csvData = header + "\n"
         }
 
         for(i in 0 until barData.timeList.size){
@@ -127,7 +128,7 @@ class OpenCsv {
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
-        pw.println(csvData)
+        pw.print(csvData)
         pw.close()
 
     }
@@ -167,7 +168,7 @@ class OpenCsv {
 
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
-        pw.println(csvData)
+        pw.print(csvData)
         pw.close()
 
     }
@@ -195,5 +196,7 @@ class OpenCsv {
         return filePath
 
     }
+
+
 
 }

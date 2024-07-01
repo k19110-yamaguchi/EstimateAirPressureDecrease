@@ -27,6 +27,12 @@ import kotlin.math.roundToInt
 
 @Composable
 fun Home(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel: MainViewModel, common:Common = Common()) {
+
+    Text(text = "適正内データ数： ${viewModel.withinSize}")
+    Text(text = "適正外データ数： ${viewModel.outOfSize}")
+
+    Spacer(modifier = Modifier.height(common.space))
+
     Text(text = "ホーム画面", fontSize = common.largeFont)
 
     Spacer(modifier = Modifier.height(common.space))
@@ -38,10 +44,16 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel:
 
     if(homeData.isNotEmpty()){
         viewModel.setHome(homeData[0])
+        if (sensorData.isNotEmpty()){
+            viewModel.countWithinData(sensorData)
+        }
 
         // 状態の表示
         if(viewModel.isTrainingState) {
             Text(text = "学習状態", fontSize = common.largeFont)
+            // todo: 推定状態に移行できるかどうか
+            //viewModel.checkIsEstState()
+
         } else {
             Text(text = "推定状態", fontSize = common.largeFont)
             if(sensorData.isNotEmpty()){
@@ -68,7 +80,6 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel:
         }else{
             Text(text = "空気注入時期: ${viewModel.showInflateDate()}", fontSize = common.smallFont)
         }
-
 
         Spacer(modifier = Modifier.width(common.space))
 
@@ -133,39 +144,44 @@ private fun startSensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barome
     // 位置情報を取得
     loc.startListening(object : Gps.LocationListener {
         override fun onLocationInfoChanged(lat: Double, lon: Double, t: Double) {
-            val prevLat = viewModel.lat
-            val prevLon = viewModel.lon
-            val prevTime = viewModel.locTime
-            viewModel.lat = lat.round(6)
-            viewModel.lon = lon.round(6)
-            viewModel.locTime = t.round(2)
+            if(t >= 5){
+                val prevLat = viewModel.lat
+                val prevLon = viewModel.lon
+                val prevTime = viewModel.locTime
+                viewModel.lat = lat.round(6)
+                viewModel.lon = lon.round(6)
+                viewModel.locTime = t.round(2)-5.0
 
-            viewModel.latList.add(viewModel.lat)
-            viewModel.lonList.add(viewModel.lon)
-            viewModel.locTimeList.add(viewModel.locTime)
+                viewModel.latList.add(viewModel.lat)
+                viewModel.lonList.add(viewModel.lon)
+                viewModel.locTimeList.add(viewModel.locTime)
 
-            // 距離，速度を求める
-            Log.d("LocationTime", t.toString())
-            val size = viewModel.locTimeList.size
-            if(count == 1 && size == 1){
-                viewModel.disList.add(0.0)
-                viewModel.speedList.add(0.0)
-            }else if(size > 1){
-                viewModel.dis = getDis(prevLat, prevLon, viewModel.lat, viewModel.lon)
-                viewModel.speed = getSpeed(viewModel.dis, prevTime, viewModel.locTime)
-                viewModel.disList.add(viewModel.dis)
-                viewModel.speedList.add(viewModel.speed)
-            }
+                // 距離，速度を求める
+                Log.d("LocationTime", viewModel.locTime.toString())
+                val size = viewModel.locTimeList.size
+                if(count == 1 && size == 1){
+                    viewModel.disList.add(0.0)
+                    viewModel.speedList.add(0.0)
+                }else{
+                    viewModel.dis = getDis(prevLat, prevLon, viewModel.lat, viewModel.lon)
+                    viewModel.speed = getSpeed(viewModel.dis, prevTime, viewModel.locTime)
+                    viewModel.disList.add(viewModel.dis)
+                    viewModel.speedList.add(viewModel.speed)
+                }
 
-            if(viewModel.locTime == 0.0){
-                startSensing2(acc, gra, bar, viewModel, common)
+                Log.d("Distance", viewModel.dis.toString())
 
-            }
+                if(viewModel.locTime == 0.0){
+                    startSensing2(acc, gra, bar, viewModel, common)
 
-            if(viewModel.locTimeList.last() > viewModel.saveTime*count){
-                viewModel.addSensorData()
-                common.log("${count}:　センサデータを追記")
-                count ++
+                }
+
+                if(viewModel.locTimeList.last() > viewModel.saveTime*count){
+                    viewModel.addSensorData()
+                    common.log("${count}:　センサデータを追記")
+                    count++
+
+                }
 
             }
         }
@@ -216,12 +232,10 @@ fun startSensing2(acc: Accelerometer, gra: Gravity, bar: Barometric, viewModel: 
     })
 }
 
-
-// todo: 距離，速度の求め方
 private fun getDis(startLat: Double, startLon: Double, endLat: Double, endLon: Double): Double{
     val dis = FloatArray(3)
     android.location.Location.distanceBetween(startLat, startLon, endLat, endLon, dis)
-    return (dis[0].toDouble() * 0.001).round(5)
+    return (dis[0] * 0.001).round(5)
 }
 
 private fun getSpeed(dis: Double, startTime: Double, endTime: Double): Double {
