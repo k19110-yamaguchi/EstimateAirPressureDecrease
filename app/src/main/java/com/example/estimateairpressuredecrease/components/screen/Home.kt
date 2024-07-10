@@ -139,6 +139,7 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel:
 private fun startSensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel: MainViewModel, common: Common = Common()){
     // 現在時刻(開始)を取得
     viewModel.startDate = LocalDateTime.now()
+    var isEnableGettingLoc = false
     var count = 1
 
     // 位置情報を取得
@@ -171,8 +172,9 @@ private fun startSensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barome
 
                 Log.d("Distance", viewModel.dis.toString())
 
-                if(viewModel.locTime == 0.0){
+                if(viewModel.locTime >= 0.0 && !isEnableGettingLoc){
                     startSensing2(acc, gra, bar, viewModel, common)
+                    isEnableGettingLoc = true
 
                 }
 
