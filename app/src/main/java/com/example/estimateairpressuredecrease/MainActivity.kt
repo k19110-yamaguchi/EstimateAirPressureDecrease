@@ -19,7 +19,7 @@ class MainActivity: ComponentActivity() {
     // センサを使用するクラスを読み込む
     private lateinit var acc: Accelerometer
     private lateinit var gra: Gravity
-    private lateinit var loc: Location
+    private lateinit var loc: Gps
     private lateinit var bar: Barometric
 
     // センサを使うのに必要
@@ -59,7 +59,7 @@ class MainActivity: ComponentActivity() {
         super.onResume()
         acc = Accelerometer(this)
         gra = Gravity(this)
-        loc = Location(this)
+        loc = Gps(this)
         bar = Barometric(this)
     }
 
@@ -68,7 +68,7 @@ class MainActivity: ComponentActivity() {
         super.onPause()
         acc = Accelerometer(this)
         gra = Gravity(this)
-        loc = Location(this)
+        loc = Gps(this)
         bar = Barometric(this)
     }
 }

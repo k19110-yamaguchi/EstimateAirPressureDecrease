@@ -5,7 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.estimateairpressuredecrease.room.dao.FeatureValueDao
+import com.example.estimateairpressuredecrease.data.AccData
+import com.example.estimateairpressuredecrease.data.BarData
+import com.example.estimateairpressuredecrease.data.GraData
+import com.example.estimateairpressuredecrease.data.LocData
 import com.example.estimateairpressuredecrease.room.dao.HomeDao
 import com.example.estimateairpressuredecrease.room.dao.SensorDao
 import com.example.estimateairpressuredecrease.room.entities.*
@@ -21,7 +24,6 @@ import kotlin.math.round
 class MainViewModel @Inject constructor(
     private val homeDao: HomeDao,
     private val sensorDao: SensorDao,
-    private val featureValueDao: FeatureValueDao,
 ) : ViewModel(){
     private var common = Common()
 
@@ -34,6 +36,8 @@ class MainViewModel @Inject constructor(
     private var isFirst by mutableStateOf(false)
 
     //Home
+    // Homeのデータを取得
+    val homeData = homeDao.getHomeData().distinctUntilChanged()
     // 学習状態かどうか
     var isTrainingState by mutableStateOf(true)
     // 適正外のデータ数
@@ -41,14 +45,14 @@ class MainViewModel @Inject constructor(
     // 適正内のデータ数
     var withinSize by mutableStateOf(0)
     // 推定に必要な適正外、適正内の特徴量の数
-    val requiredFvSize = 5
+    val requiredFvSize = 10
     // 初期の日付
     val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
     // 空気を注入した時期
     var inflatedDate: LocalDateTime by mutableStateOf(initDate)
     // メッセージ
     var homeMessage by mutableStateOf("")
-    // 空気圧推定に必要な推定空気圧の数
+    // 空気圧推定の数
     private val requiredAirPressureSize = 3
 
     // Input
@@ -63,9 +67,12 @@ class MainViewModel @Inject constructor(
     // 最小適正空気圧
     var minProperPressure by mutableStateOf(0)
     // 測定空気圧
-    private var sensingAirPressure by mutableStateOf(0)
+    var sensingAirPressure by mutableStateOf(0)
 
     // Sensing
+    val sensorData = sensorDao.getSensorData().distinctUntilChanged()
+    // データを保存するまでの時間(s)
+    val saveTime: Double = 10.0
     // 推定に必要なデータがあるか
     var isRequiredData: Boolean by mutableStateOf(false)
     // 測定開始時刻
@@ -77,34 +84,52 @@ class MainViewModel @Inject constructor(
 
 
     // Acc
+    var xAcc :Double by mutableStateOf(-1.0)
+    var yAcc :Double by mutableStateOf(-1.0)
+    var zAcc :Double by mutableStateOf(-1.0)
+    var accTime: Double by mutableStateOf(-1.0)
     var xAccList: MutableList<Double> = mutableListOf()
     var yAccList: MutableList<Double> = mutableListOf()
     var zAccList: MutableList<Double> = mutableListOf()
-    var accTime: Double by mutableStateOf(-1.0)
     var accTimeList: MutableList<Double> = mutableListOf()
 
+
     // Loc
+    var lat: Double by mutableStateOf(-1.0)
+    var lon: Double by mutableStateOf(-1.0)
+    var dis: Double by mutableStateOf(-1.0)
+    var speed: Double by mutableStateOf(-1.0)
+    var locTime: Double by mutableStateOf(-1.0)
     var latList: MutableList<Double> = mutableListOf()
     var lonList: MutableList<Double> = mutableListOf()
-    var locTime: Double by mutableStateOf(-1.0)
     var locTimeList: MutableList<Double> = mutableListOf()
+    var disList: MutableList<Double> = mutableListOf()
+    var speedList: MutableList<Double> = mutableListOf()
+
 
     // Gra
+    var xGra :Double by mutableStateOf(-1.0)
+    var yGra :Double by mutableStateOf(-1.0)
+    var zGra :Double by mutableStateOf(-1.0)
+    var graTime: Double by mutableStateOf(-1.0)
     var xGraList: MutableList<Double> = mutableListOf()
     var yGraList: MutableList<Double> = mutableListOf()
     var zGraList: MutableList<Double> = mutableListOf()
-    var graTime: Double by mutableStateOf(-1.0)
     var graTimeList: MutableList<Double> = mutableListOf()
 
+
+
     // Bar
-    var barList: MutableList<Double> = mutableListOf()
+    var bar: Double by mutableStateOf(-1.0)
     var barTime: Double by mutableStateOf(-1.0)
+    var barList: MutableList<Double> = mutableListOf()
     var barTimeList: MutableList<Double> = mutableListOf()
 
     // FeatureValue
-    var fv : List<FeatureValueData> by mutableStateOf(emptyList())
     var accSd: Double by mutableStateOf(0.0)
     var ampSptList: MutableList<Double> = mutableListOf()
+    var startGetFv: MutableList<Double> = mutableListOf()
+    var stopGetFv: MutableList<Double> = mutableListOf()
     var estimatedRange = 10
 
     // Main
@@ -117,6 +142,7 @@ class MainViewModel @Inject constructor(
                 screenStatus = common.inputNum
                 inputStatus = common.inputProperPressureNum
             }else{
+                isFirst = false
             }
         }
     }
@@ -145,22 +171,33 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // 学習状態から推定状態に変更できるか調べる
-    fun checkState(featureValueData: List<FeatureValueData>){
+    // todo: csvファイルからセンサデータを取得
+    // todo: 学習状態から推定状態に変更できるか調べる
+    // todo: 推定状態に移行するとき，推定に適した場所を抽出
+    // todo: 推定に適した場所をから特徴量を抽出
+    // todo: モデルの作成
+    // todo: 空気圧を推定
+    // todo: 空気圧注入を促す
+
+    fun countWithinData(sensorData: List<SensorData>){
         outOfSize = 0
         withinSize = 0
         // 適正外、適正内のデータの数を調べる
-        for (fv in featureValueData) {
-            if (fv.airPressure >= minProperPressure) {
+        for (sd in sensorData) {
+            if (sd.sensingAirPressure >= minProperPressure) {
                 withinSize += 1
             } else {
                 outOfSize += 1
             }
         }
+    }
 
+    fun checkIsEstState(sensorData: List<SensorData>){
         // 必要サイズ以上になった場合
         if(outOfSize >= requiredFvSize && withinSize >= requiredFvSize){
-            createModel(featureValueData)
+            // 特徴量を計算
+            calcFeatureValue(sensorData)
+            //createModel(featureValueData)
             isTrainingState = false
             updateHome()
         }
@@ -238,7 +275,7 @@ class MainViewModel @Inject constructor(
             // 学習状態・空気圧入力時
             }else{
                 sensingAirPressure = editingAirPressure.toInt()
-                addData()
+                addSensorData(true)
             }
             screenStatus = common.homeNum
             resetInput()
@@ -260,87 +297,40 @@ class MainViewModel @Inject constructor(
 
     // Sensing
     // 推定に必要なデータがあるか調べる
+    // todo: 推定に必要なデータ数を決める
     fun checkRequiredData(){
-        if(accTime != -1.0 &&
-            graTime != -1.0 &&
-            locTime != -1.0 &&
-            barTime != -1.0){
+        if(locTime > 10){
             isRequiredData = true
         }
     }
 
-    // データベースにセンサデータを追加
-    private fun addData() {
+
+    // センサデータを追加
+    fun addSensorData(isFinished: Boolean = false) {
         // テストデータを作成する
         // createTestData()
-        // 特徴量を取得
-        var successCreateFv = createFeatureValue()
 
-        // 特徴量の取得に成功した場合
-        if(successCreateFv){
-            common.log("特徴量の取得に成功")
-            homeMessage = "特徴量の取得に成功"
-            // 保存するデータをエンティティ構造に変換
-            val newAcc = AccData(xAccList = xAccList, yAccList = yAccList, zAccList = zAccList, timeList = accTimeList)
-            val newGra = GraData(xGraList = xGraList, yGraList = yGraList, zGraList = zGraList, timeList = graTimeList)
-            val newLoc = LocData(latList = latList, lonList = lonList, timeList = locTimeList)
-            val newBar = BarData(barList = barList, timeList = barTimeList)
-            val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure)
-            val newFeatureValue = FeatureValueData(accSd = accSd, ampSptList = ampSptList, airPressure = sensingAirPressure)
+        // 新しいデータの要素
+        val newAcc = AccData(xAccList = xAccList, yAccList = yAccList, zAccList = zAccList, timeList = accTimeList)
+        val newGra = GraData(xGraList = xGraList, yGraList = yGraList, zGraList = zGraList, timeList = graTimeList)
+        val newLoc = LocData(latList = latList, lonList = lonList, timeList = locTimeList, disList = disList, speedList = speedList)
+        val newBar = BarData(barList = barList, timeList = barTimeList)
 
-            // 推定状態の場合
-            if(!isTrainingState){
-                estimateAirPressure(newFeatureValue)
-            }
+        // ファイルの作成
+        val openCsv = OpenCsv()
+        val sensorDataPath = openCsv.createSensorDataCsv(startDate, newAcc, newGra, newLoc, newBar)
+        common.log("センサデータを保存")
 
-            // データベースに保存
-            addAcc(newAcc)
-            addGra(newGra)
-            addLoc(newLoc)
-            addBar(newBar)
+        if(isFinished){
+            val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure, sensorDataPath = sensorDataPath)
             addSensor(newSensor)
-            addFeatureValue(newFeatureValue)
-
-            // ファイルの作成
-            val openCsv = OpenCsv()
-            openCsv.createCsv(startDate, newAcc, newGra, newLoc, newBar, newFeatureValue)
-            common.log("ファイルの作成に成功")
-
+            resetSensing()
         }else{
-            common.log("特徴量の取得に失敗")
-            homeMessage = "特徴量の取得に失敗"
+            resetSensorData()
         }
-        resetSensing()
+
     }
 
-    // 加速度データをデータベースに追加
-    private fun addAcc(newAcc: AccData) {
-        viewModelScope.launch {
-            sensorDao.insertAccData(newAcc)
-
-        }
-    }
-
-    // 重力加速度データをデータベースに追加
-    private fun addGra(newGra: GraData) {
-        viewModelScope.launch {
-            sensorDao.insertGraData(newGra)
-        }
-    }
-
-    // 位置情報データをデータベースに追加
-    private fun addLoc(newLoc: LocData) {
-        viewModelScope.launch {
-            sensorDao.insertLocData(newLoc)
-        }
-    }
-
-    // 気圧データをデータベースに追加
-    private fun addBar(newBar: BarData) {
-        viewModelScope.launch {
-            sensorDao.insertBarData(newBar)
-        }
-    }
 
     // センサデータをデータベースに追加
     private fun addSensor(newSensor: SensorData) {
@@ -349,22 +339,14 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // 特徴量データをデータベースに追加
-    private fun addFeatureValue(newFeatureValue: FeatureValueData) {
-        viewModelScope.launch {
-            featureValueDao.insertFeatureValues(newFeatureValue)
-        }
-    }
 
     // 特徴量を取得
-    private fun createFeatureValue(): Boolean {
-        // リストに変換
-        val newAcc = createList("Acc")
-        val newGra = createList("Gra")
-        val newLoc = createList("Loc")
-        val newBar = createList("Bar")
+    private fun calcFeatureValue(sensorData: List<SensorData>) {
+
+
 
         // Pythonを用いて特徴量を取得
+        /*
         val runPython = RunPython()
         val featureValue = runPython.createFeatureValue(newAcc, newGra, newLoc, newBar)
         // 特徴量が正しく取得できた場合
@@ -377,6 +359,8 @@ class MainViewModel @Inject constructor(
         }else{
             false
         }
+         */
+
     }
 
     // センサデータをリストに変換
@@ -398,7 +382,7 @@ class MainViewModel @Inject constructor(
             "Loc" -> {
                 var len = locTimeList.size
                 for(i in 0 until len){
-                    newList.add(listOf(latList[i], lonList[i], locTimeList[i]))
+                    newList.add(listOf(latList[i], lonList[i], locTimeList[i], disList[i], speedList[i]))
                 }
             }
             "Bar" -> {
@@ -411,67 +395,60 @@ class MainViewModel @Inject constructor(
         return newList
     }
 
+    private fun resetSensorData(){
+        xAccList = emptyList<Double>().toMutableList()
+        yAccList = emptyList<Double>().toMutableList()
+        zAccList = emptyList<Double>().toMutableList()
+        accTimeList = emptyList<Double>().toMutableList()
+
+        xGraList =  emptyList<Double>().toMutableList()
+        yGraList =  emptyList<Double>().toMutableList()
+        zGraList =  emptyList<Double>().toMutableList()
+        graTimeList =  emptyList<Double>().toMutableList()
+
+        latList = emptyList<Double>().toMutableList()
+        lonList = emptyList<Double>().toMutableList()
+        locTimeList = emptyList<Double>().toMutableList()
+        disList = emptyList<Double>().toMutableList()
+        speedList = emptyList<Double>().toMutableList()
+
+        barList =  emptyList<Double>().toMutableList()
+        barTimeList =  emptyList<Double>().toMutableList()
+
+    }
+
     private fun resetSensing() {
+        resetSensorData()
         startDate = initDate
         stopDate = initDate
         sensingAirPressure = 0
         estimatedAirPressure = 0
 
-        xAccList = emptyList<Double>().toMutableList()
-        yAccList = emptyList<Double>().toMutableList()
-        zAccList = emptyList<Double>().toMutableList()
+        xAcc = -1.0
+        yAcc = -1.0
+        zAcc = -1.0
         accTime = -1.0
-        accTimeList = emptyList<Double>().toMutableList()
 
-        latList =  emptyList<Double>().toMutableList()
-        lonList = emptyList<Double>().toMutableList()
+        lat = -1.0
+        lon = -1.0
         locTime = -1.0
-        locTimeList = emptyList<Double>().toMutableList()
+        dis = -1.0
+        speed = -1.0
 
         // Gra
-        xGraList =  emptyList<Double>().toMutableList()
-        yGraList =  emptyList<Double>().toMutableList()
-        zGraList =  emptyList<Double>().toMutableList()
+        xGra = -1.0
+        yGra = -1.0
+        zGra = -1.0
         graTime = -1.0
-        graTimeList =  emptyList<Double>().toMutableList()
 
         // Bar
-        barList =  emptyList<Double>().toMutableList()
+        bar = -1.0
         barTime = -1.0
-        barTimeList =  emptyList<Double>().toMutableList()
-
-        // 特徴量
-        accSd = 0.0
-        // 振幅スペクトル
-        ampSptList = emptyList<Double>().toMutableList()
-        isRequiredData = false
-
     }
 
 
     // ↓ 書き換え前
-
-    // Homeのデータを取得
-    val homeData = homeDao.getHomeData().distinctUntilChanged()
-
-    //
-
-    val sensorData = sensorDao.getSensorData().distinctUntilChanged()
-    //
-    val accData = sensorDao.getAccData().distinctUntilChanged()
-
-    //
-    val locData = sensorDao.getLocData().distinctUntilChanged()
-
-    // のデータ取得
-    val featureValueData = featureValueDao.getFeatureValues().distinctUntilChanged()
-
-    // python
-
-
-    // 初期値を設定
-
-
+    /*
     private fun createTestData(){
         latList = listOf(35.188842,35.188878, 35.188914, 35.188953, 35.188991, 35.189028, 35.189066, 35.189105, 35.189145, 35.189183) as MutableList<Double>
         lonList = listOf(137.105494,137.105483, 137.105470, 137.105459, 137.105450, 137.105440, 137.105429, 137.105416, 137.105404, 137.1053935) as MutableList<Double>
@@ -490,7 +467,7 @@ class MainViewModel @Inject constructor(
             for(j in 0 until ampSpcSize){
                 l.add(featureValueData[i].ampSptList[j])
             }
-            l.add(featureValueData[i].airPressure.toDouble())
+            l.add(featureValueData[i].sensingAirPressure.toDouble())
             fvList.add(l)
         }
 
@@ -528,7 +505,7 @@ class MainViewModel @Inject constructor(
                 for(j in 0 until ampSpcSize){
                     l.add(featureValueData[i].ampSptList[j])
                 }
-                l.add(featureValueData[i].airPressure.toDouble())
+                l.add(featureValueData[i].sensingAirPressure.toDouble())
                 fvList.add(l)
             }
         //
@@ -545,4 +522,5 @@ class MainViewModel @Inject constructor(
         }
         return fvList
     }
+ */
 }

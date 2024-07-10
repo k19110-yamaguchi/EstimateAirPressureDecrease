@@ -2,7 +2,7 @@ package com.example.estimateairpressuredecrease
 
 import android.content.Context
 import android.os.Environment
-import com.example.estimateairpressuredecrease.room.entities.*
+import com.example.estimateairpressuredecrease.data.*
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -15,7 +15,6 @@ class OpenCsv {
     val context: Context = MainActivity.content
     // 拡張子
     private val extension : String = ".csv"
-    // 内部ストレージのDocumentのURL
 
     // 保存するフォルダ名の作成
     private fun createFileName(startDate: LocalDateTime): String {
@@ -26,11 +25,22 @@ class OpenCsv {
             .substring(0, 14)
     }
 
+    private fun isFileExists(file: File): Boolean {
+        return file.exists() && !file.isDirectory
+    }
+
     // 加速度のcsv作成
     private fun createAccDataCsv(accData: AccData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/acc" + extension
-        val header = "time(s),xAcc(m/s^2),yAcc(m/s^2),zAcc(m/s^2),"
-        var csvData = header + "\n"
+        var csvData = ""
+
+        // ファイルが存在するか調べる
+        val file = File(filePath)
+        if(!isFileExists(file)){
+            val header = "time(s),x(m/s^2),y(m/s^2),z(m/s^2),"
+            csvData = header + "\n"
+        }
+
         for(i in 0 until accData.timeList.size){
             csvData +=
                 accData.timeList[i].toString() + "," +
@@ -40,7 +50,7 @@ class OpenCsv {
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
-        pw.println(csvData)
+        pw.print(csvData)
         pw.close()
 
     }
@@ -48,8 +58,15 @@ class OpenCsv {
     // 重力加速度のcsv作成
     private fun createGraDataCsv(graData: GraData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/gra" + extension
-        val header = "time(s),xGra(m/s^2),yGra(m/s^2),zGra(m/s^2),"
-        var csvData = header + "\n"
+        var csvData = ""
+
+        // ファイルが存在するか調べる
+        val file = File(filePath)
+        if(!isFileExists(file)){
+            val header = "time(s),x(m/s^2),y(m/s^2),z(m/s^2),"
+            csvData = header + "\n"
+        }
+
         for(i in 0 until graData.timeList.size){
             csvData +=
                 graData.timeList[i].toString() + "," +
@@ -59,7 +76,7 @@ class OpenCsv {
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
-        pw.println(csvData)
+        pw.print(csvData)
         pw.close()
 
     }
@@ -67,17 +84,27 @@ class OpenCsv {
     // 位置情報のcsv作成
     private fun createLocDataCsv(locData: LocData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/loc" + extension
-        val header = "time(s),lat(°),lon(°),"
-        var csvData = header + "\n"
+        var csvData = ""
+
+        // ファイルが存在するか調べる
+        val file = File(filePath)
+        if(!isFileExists(file)){
+            val header = "time(s),lat(°),lon(°),dis(km),speed(km/h),"
+            csvData = header + "\n"
+        }
+
         for(i in 0 until locData.timeList.size){
+            val formattedString = String.format("%.5f", locData.disList[i])
             csvData +=
                 locData.timeList[i].toString() + "," +
-                locData.latList[i].toString() + "," +
-                locData.lonList[i].toString() + "," + "\n"
+                        locData.latList[i].toString() + "," +
+                        locData.lonList[i].toString() + "," +
+                        formattedString + "," +
+                        locData.speedList[i].toString() + "," + "\n"
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
-        pw.println(csvData)
+        pw.print(csvData)
         pw.close()
 
     }
@@ -85,8 +112,15 @@ class OpenCsv {
     // 気圧のcsv作成
     private fun createBarDataCsv(barData: BarData, fileName: String){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/bar" + extension
-        val header = "time(s),bar(kPa),"
-        var csvData = header + "\n"
+        var csvData = ""
+
+        // ファイルが存在するか調べる
+        val file = File(filePath)
+        if(!isFileExists(file)){
+            val header = "time(s),bar(kPa),"
+            csvData = header + "\n"
+        }
+
         for(i in 0 until barData.timeList.size){
             csvData +=
                 barData.timeList[i].toString() + "," +
@@ -94,22 +128,23 @@ class OpenCsv {
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
-        pw.println(csvData)
+        pw.print(csvData)
         pw.close()
 
     }
 
+    /*
     // 特徴量のcsv作成
     private fun createFeatureValueDataCsv(featureValueData: FeatureValueData, fileName: String, common: Common = Common()){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName + "/fv" + extension
 
         var header = "accSd(m/s^2),"
-        val fqMax = 40
+        val fqMax = 20
         val fqWidth = 0.5
         for(i in 0 until (fqMax/fqWidth).toInt()){
             header += (i*fqWidth).toString() + "~" + ((i+1)*fqWidth).toString() + "(Hz),"
         }
-        header += "airPressure,"
+        header += "sensingAirPressure(kPa),estimatedAirPressure(kPa)"
 
         var csvData = header + "\n"
         csvData += featureValueData.accSd.toString() + ","
@@ -118,18 +153,29 @@ class OpenCsv {
             common.log("fvAmp[${i}]: ${featureValueData.ampSptList[i]}")
             csvData += featureValueData.ampSptList[i].toString() + ","
         }
-        csvData += featureValueData.airPressure.toString() + ","
+        csvData += featureValueData.sensingAirPressure.toString() + ","
+        csvData += featureValueData.estimatedAirPressure.toString() + ","
+        csvData += "\n"
+        csvData += "startGetFv,"
+        for(i in 0 until featureValueData.startGetFv.size){
+            csvData += featureValueData.startGetFv[i].toString() + ","
+        }
+        csvData += "stopGetFv,"
+        for(i in 0 until featureValueData.stopGetFv.size){
+            csvData += featureValueData.stopGetFv[i].toString() + ","
+        }
         csvData += "\n"
 
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
-        pw.println(csvData)
+        pw.print(csvData)
         pw.close()
 
     }
+    */
 
     // センサデータのcsv作成
-    fun createCsv(startDate: LocalDateTime, accData: AccData, graData: GraData,locData: LocData, barData: BarData, featureValueData: FeatureValueData){
+    fun createSensorDataCsv(startDate: LocalDateTime, accData: AccData, graData: GraData, locData: LocData, barData: BarData): String{
         val fileName = createFileName(startDate)
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName
         val f = File(filePath)
@@ -146,7 +192,11 @@ class OpenCsv {
         createGraDataCsv(graData, fileName)
         createLocDataCsv(locData,fileName)
         createBarDataCsv(barData, fileName)
-        createFeatureValueDataCsv(featureValueData, fileName)
+
+        return filePath
 
     }
+
+
+
 }

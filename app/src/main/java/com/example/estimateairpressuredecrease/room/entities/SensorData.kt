@@ -15,4 +15,6 @@ data class SensorData (
     var sensingAirPressure: Int = 0,
     // 推定空気圧
     var estimatedAirPressure: Int = 0,
+    // センサデータのファイルパス
+    var sensorDataPath: String,
 )

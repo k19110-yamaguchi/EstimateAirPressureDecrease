@@ -13,12 +13,12 @@ import com.example.estimateairpressuredecrease.MainViewModel
 import com.example.estimateairpressuredecrease.sensors.Accelerometer
 import com.example.estimateairpressuredecrease.sensors.Barometric
 import com.example.estimateairpressuredecrease.sensors.Gravity
-import com.example.estimateairpressuredecrease.sensors.Location
+import com.example.estimateairpressuredecrease.sensors.Gps
 import com.example.estimateairpressuredecrease.ui.theme.element
 import java.time.LocalDateTime
 
 @Composable
-fun Sensing(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewModel: MainViewModel, common: Common = Common()) {
+fun Sensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel: MainViewModel, common: Common = Common()) {
     Text(text = "センシング画面", fontSize = common.largeFont)
 
     Spacer(modifier = androidx.compose.ui.Modifier.height(common.space))
@@ -59,7 +59,7 @@ fun Sensing(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, vi
 }
 
 // センシングを終了
-fun stopSensing(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, viewModel: MainViewModel){
+fun stopSensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel: MainViewModel){
     // 現在時刻(終了)の取得
     viewModel.stopDate = LocalDateTime.now()
     // センサーの停止

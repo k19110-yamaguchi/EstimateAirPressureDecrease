@@ -7,13 +7,13 @@ import com.example.estimateairpressuredecrease.components.MainContent
 import com.example.estimateairpressuredecrease.sensors.Accelerometer
 import com.example.estimateairpressuredecrease.sensors.Barometric
 import com.example.estimateairpressuredecrease.sensors.Gravity
-import com.example.estimateairpressuredecrease.sensors.Location
+import com.example.estimateairpressuredecrease.sensors.Gps
 import com.google.accompanist.permissions.*
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 // パーミッションの処理
-fun CheckPermissions(acc: Accelerometer, gra: Gravity, loc: Location, bar: Barometric, common: Common = Common()){
+fun CheckPermissions(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, common: Common = Common()){
     // パーミッションの状態を取得
     val permissionsStates: MultiplePermissionsState = rememberMultiplePermissionsState(
         listOf(
