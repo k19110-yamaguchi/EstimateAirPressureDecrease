@@ -423,6 +423,7 @@ class MainViewModel @Inject constructor(
         stopDate = initDate
         sensingAirPressure = 0
         estimatedAirPressure = 0
+        isRequiredData = false
 
         xAcc = -1.0
         yAcc = -1.0
