@@ -37,7 +37,7 @@ class OpenCsv {
         // ファイルが存在するか調べる
         val file = File(filePath)
         if(!isFileExists(file)){
-            val header = "time(s),x(m/s^2),y(m/s^2),z(m/s^2),"
+            val header = "time(s),x(m/s^2),y(m/s^2),z(m/s^2)"
             csvData = header + "\n"
         }
 
@@ -46,7 +46,7 @@ class OpenCsv {
                 accData.timeList[i].toString() + "," +
                 accData.xAccList[i].toString() + "," +
                 accData.yAccList[i].toString() + "," +
-                accData.zAccList[i].toString() + "," + "\n"
+                accData.zAccList[i].toString() + "\n"
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
@@ -63,7 +63,7 @@ class OpenCsv {
         // ファイルが存在するか調べる
         val file = File(filePath)
         if(!isFileExists(file)){
-            val header = "time(s),x(m/s^2),y(m/s^2),z(m/s^2),"
+            val header = "time(s),x(m/s^2),y(m/s^2),z(m/s^2)"
             csvData = header + "\n"
         }
 
@@ -72,7 +72,7 @@ class OpenCsv {
                 graData.timeList[i].toString() + "," +
                         graData.xGraList[i].toString() + "," +
                         graData.yGraList[i].toString() + "," +
-                        graData.zGraList[i].toString() + "," + "\n"
+                        graData.zGraList[i].toString() + "\n"
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
@@ -89,7 +89,7 @@ class OpenCsv {
         // ファイルが存在するか調べる
         val file = File(filePath)
         if(!isFileExists(file)){
-            val header = "time(s),lat(°),lon(°),dis(km),speed(km/h),"
+            val header = "time(s),lat(°),lon(°),dis(km),speed(km/h)"
             csvData = header + "\n"
         }
 
@@ -100,7 +100,7 @@ class OpenCsv {
                         locData.latList[i].toString() + "," +
                         locData.lonList[i].toString() + "," +
                         formattedString + "," +
-                        locData.speedList[i].toString() + "," + "\n"
+                        locData.speedList[i].toString() + "\n"
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
@@ -117,14 +117,14 @@ class OpenCsv {
         // ファイルが存在するか調べる
         val file = File(filePath)
         if(!isFileExists(file)){
-            val header = "time(s),bar(kPa),"
+            val header = "time(s),bar(kPa)"
             csvData = header + "\n"
         }
 
         for(i in 0 until barData.timeList.size){
             csvData +=
                 barData.timeList[i].toString() + "," +
-                        barData.barList[i].toString() + "," + "\n"
+                        barData.barList[i].toString() + "\n"
         }
         var fw = FileWriter(filePath, fileAppend)
         var pw = PrintWriter(BufferedWriter(fw))
