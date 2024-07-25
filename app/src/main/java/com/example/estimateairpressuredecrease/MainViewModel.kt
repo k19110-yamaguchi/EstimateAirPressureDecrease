@@ -132,6 +132,9 @@ class MainViewModel @Inject constructor(
     var stopGetFv: MutableList<Double> = mutableListOf()
     var estimatedRange = 10
 
+    // DataManagement
+    var dataManagementMessage: String by mutableStateOf("")
+
     // Main
     // 最初の起動かどうか調査
     fun checkIsInitialization(){
@@ -445,6 +448,15 @@ class MainViewModel @Inject constructor(
         // Bar
         bar = -1.0
         barTime = -1.0
+    }
+
+    // DataManagement
+    // 受け取ったセンサデータを削除
+    fun deleteSensorData(sensorData: SensorData){
+        viewModelScope.launch {
+            sensorDao.deleteSensorData(sensorData)
+            dataManagementMessage = "${sensorData.startDate}のデータを削除"
+        }
     }
 
 

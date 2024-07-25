@@ -1,10 +1,7 @@
 package com.example.estimateairpressuredecrease.components.screen
 
 import android.util.Log
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
@@ -26,113 +23,143 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Composable
-fun Home(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel: MainViewModel, common:Common = Common()) {
-
-    Text(text = "適正内データ数： ${viewModel.withinSize}")
-    Text(text = "適正外データ数： ${viewModel.outOfSize}")
-
-    Spacer(modifier = Modifier.height(common.space))
-
-    Text(text = "ホーム画面", fontSize = common.largeFont)
-
-    Spacer(modifier = Modifier.height(common.space))
-
+fun Home(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel: MainViewModel) {
+    val common = Common()
     // ホーム画面の情報を取得
     val homeData by viewModel.homeData.collectAsState(initial = emptyList())
-    val sensorData by viewModel.sensorData.collectAsState(initial = emptyList())
-
-
-    if(homeData.isNotEmpty()){
+    if (homeData.isNotEmpty()){
+        // 状態をセット
         viewModel.setHome(homeData[0])
-        if (sensorData.isNotEmpty()){
-            viewModel.countWithinData(sensorData)
+    }
+
+    // センサデータを取得
+    val sensorData by viewModel.sensorData.collectAsState(initial = emptyList())
+    if (sensorData.isNotEmpty()){
+        // 適正空気圧の範囲内，外のセンサデータの個数をカウント
+        viewModel.countWithinData(sensorData)
+        // todo: 推定状態に移行できるかどうか
+        //viewModel.checkIsEstState()
+    }
+
+    // 画面表示
+    Box(
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        // トップ
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
+            Spacer(modifier = Modifier.height(common.space))
+
+            Text(text = "ホーム画面", fontSize = common.largeFont)
+
+            Text(text = "適正内データ数： ${viewModel.withinSize}")
+            Text(text = "適正外データ数： ${viewModel.outOfSize}")
+            Button(
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = element,
+                    contentColor = Color.White
+                ),
+                onClick = {
+                    viewModel.screenStatus = common.dataManagementNum
+                }) {
+                Text(text = "データ管理", fontSize = common.smallFont)
+            }
         }
 
-        // 状態の表示
-        if(viewModel.isTrainingState) {
-            Text(text = "学習状態", fontSize = common.largeFont)
-            // todo: 推定状態に移行できるかどうか
-            //viewModel.checkIsEstState()
+        // センター
+        Column(modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ){
+            // 状態の表示
+            if(homeData.isNotEmpty()){
+                if(viewModel.isTrainingState) {
+                    Text(text = "学習状態", fontSize = common.largeFont)
 
-        } else {
-            Text(text = "推定状態", fontSize = common.largeFont)
-            if(sensorData.isNotEmpty()){
-                // 推定結果の表示
-                val estimatedAirPressureText = viewModel.showEstimatedAirPressure(sensorData)
-                if(estimatedAirPressureText != ""){
-                    Text(text = "最小適正空気圧: ${estimatedAirPressureText}kPa", fontSize = common.smallFont)
+                } else {
+                    Text(text = "推定状態", fontSize = common.largeFont)
+                    // todo 推定空気圧の取得，表示
                 }
-                if(estimatedAirPressureText.toInt() < viewModel.minProperPressure){
-                    Text(text = "空気を注入してください", fontSize = common.largeFont, color = Color.Red)
+            }
+
+            Spacer(modifier = Modifier.height(common.space))
+
+            // 空気注入時期
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if(viewModel.inflatedDate == viewModel.initDate){
+                    Text(text = "空気を注入してください", fontSize = common.smallFont)
+                }else{
+                    Text(text = "空気注入時期: ${viewModel.showInflateDate()}", fontSize = common.smallFont)
+                }
+
+                Spacer(modifier = Modifier.width(common.space))
+
+                Button(
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = element,
+                        contentColor = Color.White
+                    ),
+                    onClick = {
+                        viewModel.updateInflateDate()
+                    }) {
+                    Text(text = "空気\n注入", fontSize = common.smallFont)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(common.space))
+
+            // 最小適正空気圧表示、変更
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "最小適正空気圧: ${viewModel.minProperPressure}kPa", fontSize = common.smallFont)
+
+                Spacer(modifier = Modifier.width(common.space))
+
+                Button(
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = element,
+                        contentColor = Color.White
+                    ),
+                    onClick = {
+                        viewModel.screenStatus = common.inputNum
+                        viewModel.inputStatus = common.inputProperPressureNum
+                    }) {
+                    Text(text = "変更", fontSize = common.smallFont)
                 }
             }
         }
-    }
 
-    Spacer(modifier = Modifier.height(common.space))
+        // ボトム
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Bottom
+        ) {
+            // メッセージの表示
+            Text(text = viewModel.homeMessage, fontSize = common.smallFont)
 
-    // 空気注入時期
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if(viewModel.inflatedDate == viewModel.initDate){
-            Text(text = "空気を注入してください", fontSize = common.smallFont)
-        }else{
-            Text(text = "空気注入時期: ${viewModel.showInflateDate()}", fontSize = common.smallFont)
-        }
-
-        Spacer(modifier = Modifier.width(common.space))
-
-        Button(
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = element,
-                contentColor = Color.White
-            ),
-            onClick = {
-                viewModel.updateInflateDate()
-            }) {
-            Text(text = "空気\n注入", fontSize = common.smallFont)
-        }
-    }
-
-    Spacer(modifier = Modifier.height(common.space))
-
-    // 最小適正空気圧表示、変更
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text = "最小適正空気圧: ${viewModel.minProperPressure}kPa", fontSize = common.smallFont)
-
-        Spacer(modifier = Modifier.width(common.space))
-
-        Button(
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = element,
-                contentColor = Color.White
-            ),
-            onClick = {
-            viewModel.screenStatus = common.inputNum
-            viewModel.inputStatus = common.inputProperPressureNum
-        }) {
-            Text(text = "変更", fontSize = common.smallFont)
+            // 測定開始ボタン
+            Button(
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = element,
+                    contentColor = Color.White
+                ),
+                onClick = {
+                    // todo: startSensing()をSensingに移動させる
+                    startSensing(acc, gra, loc, bar, viewModel)
+                    viewModel.screenStatus = common.sensingNum
+                }) {
+                Text(text = "測定開始", fontSize = common.largeFont)
+            }
+            Spacer(modifier = Modifier.height(common.space))
         }
     }
-
-    Spacer(modifier = Modifier.height(common.space))
-
-    Button(
-        colors = ButtonDefaults.buttonColors(
-        backgroundColor = element,
-        contentColor = Color.White
-        ),
-        onClick = {
-            startSensing(acc, gra, loc, bar, viewModel)
-            viewModel.screenStatus = common.sensingNum
-        }) {
-        Text(text = "測定開始", fontSize = common.largeFont)
-    }
-
-    Text(text = viewModel.homeMessage, fontSize = common.smallFont)
 }
 
 // センシングを開始

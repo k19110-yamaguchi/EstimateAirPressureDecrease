@@ -24,6 +24,7 @@ class Common {
     val homeNum = 1
     val sensingNum = 2
     val inputNum = 3
+    val dataManagementNum = 4
 
     // 入力画面番号
     val inputProperPressureNum = 1
