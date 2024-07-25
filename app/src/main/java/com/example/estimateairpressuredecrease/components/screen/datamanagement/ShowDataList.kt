@@ -13,10 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.estimateairpressuredecrease.MainViewModel
 import com.example.estimateairpressuredecrease.ui.theme.element
 
 @Composable
-fun ShowDataList(sensorData: List<SensorData>){
+fun ShowDataList(sensorData: List<SensorData>, viewModel: MainViewModel){
     val common = Common()
     LazyColumn(modifier = Modifier.height(500.dp)){
         items(sensorData){sd ->
@@ -33,7 +34,7 @@ fun ShowDataList(sensorData: List<SensorData>){
                         contentColor = Color.White
                     ),
                     onClick = {
-                        // todo: idをもらってそのデータを削除する
+                        viewModel.deleteSensorData(sd)
                     }) {
                     Text(text = "削除", fontSize = common.smallFont)
                 }

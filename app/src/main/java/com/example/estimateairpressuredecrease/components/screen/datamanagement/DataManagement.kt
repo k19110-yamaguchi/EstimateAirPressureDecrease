@@ -38,7 +38,7 @@ fun DataManagement(viewModel: MainViewModel){
             verticalArrangement = Arrangement.Center
         ){
             if (sensorData.isNotEmpty()) {
-                ShowDataList(sensorData)
+                ShowDataList(sensorData, viewModel)
             }
         }
 
@@ -48,6 +48,7 @@ fun DataManagement(viewModel: MainViewModel){
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Bottom
         ) {
+            Text(text = viewModel.dataManagementMessage)
             Button(
                 colors = ButtonDefaults.buttonColors(
                     backgroundColor = element,
