@@ -1,8 +1,6 @@
-package com.example.estimateairpressuredecrease.components.screen
+package com.example.estimateairpressuredecrease.components.screen.datamanagement
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
@@ -12,37 +10,56 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+
 import com.example.estimateairpressuredecrease.Common
 import com.example.estimateairpressuredecrease.MainViewModel
-import com.example.estimateairpressuredecrease.components.screen.datamanagement.ShowDataList
 import com.example.estimateairpressuredecrease.ui.theme.element
 
 @Composable
 fun DataManagement(viewModel: MainViewModel){
-    var common = Common()
+    val common = Common()
     val sensorData by viewModel.sensorData.collectAsState(initial = emptyList())
 
-    Text(text = "データ管理画面", fontSize = common.largeFont)
-    Spacer(modifier = Modifier.height(common.space))
+    // 画面表示
+    Box(modifier = Modifier.fillMaxSize()){
+        // トップ
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ){
+            Spacer(modifier = Modifier.height(common.space))
+            Text(text = "データ管理画面", fontSize = common.largeFont)
+        }
 
-    if(sensorData.isNotEmpty()){
-        ShowDataList(sensorData)
-    }
+        // センター
+        Column(modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ){
+            if (sensorData.isNotEmpty()) {
+                ShowDataList(sensorData)
+            }
+        }
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Button(
-            colors = ButtonDefaults.buttonColors(
-                backgroundColor = element,
-                contentColor = Color.White
-            ),
-            onClick = {
-                viewModel.screenStatus = common.homeNum
-            }) {
-            Text(text = "ホーム画面", fontSize = common.smallFont)
+        // ボトム
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Bottom
+        ) {
+            Button(
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = element,
+                    contentColor = Color.White
+                ),
+                onClick = {
+                    viewModel.screenStatus = common.homeNum
+                }) {
+                Text(text = "ホーム画面", fontSize = common.smallFont)
+            }
+
+            Spacer(modifier = Modifier.height(common.space))
         }
     }
-
-
 }

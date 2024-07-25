@@ -1,8 +1,6 @@
 package com.example.estimateairpressuredecrease.components.screen.datamanagement
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import com.example.estimateairpressuredecrease.Common
@@ -14,13 +12,13 @@ import androidx.compose.material.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.example.estimateairpressuredecrease.ui.theme.element
-
 
 @Composable
 fun ShowDataList(sensorData: List<SensorData>){
     val common = Common()
-    LazyColumn{
+    LazyColumn(modifier = Modifier.height(500.dp)){
         items(sensorData){sd ->
             Row(
                 verticalAlignment = Alignment.CenterVertically
@@ -35,7 +33,7 @@ fun ShowDataList(sensorData: List<SensorData>){
                         contentColor = Color.White
                     ),
                     onClick = {
-                        /*TODO*/
+                        // todo: idをもらってそのデータを削除する
                     }) {
                     Text(text = "削除", fontSize = common.smallFont)
                 }
