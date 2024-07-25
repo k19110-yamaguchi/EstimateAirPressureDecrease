@@ -1,10 +1,7 @@
 package com.example.estimateairpressuredecrease.components.screen
 
 import android.util.Log
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
@@ -30,6 +27,17 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel:
 
     Text(text = "適正内データ数： ${viewModel.withinSize}")
     Text(text = "適正外データ数： ${viewModel.outOfSize}")
+    Button(
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = element,
+            contentColor = Color.White
+        ),
+        onClick = {
+            viewModel.screenStatus = common.dataManagementNum
+        }) {
+        Text(text = "データ管理", fontSize = common.smallFont)
+    }
+
 
     Spacer(modifier = Modifier.height(common.space))
 

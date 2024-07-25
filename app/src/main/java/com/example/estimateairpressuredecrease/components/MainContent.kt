@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.estimateairpressuredecrease.Common
 import com.example.estimateairpressuredecrease.MainViewModel
+import com.example.estimateairpressuredecrease.components.screen.DataManagement
 import com.example.estimateairpressuredecrease.components.screen.Home
 import com.example.estimateairpressuredecrease.components.screen.Input
 import com.example.estimateairpressuredecrease.components.screen.sensing.Sensing
@@ -33,6 +34,10 @@ fun MainContent(
         // 入力画面を表示
         common.inputNum -> {
             Input(viewModel)
+        }
+
+        common.dataManagementNum -> {
+            DataManagement(viewModel)
         }
         else -> {
 
