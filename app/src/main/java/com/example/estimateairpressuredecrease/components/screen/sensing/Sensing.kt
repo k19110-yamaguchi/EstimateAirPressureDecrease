@@ -35,7 +35,7 @@ fun Sensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewMod
             Spacer(modifier = Modifier.height(common.space))
             Text(text = "センシング画面", fontSize = common.largeFont)
         }
-        
+
         // センター
         Column(modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,

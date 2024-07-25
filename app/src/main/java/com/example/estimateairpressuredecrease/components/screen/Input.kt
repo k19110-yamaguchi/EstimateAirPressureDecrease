@@ -91,7 +91,7 @@ fun Input(viewModel: MainViewModel){
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(common.space))
+                    Spacer(modifier = Modifier.height(common.space/4))
 
                     // 最小適正空気圧を計算
                     Button(
@@ -105,8 +105,27 @@ fun Input(viewModel: MainViewModel){
                             common.log("タイヤ幅(mm): ${viewModel.editingTireWidth}")
                             viewModel.calcMinProperPressure()
                         }) {
-                        Text(text = "最小適正空気圧計算", fontSize = common.normalFont)
+                        Text(text = "最小適正空気圧計算", fontSize = common.smallFont)
                     }
+
+                    Spacer(modifier = Modifier.height(common.space/2))
+
+                    // 空気圧入力欄
+                    OutlinedTextField(
+                        modifier = Modifier.width(common.textField),
+                        value = viewModel.editingAirPressure,
+                        label = { Text("${labelText}を入力", fontSize = common.smallFont, fontWeight = FontWeight.Bold, color = element) },
+                        textStyle = TextStyle(fontSize = common.normalFont, color = Color.Black, textAlign = TextAlign.Center),
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
+                        onValueChange = {
+                            viewModel.editingAirPressure = it
+                        },
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            cursorColor = element, // カーソルの色を設定
+                            focusedBorderColor = element, // フォーカスされた際の枠の色を設定
+                            unfocusedBorderColor = element // フォーカスが外れた際の枠の色を設定
+                        )
+                    )
                 }
 
                 // 測定空気圧入力
@@ -121,28 +140,38 @@ fun Input(viewModel: MainViewModel){
 
         }
 
+
+        if(viewModel.inputStatus == common.inputPressureNum){
+            // センター
+            Column(modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ){
+                // 空気圧入力欄
+                OutlinedTextField(
+                    modifier = Modifier.width(common.textField),
+                    value = viewModel.editingAirPressure,
+                    label = { Text("${labelText}を入力", fontSize = common.smallFont, fontWeight = FontWeight.Bold, color = element) },
+                    textStyle = TextStyle(fontSize = common.normalFont, color = Color.Black, textAlign = TextAlign.Center),
+                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
+                    onValueChange = {
+                        viewModel.editingAirPressure = it
+                    },
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        cursorColor = element, // カーソルの色を設定
+                        focusedBorderColor = element, // フォーカスされた際の枠の色を設定
+                        unfocusedBorderColor = element // フォーカスが外れた際の枠の色を設定
+                    )
+                )
+            }
+        }
+
         // ボトム
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Bottom
         ){
-            // 空気圧入力欄
-            OutlinedTextField(
-                modifier = Modifier.width(common.textField),
-                value = viewModel.editingAirPressure,
-                label = { Text("${labelText}を入力", fontSize = common.smallFont, fontWeight = FontWeight.Bold, color = element) },
-                textStyle = TextStyle(fontSize = common.normalFont, color = Color.Black, textAlign = TextAlign.Center),
-                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
-                onValueChange = {
-                    viewModel.editingAirPressure = it
-                },
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    cursorColor = element, // カーソルの色を設定
-                    focusedBorderColor = element, // フォーカスされた際の枠の色を設定
-                    unfocusedBorderColor = element // フォーカスが外れた際の枠の色を設定
-                )
-            )
             // エラーの表示
             Text(text = viewModel.errorInputAirPressure, fontSize = common.smallFont, color = Color.Red)
             Button(
