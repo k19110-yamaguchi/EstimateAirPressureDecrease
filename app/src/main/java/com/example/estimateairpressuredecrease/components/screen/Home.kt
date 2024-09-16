@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.example.estimateairpressuredecrease.Common
 import com.example.estimateairpressuredecrease.MainViewModel
+import com.example.estimateairpressuredecrease.components.screen.sensing.Sensing
 import com.example.estimateairpressuredecrease.sensors.Accelerometer
 import com.example.estimateairpressuredecrease.sensors.Barometric
 import com.example.estimateairpressuredecrease.sensors.Gravity
@@ -135,6 +136,7 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel:
             }
         }
 
+
         // ボトム
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -152,7 +154,7 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel:
                 ),
                 onClick = {
                     // todo: startSensing()をSensingに移動させる
-                    startSensing(acc, gra, loc, bar, viewModel)
+                    // startSensing(acc, gra, loc, bar, viewModel)
                     viewModel.screenStatus = common.sensingNum
                 }) {
                 Text(text = "測定開始", fontSize = common.largeFont)
@@ -163,7 +165,7 @@ fun Home(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel:
 }
 
 // センシングを開始
-private fun startSensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel: MainViewModel, common: Common = Common()){
+fun startSensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel: MainViewModel, common: Common = Common()){
     // 現在時刻(開始)を取得
     viewModel.startDate = LocalDateTime.now()
     var isEnableGettingLoc = false

@@ -45,7 +45,7 @@ class MainViewModel @Inject constructor(
     // 適正内のデータ数
     var withinSize by mutableStateOf(0)
     // 推定に必要な適正外、適正内の特徴量の数
-    val requiredFvSize = 10
+    private val requiredFvSize = 10
     // 初期の日付
     val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
     // 空気を注入した時期
@@ -73,6 +73,8 @@ class MainViewModel @Inject constructor(
     val sensorData = sensorDao.getSensorData().distinctUntilChanged()
     // データを保存するまでの時間(s)
     val saveTime: Double = 10.0
+    // センシング画面に初めて移動したか
+    var isSensingInit = true
     // 推定に必要なデータがあるか
     var isRequiredData: Boolean by mutableStateOf(false)
     // 測定開始時刻
@@ -328,6 +330,8 @@ class MainViewModel @Inject constructor(
             val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure, sensorDataPath = sensorDataPath)
             addSensor(newSensor)
             resetSensing()
+
+            // todo: 走行データを推定に使用できる区間に分割
         }else{
             resetSensorData()
         }
@@ -426,6 +430,7 @@ class MainViewModel @Inject constructor(
         stopDate = initDate
         sensingAirPressure = 0
         estimatedAirPressure = 0
+        isSensingInit = true
         isRequiredData = false
 
         xAcc = -1.0
