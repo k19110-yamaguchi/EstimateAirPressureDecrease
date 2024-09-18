@@ -8,7 +8,31 @@ import com.chaquo.python.android.AndroidPlatform
 
 class RunPython {
     val context: Context = MainActivity.content
-    var filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString()
+    private var filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString()
+
+
+    //　todo: 共通区間の抽出
+
+
+    // 走行データを推定に使用できる区間に分割
+    fun extractIntervals(sensingDate: String, common: Common = Common()){
+
+        // Pythonコードを実行する前にPython.start()の呼び出しが必要
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(MainActivity.content))
+        }
+        val py = Python.getInstance()
+        // スクリプト名
+        val module = py.getModule("extractIntervals")
+        // 区間をPythonで分割
+        val res = module.callAttr("extractIntervals", sensingDate, filePath).toString()
+        val isSuccess = res.toBoolean()
+        if (isSuccess){
+            common.log("走行データを推定に使用できる区間の抽出に成功")
+        }
+
+    }
+
 
     // 特徴量を取得
     fun createFeatureValue(newAcc: MutableList<List<Double>>, newGra: MutableList<List<Double>>, newLoc: MutableList<List<Double>>, newBar: MutableList<List<Double>>): List<Double> {
