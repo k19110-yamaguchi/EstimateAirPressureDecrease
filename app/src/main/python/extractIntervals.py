@@ -1,25 +1,20 @@
 # 仮想環境をアクティブ
+## python3 -m venv path/to/venv  
 ## source path/to/venv/bin/activate
 
 # ライブラリの読み込み
 ## pip install pandas
 import pandas as pd 
-import glob as gb
 ## pip install pyproj
 from pyproj import Transformer
 import numpy as np
-import math
-import re
 import csv
 
-# Headerクラス
-## 加速度ヘッダー
-class AccHeader:
-    def __init__(self,time="time(s)",x="x(m/s^2)",y="y(m/s^2)",z="z(m/s^2)"):
-        self.time = time
-        self.x = x
-        self.y = y
-        self.z = z           
+#import os
+# スクリプトのディレクトリに移動
+#os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+# Headerクラス      
 ## 位置情報ヘッダー
 class LocHeader:
     def __init__(self,time="time(s)",lat="lat(°)",lon="lon(°)",dis="dis(km)", speed="speed(km/h)"):
@@ -28,14 +23,10 @@ class LocHeader:
         self.lon = lon
         self.dis = dis
         self.speed = speed    
-## 気圧ヘッダー
-class BarHeader:
-    def __init__(self,time="time(s)",bar="bar(kPa)"):
-        self.time = time
-        self.bar = bar     
+    
 ## 区間ヘッダー
 class IntervalsHeader:
-    def __init__(self,startTime="startTime(s)",stopTime="stotTime(s)"):
+    def __init__(self,startTime="startTime(s)",stopTime="stopTime(s)"):
         self.startTime = startTime
         self.stopTime = stopTime   
 
@@ -50,9 +41,7 @@ thresholdDis = 0.4
 thresholdSimPointDis = 10.0   
 
 # ヘッダーの取得
-ah = AccHeader()
 lh = LocHeader()
-bh = BarHeader()
 ih = IntervalsHeader()
 
 # 「緯度経度(°)」→「平面座標系(m)」に変換
@@ -68,7 +57,6 @@ def convertToRCS(locDf):
         resXList.append(x)
         resYList.append(y)         
     return [resXList, resYList]
-
 
 # 取得したデータのみの分析
 # 走行区間の抽出
@@ -170,10 +158,12 @@ def extractLocDf(locDf, startTime, stopTime):
     res = locDf[(startTime <= locDf[lh.time]) & (locDf[lh.time] <= stopTime)]
     return res.reset_index(drop=True)
 
-# 安定区間に使えそうな区間を抽出
+## 安定区間に使えそうな区間を抽出
 def extractIntervals(sensingDate, filePath):
+    print("extractIntervals: 開始")
+        
     # 取得したデータ
-    locDf = pd.read_csv(f"{filePath}/{sensingDate}/loc.csv")                                       
+    locDf = pd.read_csv(f"{filePath}/{sensingDate}/loc.csv")    
         
     # 走行区間の抽出    
     startTime, stopTime = extractRidingIntervals(locDf)    
@@ -197,6 +187,7 @@ def extractIntervals(sensingDate, filePath):
         row = [startTime[i], stopTime[i]]
         data.append(row)
     intervalsDf = pd.DataFrame(data, columns=columns)    
-    intervalsDf.to_csv(f"{filePath}/{sensingDate}.csv", index=False)
-
-
+    intervalsDf.to_csv(f"{filePath}/{sensingDate}/intervals.csv", index=False)
+    
+    print("extractIntervals: 終了")    
+    return True    

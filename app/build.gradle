@@ -35,6 +35,8 @@ android {
                 install "pandas"
                 install "geopy"
                 install "scikit-learn"
+                install "pyproj"
+
             }
         }
     }

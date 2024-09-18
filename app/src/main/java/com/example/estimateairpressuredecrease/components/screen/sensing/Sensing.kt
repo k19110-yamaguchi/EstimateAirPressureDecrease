@@ -6,6 +6,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,7 +31,6 @@ fun Sensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewMod
         viewModel.isSensingInit = false
 
     }
-
 
     // 表示
     Box(modifier = Modifier.fillMaxSize()){
@@ -94,6 +94,7 @@ fun Sensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewMod
 }
 
 // センシングを開始
+// todo: startSensingとstartSensing2をまとめる
 fun startSensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel: MainViewModel){
     val common = Common()
     // 現在時刻(開始)を取得

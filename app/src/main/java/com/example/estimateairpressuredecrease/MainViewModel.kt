@@ -1,5 +1,6 @@
 package com.example.estimateairpressuredecrease
 import android.util.Log
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -83,6 +84,8 @@ class MainViewModel @Inject constructor(
     var stopDate: LocalDateTime by mutableStateOf(initDate)
     // 推定空気圧
     var estimatedAirPressure: Int by mutableStateOf(0)
+    // センシングデータの日付リスト
+    var sensingDates: MutableList<LocalDateTime> = mutableListOf()
 
 
     // Acc
@@ -194,6 +197,14 @@ class MainViewModel @Inject constructor(
             } else {
                 outOfSize += 1
             }
+        }
+    }
+
+    // センシングデータの日付リストを取得
+    fun getSensingDates(sensorData: List<SensorData>){
+        sensingDates = emptyList<LocalDateTime>().toMutableList()
+        for (sd in sensorData){
+            sensingDates.add(sd.startDate)
         }
     }
 
@@ -324,14 +335,31 @@ class MainViewModel @Inject constructor(
         // ファイルの作成
         val openCsv = OpenCsv()
         val sensorDataPath = openCsv.createSensorDataCsv(startDate, newAcc, newGra, newLoc, newBar)
-        common.log("センサデータを保存")
+        common.log("センサデータをcsvとして保存")
 
         if(isFinished){
+
+            // 走行データを推定に使用できる区間に分割
+            val sensorDatesStr: MutableList<String> = mutableListOf()
+            for (sd in sensingDates){
+                sensorDatesStr.add(openCsv.createFileName(sd))
+            }
+
+            // 走行データから推定に使用できる区間に分割
+            val curtSensorDate = openCsv.createFileName(startDate)
+            sensorDatesStr.add(curtSensorDate)
+            val rp = RunPython()
+            rp.extractIntervals(curtSensorDate)
+
+            //　todo: 共通区間の抽出
+
+            // センサ情報をデータベースに保存
             val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure, sensorDataPath = sensorDataPath)
             addSensor(newSensor)
+            common.log("センサデータをデータベースに保存")
+
             resetSensing()
 
-            // todo: 走行データを推定に使用できる区間に分割
         }else{
             resetSensorData()
         }

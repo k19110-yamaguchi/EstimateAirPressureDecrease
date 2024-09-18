@@ -17,7 +17,7 @@ class OpenCsv {
     private val extension : String = ".csv"
 
     // 保存するフォルダ名の作成
-    private fun createFileName(startDate: LocalDateTime): String {
+    fun createFileName(startDate: LocalDateTime): String {
         return startDate.toString()
             .replace("-", "")
             .replace("T", "")

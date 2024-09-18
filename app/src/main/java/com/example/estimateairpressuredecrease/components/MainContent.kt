@@ -25,7 +25,7 @@ fun MainContent(
     when (viewModel.screenStatus) {
         // ホーム画面を表示
         common.homeNum -> {
-            Home(acc, gra, loc, bar, viewModel)
+            Home(viewModel)
         }
         // センシング画面を表示
         common.sensingNum -> {
