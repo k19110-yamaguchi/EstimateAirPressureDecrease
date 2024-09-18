@@ -56,18 +56,26 @@ fun Home(viewModel: MainViewModel) {
 
             Text(text = "ホーム画面", fontSize = common.largeFont)
 
-            Text(text = "適正内データ数： ${viewModel.withinSize}")
-            Text(text = "適正外データ数： ${viewModel.outOfSize}")
-            Button(
-                colors = ButtonDefaults.buttonColors(
-                    backgroundColor = element,
-                    contentColor = Color.White
-                ),
-                onClick = {
-                    viewModel.screenStatus = common.dataManagementNum
-                }) {
-                Text(text = "データ管理", fontSize = common.smallFont)
+            if (sensorData.isNotEmpty()){
+                Spacer(modifier = Modifier.height(common.space))
+
+                Text(text = "適正内データ数： ${viewModel.withinSize}")
+                Text(text = "適正外データ数： ${viewModel.outOfSize}")
+
+                Spacer(modifier = Modifier.height(common.space))
+
+                Button(
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = element,
+                        contentColor = Color.White
+                    ),
+                    onClick = {
+                        viewModel.screenStatus = common.dataManagementNum
+                    }) {
+                    Text(text = "データ管理", fontSize = common.smallFont)
+                }
             }
+
         }
 
         // センター

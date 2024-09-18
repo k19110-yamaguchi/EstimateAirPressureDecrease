@@ -486,11 +486,16 @@ class MainViewModel @Inject constructor(
     // DataManagement
     // 受け取ったセンサデータを削除
     fun deleteSensorData(sensorData: SensorData){
+        val openCsv = OpenCsv()
+        // センサデータのcsvを削除
+        openCsv.deleteSensorDataCsv(sensorData.startDate)
         viewModelScope.launch {
             sensorDao.deleteSensorData(sensorData)
             dataManagementMessage = "${sensorData.startDate}のデータを削除"
         }
+
     }
+
 
 
     // ↓ 書き換え前
