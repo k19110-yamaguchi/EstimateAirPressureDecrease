@@ -198,5 +198,29 @@ class OpenCsv {
     }
 
 
+    // フォルダを再帰的に削除する関数
+    private fun deleteFolderRecursively(file: File): Boolean {
+        if (file.isDirectory) {
+            val children = file.listFiles() ?: return false
+            for (child in children) {
+                deleteFolderRecursively(child)  // サブファイル/フォルダを再帰的に削除
+            }
+        }
+        return file.delete()  // 最後にフォルダ自体を削除
+    }
+
+    // センサデータのフォルダを削除
+    fun deleteSensorDataCsv(startDate: LocalDateTime){
+        val fileName = createFileName(startDate)
+        val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/" + fileName
+        val f = File(filePath)
+        if (f.exists()) {
+            deleteFolderRecursively(f)
+        }
+    }
+
+
+
+
 
 }
