@@ -85,7 +85,9 @@ class MainViewModel @Inject constructor(
     // 推定空気圧
     var estimatedAirPressure: Int by mutableStateOf(0)
     // センシングデータの日付リスト
-    var sensingDates: MutableList<LocalDateTime> = mutableListOf()
+    var sensingDateList: MutableList<LocalDateTime> = mutableListOf()
+    // センシングデータの空気圧リスト
+    var sensingAirPressureList: MutableList<Int> = mutableListOf()
 
 
     // Acc
@@ -201,10 +203,12 @@ class MainViewModel @Inject constructor(
     }
 
     // センシングデータの日付リストを取得
-    fun getSensingDates(sensorData: List<SensorData>){
-        sensingDates = emptyList<LocalDateTime>().toMutableList()
+    fun getSensingData(sensorData: List<SensorData>){
+        sensingDateList = emptyList<LocalDateTime>().toMutableList()
+        sensingAirPressureList = emptyList<Int>().toMutableList()
         for (sd in sensorData){
-            sensingDates.add(sd.startDate)
+            sensingDateList.add(sd.startDate)
+            sensingAirPressureList.add(sd.sensingAirPressure)
         }
     }
 
@@ -340,14 +344,14 @@ class MainViewModel @Inject constructor(
         if(isFinished){
 
             // 走行データを推定に使用できる区間に分割
-            val sensorDatesStr: MutableList<String> = mutableListOf()
-            for (sd in sensingDates){
-                sensorDatesStr.add(openCsv.createFileName(sd))
+            val sensorDateStrList: MutableList<String> = mutableListOf()
+            for (sd in sensingDateList){
+                sensorDateStrList.add(openCsv.createFileName(sd))
             }
 
             // 走行データから推定に使用できる区間に分割
             val curtSensorDate = openCsv.createFileName(startDate)
-            sensorDatesStr.add(curtSensorDate)
+            sensorDateStrList.add(curtSensorDate)
             val rp = RunPython()
             rp.extractIntervals(curtSensorDate)
 
@@ -357,6 +361,9 @@ class MainViewModel @Inject constructor(
             val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure, sensorDataPath = sensorDataPath)
             addSensor(newSensor)
             common.log("センサデータをデータベースに保存")
+
+            // センシング時の空気圧をcsvに保存
+            openCsv.createSensingAirPressure(sensorDateStrList, sensingAirPressureList)
 
             resetSensing()
 

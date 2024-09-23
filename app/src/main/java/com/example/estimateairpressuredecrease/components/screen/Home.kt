@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.example.estimateairpressuredecrease.Common
 import com.example.estimateairpressuredecrease.MainViewModel
+import com.example.estimateairpressuredecrease.OpenCsv
 import com.example.estimateairpressuredecrease.sensors.Accelerometer
 import com.example.estimateairpressuredecrease.sensors.Barometric
 import com.example.estimateairpressuredecrease.sensors.Gravity
@@ -37,10 +38,11 @@ fun Home(viewModel: MainViewModel) {
         // 適正空気圧の範囲内，外のセンサデータの個数をカウント
         viewModel.countWithinData(sensorData)
         // センシングデータの日付リストを取得
-        viewModel.getSensingDates(sensorData)
+        viewModel.getSensingData(sensorData)
         // todo: 推定状態に移行できるかどうか
         //viewModel.checkIsEstState()
     }
+
 
     // 画面表示
     Box(
@@ -57,12 +59,9 @@ fun Home(viewModel: MainViewModel) {
             Text(text = "ホーム画面", fontSize = common.largeFont)
 
             if (sensorData.isNotEmpty()){
-                Spacer(modifier = Modifier.height(common.space))
 
                 Text(text = "適正内データ数： ${viewModel.withinSize}")
                 Text(text = "適正外データ数： ${viewModel.outOfSize}")
-
-                Spacer(modifier = Modifier.height(common.space))
 
                 Button(
                     colors = ButtonDefaults.buttonColors(
@@ -74,8 +73,8 @@ fun Home(viewModel: MainViewModel) {
                     }) {
                     Text(text = "データ管理", fontSize = common.smallFont)
                 }
-            }
 
+            }
         }
 
         // センター
