@@ -37,8 +37,6 @@ thresholdSpeed = 5.0
 thresholdRadius = 15
 ## 推定区間に必要な距離(km)
 thresholdDis = 0.4
-## 同じ地点かどうかの推定に必要な距離(m)
-thresholdSimPointDis = 10.0   
 
 # ヘッダーの取得
 lh = LocHeader()
