@@ -68,7 +68,7 @@ class MainViewModel @Inject constructor(
     // 最小適正空気圧
     var minProperPressure by mutableStateOf(0)
     // 測定空気圧
-    var sensingAirPressure by mutableStateOf(0)
+    private var sensingAirPressure by mutableStateOf(0)
 
     // Sensing
     val sensorData = sensorDao.getSensorData().distinctUntilChanged()
@@ -343,19 +343,24 @@ class MainViewModel @Inject constructor(
 
         if(isFinished){
 
-            // 走行データを推定に使用できる区間に分割
-            val sensorDateStrList: MutableList<String> = mutableListOf()
+            // 保存されていたセンサ日付をファイル名の形に変換
+            val sensorDataFileNameList: MutableList<String> = mutableListOf()
             for (sd in sensingDateList){
-                sensorDateStrList.add(openCsv.createFileName(sd))
+                sensorDataFileNameList.add(openCsv.createFileName(sd))
             }
+            // 現在センシングした日付と空気圧を取得
+            val curtSensorDate = openCsv.createFileName(startDate)
+            sensorDataFileNameList.add(curtSensorDate)
+            sensingAirPressureList.add(sensingAirPressure)
+
 
             // 走行データから推定に使用できる区間に分割
-            val curtSensorDate = openCsv.createFileName(startDate)
-            sensorDateStrList.add(curtSensorDate)
+
             val rp = RunPython()
             rp.extractIntervals(curtSensorDate)
 
             //　todo: 共通区間の抽出
+            rp.extractCommonIntervals(sensorDataFileNameList)
 
             // センサ情報をデータベースに保存
             val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure, sensorDataPath = sensorDataPath)
@@ -363,7 +368,7 @@ class MainViewModel @Inject constructor(
             common.log("センサデータをデータベースに保存")
 
             // センシング時の空気圧をcsvに保存
-            openCsv.createSensingAirPressure(sensorDateStrList, sensingAirPressureList)
+            openCsv.createSensingAirPressure(sensorDataFileNameList, sensingAirPressureList)
 
             resetSensing()
 

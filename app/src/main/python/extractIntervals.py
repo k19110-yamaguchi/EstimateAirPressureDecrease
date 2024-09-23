@@ -4,10 +4,10 @@
 
 # ライブラリの読み込み
 ## pip install pandas
-import pandas as pd 
+import pandas as pd  # type: ignore
 ## pip install pyproj
 from pyproj import Transformer
-import numpy as np
+import numpy as np # type: ignore
 import csv
 
 #import os

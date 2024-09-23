@@ -10,10 +10,6 @@ class RunPython {
     val context: Context = MainActivity.content
     private var filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString()
 
-
-    //　todo: 共通区間の抽出
-
-
     // 走行データを推定に使用できる区間に分割
     fun extractIntervals(sensingDate: String, common: Common = Common()){
 
@@ -33,8 +29,30 @@ class RunPython {
 
     }
 
+    //　todo: 共通区間の抽出
+    fun extractCommonIntervals(sensingDateList: List<String>, common: Common = Common()){
 
-    // 特徴量を取得
+        // Pythonコードを実行する前にPython.start()の呼び出しが必要
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(MainActivity.content))
+        }
+        val py = Python.getInstance()
+        // スクリプト名
+        val module = py.getModule("extractCommonIntervals")
+        // 区間をPythonで分割
+        val res = module.callAttr("extractCommonIntervals", sensingDateList, filePath).toString()
+        val isSuccess = res.toBoolean()
+        if (isSuccess){
+            common.log("共通区間の抽出の抽出に成功")
+        }
+
+    }
+
+    // todo: 安定区間の抽出
+
+    // todo: 安定区間内の加速度を抽出
+
+    // todo: 特徴量を取得
     fun createFeatureValue(newAcc: MutableList<List<Double>>, newGra: MutableList<List<Double>>, newLoc: MutableList<List<Double>>, newBar: MutableList<List<Double>>): List<Double> {
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
@@ -53,7 +71,7 @@ class RunPython {
         }
     }
 
-    // 学習モデルを作成
+    // todo: 学習モデルを作成
     fun createModel(TrainingFv: MutableList<List<Double>>){
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
@@ -66,7 +84,7 @@ class RunPython {
         module.callAttr("createModel", TrainingFv, filePath)
     }
 
-    // 特徴量から空気圧を推定
+    // todo: 特徴量から空気圧を推定
     fun estimateAirPressure(EstimatedFv: MutableList<List<Double>>): Int{
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
