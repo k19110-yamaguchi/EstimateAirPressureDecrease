@@ -168,6 +168,47 @@ def compareLocDfs(curtExLocDfs, compExLocDfs):
         compStopTimeList.append(stopTimeList2)
     return [curtStartTimeList, curtStopTimeList, compStartTimeList, compStopTimeList]
 
+# 共通区間開始，終了地点の時刻をcsvファイルに追加
+def addCommonTime(commonDf, timeList1, timeList2, curtRouteNum, intervalsCount, timeType, filePath):
+    newHeader = []
+    newCommonTimes = []
+    print(f"timeList1{timeList1}")
+    for i, row in commonDf.iterrows():               
+        # 新しいheaderを追加
+        if i == 0:            
+            for cell in row:
+                newHeader.append(cell)
+            for j, tl in enumerate(timeList1):
+                first = curtRouteNum
+                second = j
+                newHeader.append(f"[{first}][{second}]")
+        # 新しい共通区間開始，終了時刻を追加(縦)
+        else:
+            second = i-1    
+            _newCommonTimes = []              
+            for cell in row:
+                _newCommonTimes.append(cell)                        
+            for j in range(len(timeList1)):
+                _newCommonTimes.append(timeList1[j][second])      
+            newCommonTimes.append(_newCommonTimes) 
+        
+    # 新しい共通区間開始，終了時刻を追加(横)
+    for i, tl in enumerate(timeList2):
+        _newCommonTimes = []
+        _newCommonTimes.append(newHeader[intervalsCount+i+1])
+        for t in tl:
+            _newCommonTimes.append(t)
+        for j, t2 in enumerate(timeList2):
+            _newCommonTimes.append(-1)
+        newCommonTimes.append(_newCommonTimes)
+
+    # 共通区間開始，終了地点の時刻をcsvで保存
+    f = open(f"{filePath}/{timeType}.csv", "w")
+    writer = csv.writer(f, lineterminator='\n')
+    writer.writerow(newHeader)
+    for row in newCommonTimes:        
+        writer.writerow(row)
+    f.close()
 
 # 共通区間のファイルを更新
 def updateCommonTimeFile(locDfs, intervalsDfs, filePath):
@@ -197,11 +238,26 @@ def updateCommonTimeFile(locDfs, intervalsDfs, filePath):
 
     # 区間位置情報データを比較
     curtStartTimeList, curtStopTimeList, compStartTimeList, compStopTimeList = compareLocDfs(curtExLocDfs, compExLocDfs)  
-    print(curtStartTimeList)
-    print(curtStopTimeList)
+
+    # 保存されている共通区間開始，終了時刻を取得
+    commonStartTimeDf = pd.read_csv(f"{filePath}/commonStartTime.csv", header=None)
+    commonStopTimeDf = pd.read_csv(f"{filePath}/commonStartTime.csv", header=None)
+
+    # 新しく取得したルートの番号
+    curtRouteNum = len(locDfs)-1
+    # 今までの区間データの数
+    #全ての区間数
+    compIntervalsCount = 0
+    for i, compIntervalsDf in enumerate(compIntervalsDfs):
+        compIntervalsCount = compIntervalsCount + len(compIntervalsDf)            
+
+    # 共通区間開始時刻を追加
+    timeType = "commonStartTime"
+    addCommonTime(commonStartTimeDf, compStartTimeList, curtStartTimeList, curtRouteNum, compIntervalsCount, timeType, filePath)
+    # 共通区間終了時刻を追加
+    timeType = "commonStartTime"
+    addCommonTime(commonStopTimeDf, compStopTimeList, curtStopTimeList, curtRouteNum, compIntervalsCount, timeType, filePath)                                  
     
-
-
     return 0
 
 # 最初に共通区間のファイルを作成
@@ -248,24 +304,23 @@ def extractCommonIntervals(sensingDatesArray, filePath):
     sensingDates = changeJavaList(sensingDatesArray)
 
     # デバック用
+    '''
     import os
     # スクリプトのディレクトリに移動
     os.chdir(os.path.dirname(os.path.abspath(__file__)))    
     sensingDates = ["20240709073515", "20240709185604"]
+    '''
     
     # 保存した位置情報，区間データを取得
+    locDfs, intervalsDfs = getAllLocDfs(filePath, sensingDates)    
     # デバック用
-    locDfs, intervalsDfs = getAllLocDfs("sensorData", sensingDates)    
-    #locDfs, intervalsDfs = getAllLocDfs(filePath, sensingDates)    
-    # 新しく取得したルートの番号
-    curtRouteNum = len(locDfs)-1
-    print(intervalsDfs)
+    #locDfs, intervalsDfs = getAllLocDfs("sensorData", sensingDates)    
+    
     if len(locDfs) >= 2:
         # 2回目以降センシングした場合
         updateCommonTimeFile(locDfs, intervalsDfs, filePath)
     else:
-        # 初めてセンシングした場合
-        # デバック用        
+        # 初めてセンシングした場合             
         createCommonTimeFile(intervalsDfs, filePath)
 
     print("extractCommonInterval: 終了")    

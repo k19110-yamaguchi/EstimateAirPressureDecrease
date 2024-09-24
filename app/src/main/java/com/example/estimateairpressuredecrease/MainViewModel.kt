@@ -318,9 +318,8 @@ class MainViewModel @Inject constructor(
     // Sensing
     // 推定に必要なデータがあるか調べる
     // todo: 推定に必要なデータ数を決める
-    // todo: デバック中
     fun checkRequiredData(){
-        if(locTime > 2){
+        if(locTime > 10){
             isRequiredData = true
         }
     }
