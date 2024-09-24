@@ -358,7 +358,7 @@ class MainViewModel @Inject constructor(
             val isSuccessExtractIntervals = rp.extractIntervals(curtSensorDate)
             // 区間抽出に成功したら
             if (isSuccessExtractIntervals){
-                //　todo: 共通区間の抽出
+                //　共通区間の抽出
                 rp.extractCommonIntervals(sensorDataFileNameList)
 
                 // センサ情報をデータベースに保存

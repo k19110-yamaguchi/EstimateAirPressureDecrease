@@ -241,7 +241,7 @@ def updateCommonTimeFile(locDfs, intervalsDfs, filePath):
 
     # 保存されている共通区間開始，終了時刻を取得
     commonStartTimeDf = pd.read_csv(f"{filePath}/commonStartTime.csv", header=None)
-    commonStopTimeDf = pd.read_csv(f"{filePath}/commonStartTime.csv", header=None)
+    commonStopTimeDf = pd.read_csv(f"{filePath}/commonStopTime.csv", header=None)
 
     # 新しく取得したルートの番号
     curtRouteNum = len(locDfs)-1
@@ -255,7 +255,7 @@ def updateCommonTimeFile(locDfs, intervalsDfs, filePath):
     timeType = "commonStartTime"
     addCommonTime(commonStartTimeDf, compStartTimeList, curtStartTimeList, curtRouteNum, compIntervalsCount, timeType, filePath)
     # 共通区間終了時刻を追加
-    timeType = "commonStartTime"
+    timeType = "commonStopTime"
     addCommonTime(commonStopTimeDf, compStopTimeList, curtStopTimeList, curtRouteNum, compIntervalsCount, timeType, filePath)                                  
     
     return 0
