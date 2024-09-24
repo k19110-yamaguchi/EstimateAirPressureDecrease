@@ -3,6 +3,7 @@ package com.example.estimateairpressuredecrease
 import android.content.Context
 import android.os.Environment
 import com.example.estimateairpressuredecrease.data.*
+import com.example.estimateairpressuredecrease.room.entities.SensorData
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -11,7 +12,7 @@ import java.time.LocalDateTime
 
 class OpenCsv {
     //true=追記, false=上書き
-    private val fileAppend : Boolean = true
+    private var fileAppend : Boolean = true
     val context: Context = MainActivity.content
     // 拡張子
     private val extension : String = ".csv"
@@ -219,8 +220,26 @@ class OpenCsv {
         }
     }
 
+    fun createSensingAirPressure(dateList: List<String>, airPressureList: List<Int>){
+        val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/sensingAirPressure" + extension
+        var csvData = ""
 
+        // ファイルが存在するか調べる
+        val file = File(filePath)
+        if(!isFileExists(file)){
+            val header = "date,airPressure(kPa)"
+            csvData = header + "\n"
+        }
 
+        for(i in dateList.indices){
+            csvData += "${dateList[i]},${airPressureList[i]}\n"
+        }
+        var fw = FileWriter(filePath, false)
+        var pw = PrintWriter(BufferedWriter(fw))
+        pw.print(csvData)
+        pw.close()
+
+    }
 
 
 }
