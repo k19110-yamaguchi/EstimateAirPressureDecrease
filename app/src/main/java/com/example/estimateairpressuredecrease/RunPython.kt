@@ -11,7 +11,7 @@ class RunPython {
     private var filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString()
 
     // 走行データを推定に使用できる区間に分割
-    fun extractIntervals(sensingDate: String, common: Common = Common()){
+    fun extractIntervals(sensingDate: String, common: Common = Common()): Boolean{
 
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
@@ -25,7 +25,10 @@ class RunPython {
         val isSuccess = res.toBoolean()
         if (isSuccess){
             common.log("走行データを推定に使用できる区間の抽出に成功")
+        }else{
+            common.log("走行データを推定に使用できる区間の抽出に失敗")
         }
+        return isSuccess
 
     }
 
