@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import com.example.estimateairpressuredecrease.Common
 import com.example.estimateairpressuredecrease.MainViewModel
 import com.example.estimateairpressuredecrease.OpenCsv
+import com.example.estimateairpressuredecrease.RunPython
 import com.example.estimateairpressuredecrease.sensors.Accelerometer
 import com.example.estimateairpressuredecrease.sensors.Barometric
 import com.example.estimateairpressuredecrease.sensors.Gravity
@@ -57,6 +58,12 @@ fun Home(viewModel: MainViewModel) {
             Spacer(modifier = Modifier.height(common.space))
 
             Text(text = "ホーム画面", fontSize = common.largeFont)
+            Button(onClick = { 
+                val rp = RunPython()
+                rp.extractStableInterval()
+            }) {
+                Text(text = "Pythonテスト")
+            }
 
             if (sensorData.isNotEmpty()){
 

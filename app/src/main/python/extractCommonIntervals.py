@@ -297,7 +297,7 @@ def createCommonTimeFile(intervalsDfs, filePath):
 
     return 0
 
-
+# 共通区間の抽出
 def extractCommonIntervals(sensingDatesArray, filePath):    
     print("extractCommonInterval: 開始")  
     # JavaList→Listに変換       
@@ -305,6 +305,14 @@ def extractCommonIntervals(sensingDatesArray, filePath):
 
     # デバック用
     '''
+    # ファイルパスの取得
+    filePaths = gb.glob(f"./input/{rootName[2]}/*")
+    filePaths.sort()
+    sensingDates = []
+    for fp in filePaths:
+        # 取得したデータの日付を取得    
+        sensingDate = re.search(r'\d{14}', fp).group()
+        sensingDates.append(sensingDate)
     import os
     # スクリプトのディレクトリに移動
     os.chdir(os.path.dirname(os.path.abspath(__file__)))    

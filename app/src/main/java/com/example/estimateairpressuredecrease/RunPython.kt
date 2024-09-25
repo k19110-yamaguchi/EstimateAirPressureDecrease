@@ -52,6 +52,21 @@ class RunPython {
     }
 
     // todo: 安定区間の抽出
+    fun extractStableInterval(common: Common = Common()){
+        // Pythonコードを実行する前にPython.start()の呼び出しが必要
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(MainActivity.content))
+        }
+        val py = Python.getInstance()
+        // スクリプト名
+        val module = py.getModule("extractStableInterval")
+        // 区間をPythonで分割
+        val res = module.callAttr("extractStableInterval", "", "").toString()
+        val isSuccess = res.toBoolean()
+        if (isSuccess) {
+            common.log("安定区間の抽出に成功")
+        }
+    }
 
     // todo: 安定区間内の加速度を抽出
 
