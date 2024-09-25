@@ -46,7 +46,7 @@ class MainViewModel @Inject constructor(
     // 適正内のデータ数
     var withinSize by mutableStateOf(0)
     // 推定に必要な適正外、適正内の特徴量の数
-    private val requiredFvSize = 10
+    val requiredRouteSize = 10
     // 初期の日付
     val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
     // 空気を注入した時期
@@ -214,7 +214,7 @@ class MainViewModel @Inject constructor(
 
     fun checkIsEstState(sensorData: List<SensorData>){
         // 必要サイズ以上になった場合
-        if(outOfSize >= requiredFvSize && withinSize >= requiredFvSize){
+        if(outOfSize >= requiredRouteSize && withinSize >= requiredRouteSize){
             // 特徴量を計算
             calcFeatureValue(sensorData)
             //createModel(featureValueData)

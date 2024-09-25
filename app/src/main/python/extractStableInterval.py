@@ -78,10 +78,11 @@ def getMaxCommonIntervalsCount(commonCounts):
     return res
 
 ## 安定区間の抽出
-def extractStableInterval(sensingDatesArray, filePath2):
+def extractStableInterval(sensingDatesArray, sensingAirPressureArray, minProperPressure, requiredRouteCount, filePath2):
     print("extractStableInterval: 開始")
     # JavaList→Listに変換       
     # sensingDates = changeJavaList(sensingDatesArray)
+    sensingAirPressures = changeJavaList(sensingAirPressureArray)    
      
      
     # デバック
@@ -94,7 +95,13 @@ def extractStableInterval(sensingDatesArray, filePath2):
                     "20240724073752", "20240724161042", "20240725073402", "20240730083658",
                     "20240730162752", "20240806182328", "20240821154530", "20240903082133",
                     "20240903133519", "20240910072425"
-                    ]  
+    ]
+    sensingAirPressures = [300, 300, 300, 300,
+                           273, 273, 263, 263,
+                           263, 263, 263, 235,
+                           235, 213, 153, 294,
+                           294, 261
+    ]  
     filePath = "./sensorData"          
 
     # 保存した位置情報，区間データを取得
@@ -121,6 +128,43 @@ def extractStableInterval(sensingDatesArray, filePath2):
     # 最大共通区間数の区間を抽出
     maxCommonIntervalsCount = getMaxCommonIntervalsCount(commonIntervalsCounts)
     print(maxCommonIntervalsCount)
+    print(sensingAirPressures)
+
+    # 最大共通区間数の区間を抽出
+    # todo: 最大共通区間が同じルートに複数あった場合の処理
+    stableRouteNums = []
+    stableIntervalNums = []
+    for cic in commonIntervalsCounts:
+        if cic[2] >= maxCommonIntervalsCount:
+            stableRouteNums.append(cic[0])
+            stableIntervalNums.append(cic[1])                 
+
+    print(f"最大共通数: {round(maxCommonIntervalsCount)}/{len(locDfs)-1}")
+    
+    # 適正内，外の利用できるルートの数
+    tmp = -1
+    withinAvailableRouteCount = 0
+    outOfAvailableRouteCount = 0
+    for srn, sin  in zip(stableRouteNums, stableIntervalNums):       
+        if tmp != srn:            
+            tmp = srn                        
+            if sensingAirPressures[srn] >= minProperPressure:
+                withinAvailableRouteCount = withinAvailableRouteCount + 1            
+            else:
+                outOfAvailableRouteCount = outOfAvailableRouteCount + 1
+
+        print(f"[{srn}][{sin}]->", end="")
+    print("")
+
+    print(f"withinAvailableRouteCount: {withinAvailableRouteCount}")
+    print(f"outOfAvailableRouteCount: {outOfAvailableRouteCount}")
+
+    # 安定区間を抽出するのに必要なデータ数があるか
+    if withinAvailableRouteCount >= requiredRouteCount and outOfAvailableRouteCount >= requiredRouteCount:
+        # todo: 安定区間の抽出    
+        print("安定区間の抽出")
+    else: 
+        print("データ数が足りない")
 
     print("extractStableInterval: 終了")  
     return True
