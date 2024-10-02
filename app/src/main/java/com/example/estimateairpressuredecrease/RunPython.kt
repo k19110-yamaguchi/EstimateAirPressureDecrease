@@ -52,7 +52,7 @@ class RunPython {
     }
 
     // todo: 安定区間の抽出
-    fun extractStableInterval(sensingAirPressureList: List<Int>, minProperPressure: Int, requiredRouteCount: Int, common: Common = Common()){
+    fun extractStableInterval(sensingAirPressureList: List<Int>, minProperPressure: Int, requiredRouteCount: Int, common: Common = Common()): List<Double>{
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
@@ -62,10 +62,13 @@ class RunPython {
         val module = py.getModule("extractStableInterval")
         // 区間をPythonで分割
         val res = module.callAttr("extractStableInterval", "", sensingAirPressureList, minProperPressure, requiredRouteCount, "").toString()
-        val isSuccess = res.toBoolean()
-        if (isSuccess) {
-            common.log("安定区間の抽出に成功")
+        // 最初と最後の[]を取り除き、","で分割
+        return if(res != "True"){
+            res.substring(1, res.length - 1).split(",").map { it.trim().toDouble() }
+        }else{
+            emptyList()
         }
+
     }
 
     // todo: 安定区間内の加速度を抽出

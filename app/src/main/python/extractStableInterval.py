@@ -1,6 +1,26 @@
 ## pip install pandas
 import pandas as pd  # type: ignore
 
+
+class LocHeader:
+    def __init__(self,time="time(s)",lat="lat(°)",lon="lon(°)",dis="dis(km)", speed="speed(km/h)"):
+        self.time = time
+        self.lat = lat
+        self.lon = lon
+        self.dis = dis
+        self.speed = speed 
+
+class IntervalsHeader:
+    def __init__(self,startTime="startTime(s)",stopTime="stopTime(s)"):
+        self.startTime = startTime
+        self.stopTime = stopTime   
+
+lh = LocHeader()
+ih = IntervalsHeader()
+
+# 推定区間に必要な距離(km)
+thresholdDis = 0.4  
+
 # java.util.ArrayList(1次元)をlistの型に変換
 def changeJavaList(javaList):
     pyList = [javaList.get(i) for i in range(javaList.size())]                    
@@ -16,6 +36,19 @@ def getAllLocDfs(filePath, sensingDates):
         resLocDfs.append(locDf)
         resIntervalsDfs.append(intervalsDf)
     return [resLocDfs, resIntervalsDfs]
+
+# 走行区間から特徴量を抽出
+def extractLocDf(locDf, startTime, stopTime):
+    res = locDf[(startTime <= locDf[lh.time]) & (locDf[lh.time] <= stopTime)]
+    return res.reset_index(drop=True)
+
+# 区間距離を計算
+def calcIntervalsDistance(locDf, startTime, stopTime):    
+    res = 0        
+    for i, row in locDf.iterrows():
+        if startTime <= row[lh.time] and row[lh.time] <= stopTime:
+            res += row[lh.dis]        
+    return res
 
 # 最大共通区間数を取得
 # csvに保存された共通時間をListに変換
@@ -77,6 +110,34 @@ def getMaxCommonIntervalsCount(commonCounts):
             res = float(count[2])
     return res
 
+'''
+def withinAvailableRouteCount():
+    # 適正内，外の利用できるルートの数
+    tmp = -1
+    withinAvailableRouteCount = 0
+    outOfAvailableRouteCount = 0
+    for srn, sin  in zip(stableRouteNums, stableIntervalNums):       
+        if tmp != srn:            
+            tmp = srn                        
+            if sensingAirPressures[srn] >= minProperPressure:
+                withinAvailableRouteCount = withinAvailableRouteCount + 1            
+            else:
+                outOfAvailableRouteCount = outOfAvailableRouteCount + 1
+
+        print(f"[{srn}][{sin}]->", end="")
+    print("")
+
+    print(f"withinAvailableRouteCount: {withinAvailableRouteCount}")
+    print(f"outOfAvailableRouteCount: {outOfAvailableRouteCount}")
+
+    # 安定区間を抽出するのに必要なデータ数があるか
+    if withinAvailableRouteCount >= requiredRouteCount and outOfAvailableRouteCount >= requiredRouteCount:
+        # todo: 安定区間の抽出    
+        print("安定区間の抽出")
+    else: 
+        print("データ数が足りない")
+'''
+
 ## 安定区間の抽出
 def extractStableInterval(sensingDatesArray, sensingAirPressureArray, minProperPressure, requiredRouteCount, filePath2):
     print("extractStableInterval: 開始")
@@ -130,41 +191,58 @@ def extractStableInterval(sensingDatesArray, sensingAirPressureArray, minProperP
     print(maxCommonIntervalsCount)
     print(sensingAirPressures)
 
-    # 最大共通区間数の区間を抽出
-    # todo: 最大共通区間が同じルートに複数あった場合の処理
+    # 最大共通区間数の区間を抽出    
     stableRouteNums = []
     stableIntervalNums = []
     for cic in commonIntervalsCounts:
         if cic[2] >= maxCommonIntervalsCount:
             stableRouteNums.append(cic[0])
             stableIntervalNums.append(cic[1])                 
+    print(f"最大共通数: {round(maxCommonIntervalsCount)}/{len(locDfs)-1}")  
 
-    print(f"最大共通数: {round(maxCommonIntervalsCount)}/{len(locDfs)-1}")
+    # todo: 最大共通区間が同じルートに複数あった場合の処理
+    # 共通している数が最大のものから推定区間を抽出    
+    siStartTime = -1
+    siStopTime = -1    
+    for srn, sin  in zip(stableRouteNums, stableIntervalNums):
+        if siStartTime == -1:        
+            siStartTime = intervalsDfs[srn][ih.startTime][sin]
+            siStopTime = intervalsDfs[srn][ih.stopTime][sin]
+            print(f"{siStartTime} ~ {siStopTime}")
+            if siStartTime > siStopTime:
+                tmp = siStartTime
+                siStartTime = siStopTime
+                siStopTime = tmp
+        else:      
+            commonStartTime = commonStartTimeList[stableRouteNums[0]][stableIntervalNums[0]][srn][sin]
+            commonStopTime = commonStopTimeList[stableRouteNums[0]][stableIntervalNums[0]][srn][sin]
+            if commonStartTime > commonStopTime:
+                tmp = commonStartTime
+                commonStartTime = commonStopTime
+                commonStopTime = tmp
+            
+            if commonStartTime > siStartTime:
+                siStartTime = commonStartTime
+            if commonStopTime < siStopTime:
+                siStopTime = commonStopTime
     
-    # 適正内，外の利用できるルートの数
-    tmp = -1
-    withinAvailableRouteCount = 0
-    outOfAvailableRouteCount = 0
-    for srn, sin  in zip(stableRouteNums, stableIntervalNums):       
-        if tmp != srn:            
-            tmp = srn                        
-            if sensingAirPressures[srn] >= minProperPressure:
-                withinAvailableRouteCount = withinAvailableRouteCount + 1            
-            else:
-                outOfAvailableRouteCount = outOfAvailableRouteCount + 1
+    # 安定区間のデータを抽出
+    siLocDf = extractLocDf(locDfs[stableRouteNums[0]], siStartTime, siStopTime)
+    # 安定区間の距離を抽出
+    siDis = calcIntervalsDistance(locDfs[stableRouteNums[0]], siStartTime, siStopTime)
 
-        print(f"[{srn}][{sin}]->", end="")
-    print("")
+    print(f"安定区間距離: {round(siDis*1000, 1)}m")    
+    if siDis > thresholdDis:
+        siStartLat = siLocDf[lh.lat].iloc[0]
+        siStartLon = siLocDf[lh.lon].iloc[0]
+        siStopLat = siLocDf[lh.lat].iloc[-1]
+        siStopLon = siLocDf[lh.lon].iloc[-1]
+        print(f"安定区間位置情報: [{siStartLat}, {siStartLon}] ~ [{siStopLat}, {siStopLon}]")     
+        print("extractStableInterval: 終了")  
+        return [siStartLat, siStartLon, siStopLat, siStopLon]
+    else:
+        print(f"安定区間に必要な距離が足りない")
+        print("extractStableInterval: 終了")  
+        return True
 
-    print(f"withinAvailableRouteCount: {withinAvailableRouteCount}")
-    print(f"outOfAvailableRouteCount: {outOfAvailableRouteCount}")
-
-    # 安定区間を抽出するのに必要なデータ数があるか
-    if withinAvailableRouteCount >= requiredRouteCount and outOfAvailableRouteCount >= requiredRouteCount:
-        # todo: 安定区間の抽出    
-        print("安定区間の抽出")
-    else: 
-        print("データ数が足りない")
-
-    print("extractStableInterval: 終了")  
-    return True
+    

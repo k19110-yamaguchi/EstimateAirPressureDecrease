@@ -60,7 +60,8 @@ fun Home(viewModel: MainViewModel) {
             Text(text = "ホーム画面", fontSize = common.largeFont)
             Button(onClick = { 
                 val rp = RunPython()
-                rp.extractStableInterval(viewModel.sensingAirPressureList, viewModel.minProperPressure, viewModel.requiredRouteSize)
+                val siInfoList = rp.extractStableInterval(viewModel.sensingAirPressureList, viewModel.minProperPressure, viewModel.requiredRouteSize)
+                common.log(siInfoList.toString())
             }) {
                 Text(text = "Pythonテスト")
             }
