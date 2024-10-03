@@ -139,12 +139,10 @@ def withinAvailableRouteCount():
 '''
 
 ## 安定区間の抽出
-def extractStableInterval(sensingDatesArray, sensingAirPressureArray, minProperPressure, requiredRouteCount, filePath2):
+def extractStableInterval(sensingDatesArray, filePath2):
     print("extractStableInterval: 開始")
     # JavaList→Listに変換       
-    # sensingDates = changeJavaList(sensingDatesArray)
-    sensingAirPressures = changeJavaList(sensingAirPressureArray)    
-     
+    # sensingDates = changeJavaList(sensingDatesArray)         
      
     # デバック
     import os
@@ -188,8 +186,7 @@ def extractStableInterval(sensingDatesArray, sensingAirPressureArray, minProperP
 
     # 最大共通区間数の区間を抽出
     maxCommonIntervalsCount = getMaxCommonIntervalsCount(commonIntervalsCounts)
-    print(maxCommonIntervalsCount)
-    print(sensingAirPressures)
+    print(maxCommonIntervalsCount)    
 
     # 最大共通区間数の区間を抽出    
     stableRouteNums = []
@@ -244,5 +241,32 @@ def extractStableInterval(sensingDatesArray, sensingAirPressureArray, minProperP
         print(f"安定区間に必要な距離が足りない")
         print("extractStableInterval: 終了")  
         return True
+
+def getAvailableRouteCount(sensingDatesArray, siStartLat, siStartLon, siStopLat, siStopLon, sensingAirPressureArray, minProperPressure, requiredRouteCount, filePath2):    
+    print("getAvailableRouteCount: 開始")
+    # JavaList→Listに変換       
+    # sensingDates = changeJavaList(sensingDatesArray)   
+    # sensingAirPressures = changeJavaList(sensingAirPressureArray)
+    
+    # デバック
+    import os
+    # スクリプトのディレクトリに移動
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))   
+    # ファイルパスの取得     
+    sensingDates = ["20240709073515", "20240709185604", "20240714074015", "20240716161222", 
+                    "20240718073501", "20240718145520", "20240723091223", "20240723175341", 
+                    "20240724073752", "20240724161042", "20240725073402", "20240730083658",
+                    "20240730162752", "20240806182328", "20240821154530", "20240903082133",
+                    "20240903133519", "20240910072425"
+    ]
+    sensingAirPressures = [300, 300, 300, 300,
+                           273, 273, 263, 263,
+                           263, 263, 263, 235,
+                           235, 213, 153, 294,
+                           294, 261
+    ]  
+    filePath = "./sensorData"          
+    print("extractStableInterval: 終了")  
+    return True
 
     

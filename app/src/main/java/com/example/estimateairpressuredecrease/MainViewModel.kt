@@ -148,6 +148,7 @@ class MainViewModel @Inject constructor(
     var availableFileName : MutableList<String> = mutableListOf()
     // stableIntervalのデータを取得
     var stableIntervalData = stableIntervalDao.getStableIntervalData().distinctUntilChanged()
+    val requiredRouteCount = 10
 
     // FeatureValue
     var accSd: Double by mutableStateOf(0.0)

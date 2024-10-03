@@ -32,7 +32,7 @@ class RunPython {
 
     }
 
-    //　todo: 共通区間の抽出
+    //　共通区間の抽出
     fun extractCommonIntervals(sensingDateList: List<String>, common: Common = Common()){
 
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
@@ -51,8 +51,8 @@ class RunPython {
 
     }
 
-    // todo: 安定区間の抽出
-    fun extractStableInterval(sensingAirPressureList: List<Int>, minProperPressure: Int, requiredRouteCount: Int, common: Common = Common()): List<Double>{
+    // 安定区間の抽出
+    fun extractStableInterval(sensingDateList: List<String>, common: Common = Common()): List<Double>{
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
@@ -61,13 +61,29 @@ class RunPython {
         // スクリプト名
         val module = py.getModule("extractStableInterval")
         // 区間をPythonで分割
-        val res = module.callAttr("extractStableInterval", "", sensingAirPressureList, minProperPressure, requiredRouteCount, "").toString()
+        val res = module.callAttr("extractStableInterval", sensingDateList, filePath).toString()
         // 最初と最後の[]を取り除き、","で分割
         return if(res != "True"){
             res.substring(1, res.length - 1).split(",").map { it.trim().toDouble() }
         }else{
             emptyList()
         }
+
+    }
+
+    // todo: 推定に使用できるルート数を取得
+    fun getAvailableRouteCount(sensingDateList: List<String>, siStartLat: Double, siStartLon: Double, siStopLat: Double, siStopLon: Double, sensingAirPressureList: List<Int>, minProperPressure: Int, requiredRouteCount: Int, common: Common = Common()){
+        // Pythonコードを実行する前にPython.start()の呼び出しが必要
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(MainActivity.content))
+        }
+        val py = Python.getInstance()
+        // スクリプト名
+        val module = py.getModule("extractStableInterval")
+        // 区間をPythonで分割
+        val res = module.callAttr("getAvailableRouteCount", sensingDateList, siStartLat, siStartLon, siStopLat, siStopLon, sensingAirPressureList, minProperPressure, requiredRouteCount, filePath).toString()
+        // 最初と最後の[]を取り除き、","で分割
+
 
     }
 

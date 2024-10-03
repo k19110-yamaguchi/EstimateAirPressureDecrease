@@ -66,11 +66,18 @@ fun Home(viewModel: MainViewModel) {
             Text(text = "ホーム画面", fontSize = common.largeFont)
             Button(onClick = { 
                 val rp = RunPython()
-                val siInfoList = rp.extractStableInterval(viewModel.sensingAirPressureList, viewModel.minProperPressure, viewModel.requiredRouteSize)
+                val siInfoList = rp.extractStableInterval(emptyList())
                 viewModel.addStableInterval(siInfoList)
                 //common.log(siInfoList.toString())
             }) {
                 Text(text = "Pythonテスト")
+            }
+            Button(onClick = {
+                val rp = RunPython()
+                val siAvailableInfoLis = rp.getAvailableRouteCount(emptyList(), viewModel.siStartLat, viewModel.siStartLon, viewModel.siStopLat, viewModel.siStopLon, viewModel.sensingAirPressureList, viewModel.minProperPressure, viewModel.requiredRouteCount)
+                //common.log(siInfoList.toString())
+            }) {
+                Text(text = "Pythonテスト2")
             }
 
             if (stableIntervalData.isNotEmpty()){
