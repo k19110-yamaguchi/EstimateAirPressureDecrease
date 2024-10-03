@@ -133,21 +133,21 @@ class MainViewModel @Inject constructor(
     var barTimeList: MutableList<Double> = mutableListOf()
 
     // StableInterval
-    val siStartLat: Double by mutableStateOf(-1.0)
+    var siStartLat: Double by mutableStateOf(-1.0)
     // 安定区間の開始の経度
-    val siStartLon: Double by mutableStateOf(-1.0)
+    var siStartLon: Double by mutableStateOf(-1.0)
     // 安定区間の終了の緯度
-    val siStopLat: Double by mutableStateOf(-1.0)
+    var siStopLat: Double by mutableStateOf(-1.0)
     // 安定区間の終了の経度
-    val siStopLon: Double by mutableStateOf(-1.0)
+    var siStopLon: Double by mutableStateOf(-1.0)
     // 安定区間が取得できる適正内のデータ数
-    val withinAvailableRouteCount: Int by mutableStateOf(-1)
+    var withinAvailableRouteCount: Int by mutableStateOf(-1)
     // 安定区間が取得できる適正外のデータ数
-    val outOfAvailableRouteCount: Int by mutableStateOf(-1)
+    var outOfAvailableRouteCount: Int by mutableStateOf(-1)
     // 使用できるセンサデータのファイル名
-    val availableFileName : MutableList<String> = mutableListOf()
+    var availableFileName : MutableList<String> = mutableListOf()
     // stableIntervalのデータを取得
-    val stableIntervalData = stableIntervalDao.getStableIntervalData().distinctUntilChanged()
+    var stableIntervalData = stableIntervalDao.getStableIntervalData().distinctUntilChanged()
 
     // FeatureValue
     var accSd: Double by mutableStateOf(0.0)
@@ -423,7 +423,15 @@ class MainViewModel @Inject constructor(
     }
 
     // 安定区間の情報を追加
-    fun addStableInterval(){
+    fun addStableInterval(siInfoList: List<Double>){
+        siStartLat = siInfoList[0]
+        siStartLon = siInfoList[1]
+        siStopLat = siInfoList[2]
+        siStopLon = siInfoList[3]
+        // withinAvailableRouteCount = siInfoList[4].toInt()
+        // outOfAvailableRouteCount = siInfoList[5].toInt()
+        // availableFileName = stableInterval.availableFileName.toMutableList()
+
         // 安定区間データのデータベースがあるかどうか
         viewModelScope.launch {
             // id:0 のstableIntervalがnullだった場合
@@ -438,7 +446,14 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setStableInterval(){
+    fun setStableInterval(stableInterval: StableIntervalData){
+        siStartLat = stableInterval.siStartLat
+        siStartLon = stableInterval.siStartLon
+        siStopLat = stableInterval.siStopLat
+        siStopLon = stableInterval.siStopLon
+        withinAvailableRouteCount = stableInterval.withinAvailableRouteCount
+        outOfAvailableRouteCount = stableInterval.outOfAvailableRouteCount
+        availableFileName = stableInterval.availableFileName.toMutableList()
 
     }
 

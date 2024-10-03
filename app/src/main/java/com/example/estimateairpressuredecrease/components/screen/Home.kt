@@ -33,8 +33,6 @@ fun Home(viewModel: MainViewModel) {
         viewModel.setHome(homeData[0])
     }
 
-
-
     // センサデータを取得
     val sensorData by viewModel.sensorData.collectAsState(initial = emptyList())
     if (sensorData.isNotEmpty()){
@@ -42,8 +40,14 @@ fun Home(viewModel: MainViewModel) {
         viewModel.countWithinData(sensorData)
         // センシングデータの日付リストを取得
         viewModel.getSensingData(sensorData)
+    }
+
+    // 安定区間の情報を取得
+    val stableIntervalData by viewModel.stableIntervalData.collectAsState(initial = emptyList())
+    if(stableIntervalData.isNotEmpty()){
+        // 状態をセット
+        viewModel.setStableInterval(stableIntervalData[0])
         // todo: 推定状態に移行できるかどうか
-        //viewModel.checkIsEstState()
     }
 
 
@@ -63,9 +67,17 @@ fun Home(viewModel: MainViewModel) {
             Button(onClick = { 
                 val rp = RunPython()
                 val siInfoList = rp.extractStableInterval(viewModel.sensingAirPressureList, viewModel.minProperPressure, viewModel.requiredRouteSize)
-                common.log(siInfoList.toString())
+                viewModel.addStableInterval(siInfoList)
+                //common.log(siInfoList.toString())
             }) {
                 Text(text = "Pythonテスト")
+            }
+
+            if (stableIntervalData.isNotEmpty()){
+                Text(text = "安定区間")
+                Text(text = "[${viewModel.siStartLat}, ${viewModel.siStartLon}]")
+                Text(text = "|")
+                Text(text = "[${viewModel.siStopLat}, ${viewModel.siStopLon}]")
             }
 
             if (sensorData.isNotEmpty()){
