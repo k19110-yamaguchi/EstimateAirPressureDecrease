@@ -12,6 +12,7 @@ import com.example.estimateairpressuredecrease.data.GraData
 import com.example.estimateairpressuredecrease.data.LocData
 import com.example.estimateairpressuredecrease.room.dao.HomeDao
 import com.example.estimateairpressuredecrease.room.dao.SensorDao
+import com.example.estimateairpressuredecrease.room.dao.StableIntervalDao
 import com.example.estimateairpressuredecrease.room.entities.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -25,6 +26,7 @@ import kotlin.math.round
 class MainViewModel @Inject constructor(
     private val homeDao: HomeDao,
     private val sensorDao: SensorDao,
+    private val stableIntervalDao: StableIntervalDao,
 ) : ViewModel(){
     private var common = Common()
 
@@ -124,13 +126,28 @@ class MainViewModel @Inject constructor(
     var zGraList: MutableList<Double> = mutableListOf()
     var graTimeList: MutableList<Double> = mutableListOf()
 
-
-
     // Bar
     var bar: Double by mutableStateOf(-1.0)
     var barTime: Double by mutableStateOf(-1.0)
     var barList: MutableList<Double> = mutableListOf()
     var barTimeList: MutableList<Double> = mutableListOf()
+
+    // StableInterval
+    val siStartLat: Double by mutableStateOf(-1.0)
+    // 安定区間の開始の経度
+    val siStartLon: Double by mutableStateOf(-1.0)
+    // 安定区間の終了の緯度
+    val siStopLat: Double by mutableStateOf(-1.0)
+    // 安定区間の終了の経度
+    val siStopLon: Double by mutableStateOf(-1.0)
+    // 安定区間が取得できる適正内のデータ数
+    val withinAvailableRouteCount: Int by mutableStateOf(-1)
+    // 安定区間が取得できる適正外のデータ数
+    val outOfAvailableRouteCount: Int by mutableStateOf(-1)
+    // 使用できるセンサデータのファイル名
+    val availableFileName : MutableList<String> = mutableListOf()
+    // stableIntervalのデータを取得
+    val stableIntervalData = stableIntervalDao.getStableIntervalData().distinctUntilChanged()
 
     // FeatureValue
     var accSd: Double by mutableStateOf(0.0)
@@ -388,6 +405,44 @@ class MainViewModel @Inject constructor(
             sensorDao.insertSensorData(newSensor)
         }
     }
+
+    // 安定区間データのデータベースを作成
+    private fun createStableInterval() {
+        viewModelScope.launch {
+            val newStableInterval = StableIntervalData(siStartLat = siStartLat, siStartLon = siStartLon, siStopLat = siStopLat, siStopLon = siStopLon, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileName = availableFileName)
+            stableIntervalDao.createStableIntervalDB(newStableInterval)
+        }
+    }
+
+    // 安定区間データのデータベースを更新
+    private fun updateStableInterval() {
+        viewModelScope.launch {
+            val newStableInterval = StableIntervalData(siStartLat = siStartLat, siStartLon = siStartLon, siStopLat = siStopLat, siStopLon = siStopLon, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileName = availableFileName)
+            stableIntervalDao.updateStableIntervalData(newStableInterval)
+        }
+    }
+
+    // 安定区間の情報を追加
+    fun addStableInterval(){
+        // 安定区間データのデータベースがあるかどうか
+        viewModelScope.launch {
+            // id:0 のstableIntervalがnullだった場合
+            if (stableIntervalDao.getStableIntervalById(0) == null){
+                // 安定区間のデータベースを作成
+                createStableInterval()
+
+            }else{
+                // 安定区間のデータベースを更新
+                updateStableInterval()
+            }
+        }
+    }
+
+    fun setStableInterval(){
+
+    }
+
+
 
 
     // 特徴量を取得

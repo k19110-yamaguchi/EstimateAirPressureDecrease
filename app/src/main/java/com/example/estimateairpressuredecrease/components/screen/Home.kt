@@ -33,6 +33,8 @@ fun Home(viewModel: MainViewModel) {
         viewModel.setHome(homeData[0])
     }
 
+
+
     // センサデータを取得
     val sensorData by viewModel.sensorData.collectAsState(initial = emptyList())
     if (sensorData.isNotEmpty()){

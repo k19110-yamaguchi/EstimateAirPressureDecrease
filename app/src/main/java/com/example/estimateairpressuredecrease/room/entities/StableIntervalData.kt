@@ -19,4 +19,7 @@ data class StableIntervalData(
     val withinAvailableRouteCount: Int,
     // 安定区間が取得できる適正外のデータ数
     val outOfAvailableRouteCount: Int,
+    // 使用できるセンサデータのファイル名
+    val availableFileName : List<String>,
+
 )
