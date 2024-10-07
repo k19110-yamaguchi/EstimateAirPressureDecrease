@@ -184,13 +184,15 @@ def withinAvailableRouteCount():
 '''
 
 # 推定に使用可能な適正内，外のルート数
-def getAvailableRouteCount(locDfs, intervalsDfs, siLocDf, stableRouteNums, sensingAirPressures, minProperPressure): 
+def getAvailableRouteCount(locDfs, intervalsDfs, siLocDf, stableRouteNums, sensingDates, sensingAirPressures, minProperPressure): 
     resWithinAvailableRouteCount = 0
     resOutOfAvailableRouteCount = 0
+    resAvailableFileNameList = []
     j = 0
     for i, locDf in enumerate(locDfs):
         print(f"i: {i}")
         if i == stableRouteNums[j]:
+            resAvailableFileNameList.append(sensingDates[i])
             if sensingAirPressures[i] >= minProperPressure:
                 resWithinAvailableRouteCount = resWithinAvailableRouteCount + 1
             else:
@@ -229,11 +231,12 @@ def getAvailableRouteCount(locDfs, intervalsDfs, siLocDf, stableRouteNums, sensi
                     print(f"共通区間距離が短い: {round(dis, 5)}km")
                     
                 else:    
+                    resAvailableFileNameList.append(sensingDates[i])
                     if sensingAirPressures[i] >= minProperPressure:
                         resWithinAvailableRouteCount = resWithinAvailableRouteCount + 1
                     else:
                         resOutOfAvailableRouteCount = resOutOfAvailableRouteCount + 1                                                       
-    return [resWithinAvailableRouteCount, resOutOfAvailableRouteCount]
+    return [resWithinAvailableRouteCount, resOutOfAvailableRouteCount, resAvailableFileNameList]
                                                      
         
 
@@ -333,15 +336,16 @@ def extractStableInterval(sensingDatesArray, sensingAirPressuresArray, minProper
 
     print(f"安定区間距離: {round(siDis*1000, 1)}m")    
     if siDis > thresholdDis:
-        withinAvailableRouteCount, outOfAvailableRouteCount = getAvailableRouteCount(locDfs, intervalsDfs, siLocDf, stableIntervalNums, sensingAirPressures, minProperPressure)
+        withinAvailableRouteCount, outOfAvailableRouteCount, availableFileNameList = getAvailableRouteCount(locDfs, intervalsDfs, siLocDf, stableIntervalNums, sensingDates, sensingAirPressures, minProperPressure)
         
         print(withinAvailableRouteCount)
         print(outOfAvailableRouteCount)
         
-        if withinAvailableRouteCount >= requiredRouteCount and outOfAvailableRouteCount >= requiredRouteCount:
+        # withinAvailableRouteCount >= requiredRouteCount and outOfAvailableRouteCount >= requiredRouteCount:
+        if True:
             print(f"推定できる")
             print("extractStableInterval: 終了")  
-            return [withinAvailableRouteCount, outOfAvailableRouteCount, sensingDates[stableRouteNums[0]], siStartTime, siStopTime]
+            return [withinAvailableRouteCount, outOfAvailableRouteCount, sensingDates[stableRouteNums[0]], siStartTime, siStopTime, availableFileNameList]
         
         else:
             print(f"推定に必要な距離が足りない")   

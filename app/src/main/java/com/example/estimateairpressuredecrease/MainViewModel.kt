@@ -74,8 +74,10 @@ class MainViewModel @Inject constructor(
 
     // Sensing
     val sensorData = sensorDao.getSensorData().distinctUntilChanged()
-    // データを保存するまでの時間(s)
-    val saveTime: Double = 10.0
+    // データを保存するまでの時間(s): デフォ:10
+    val saveTime: Double = 2.0
+    // センシング終了までに必要なデータサイズ
+    private val requiredDataSize = 0.0
     // センシング画面に初めて移動したか
     var isSensingInit = true
     // 推定に必要なデータがあるか
@@ -144,7 +146,7 @@ class MainViewModel @Inject constructor(
     // 安定区間が取得できる適正外のデータ数
     var outOfAvailableRouteCount: Int by mutableStateOf(-1)
     // 使用できるセンサデータのファイル名
-    var availableFileName : MutableList<String> = mutableListOf()
+    var availableFileNameList : MutableList<String> = mutableListOf()
     // stableIntervalのデータを取得
     var stableIntervalData = stableIntervalDao.getStableIntervalData().distinctUntilChanged()
 
@@ -335,7 +337,7 @@ class MainViewModel @Inject constructor(
     // 推定に必要なデータがあるか調べる
     // todo: 推定に必要なデータ数を決める
     fun checkRequiredData(){
-        if(locTime > 10){
+        if(locTime > requiredDataSize){
             isRequiredData = true
         }
     }
@@ -464,15 +466,18 @@ class MainViewModel @Inject constructor(
         outOfAvailableRouteCount = siInfoList[1].toInt()
 
         // 安定区間データのデータベースがあるかどうか
-        if ((siInfoList.size  == 5)){
+        if ((siInfoList.size  >= 3)){
             siFileName = siInfoList[2].replace("'", "")
             siStarTime = siInfoList[3].toDouble()
             siStopTime = siInfoList[4].toDouble()
-            //availableFileName = stableInterval.availableFileName.toMutableList()
+            availableFileNameList = siInfoList.last()
+                .removeSurrounding("['", "']")
+                .split("', '")
+                .map { it.trim() }.toMutableList()
 
         }
 
-        val newStableInterval = StableIntervalData(siFileName = siFileName, siStarTime = siStarTime, siStopTime = siStopTime, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileName = availableFileName)
+        val newStableInterval = StableIntervalData(siFileName = siFileName, siStarTime = siStarTime, siStopTime = siStopTime, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileNameList = availableFileNameList)
 
         viewModelScope.launch {
             // id:0 のstableIntervalがnullだった場合
@@ -492,7 +497,7 @@ class MainViewModel @Inject constructor(
         siStopTime = stableInterval.siStopTime
         withinAvailableRouteCount = stableInterval.withinAvailableRouteCount
         outOfAvailableRouteCount = stableInterval.outOfAvailableRouteCount
-        availableFileName = stableInterval.availableFileName.toMutableList()
+        availableFileNameList = stableInterval.availableFileNameList.toMutableList()
 
     }
 

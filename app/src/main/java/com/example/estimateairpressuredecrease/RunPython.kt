@@ -61,11 +61,12 @@ class RunPython {
         // スクリプト名
         val module = py.getModule("extractStableInterval")
         // 区間をPythonで分割
-        val res = module.callAttr("extractStableInterval", sensingDateList, sensingAirPressureList, minProperPressure, requiredRouteCount, filePath).toString()
-        // 最初と最後の[]を取り除き、","で分割
+        var res = module.callAttr("extractStableInterval", sensingDateList, sensingAirPressureList, minProperPressure, requiredRouteCount, filePath).toString()
         common.log(res)
         return if(res != "True"){
-            res.substring(1, res.length - 1).split(",").map { it.trim().toString() }
+            res.removeSurrounding("[", "]")
+                .split(Regex(",(?![^\\[\\]]*\\])"))  // リスト内のカンマを無視する
+                .map { it.trim() }
         }else{
             emptyList()
         }
