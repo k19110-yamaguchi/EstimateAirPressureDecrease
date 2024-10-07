@@ -236,13 +236,13 @@ def extractStableInterval(sensingDatesArray, filePath2):
         siStopLon = siLocDf[lh.lon].iloc[-1]
         print(f"安定区間位置情報: [{siStartLat}, {siStartLon}] ~ [{siStopLat}, {siStopLon}]")     
         print("extractStableInterval: 終了")  
-        return [siStartLat, siStartLon, siStopLat, siStopLon]
+        return [sensingDates[stableRouteNums[0]], siStartTime, siStopTime]
     else:
         print(f"安定区間に必要な距離が足りない")
         print("extractStableInterval: 終了")  
         return True
 
-def getAvailableRouteCount(sensingDatesArray, siStartLat, siStartLon, siStopLat, siStopLon, sensingAirPressureArray, minProperPressure, requiredRouteCount, filePath2):    
+def getAvailableRouteCount(sensingDatesArray, siFileName, siStartTime, siStopTime, sensingAirPressureArray, minProperPressure, requiredRouteCount, filePath2):    
     print("getAvailableRouteCount: 開始")
     # JavaList→Listに変換       
     # sensingDates = changeJavaList(sensingDatesArray)   

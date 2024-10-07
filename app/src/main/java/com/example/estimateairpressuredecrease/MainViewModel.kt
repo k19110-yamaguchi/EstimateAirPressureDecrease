@@ -133,13 +133,12 @@ class MainViewModel @Inject constructor(
     var barTimeList: MutableList<Double> = mutableListOf()
 
     // StableInterval
-    var siStartLat: Double by mutableStateOf(-1.0)
-    // 安定区間の開始の経度
-    var siStartLon: Double by mutableStateOf(-1.0)
-    // 安定区間の終了の緯度
-    var siStopLat: Double by mutableStateOf(-1.0)
-    // 安定区間の終了の経度
-    var siStopLon: Double by mutableStateOf(-1.0)
+    // 安定区間を抽出するファイル名
+    var siFileName: String by mutableStateOf("")
+    // 安定区間の開始時間
+    var siStarTime: Double by mutableStateOf(-1.0)
+    // 安定区間の終了時間
+    var siStopTime: Double by mutableStateOf(-1.0)
     // 安定区間が取得できる適正内のデータ数
     var withinAvailableRouteCount: Int by mutableStateOf(-1)
     // 安定区間が取得できる適正外のデータ数
@@ -220,7 +219,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // センシングデータの日付リストを取得
+    // センシングデータの日付・空気圧リストを取得
     fun getSensingData(sensorData: List<SensorData>){
         sensingDateList = emptyList<LocalDateTime>().toMutableList()
         sensingAirPressureList = emptyList<Int>().toMutableList()
@@ -342,6 +341,28 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // 安定区間
+    private fun checkRequiredIntervals(sensingAirPressureList: List<Int>): Boolean{
+        var res = false
+        for(sa in sensingAirPressureList){
+            withinSize = 0
+            outOfSize = 0
+            if(sa >= minProperPressure){
+                withinSize += 1
+            }else{
+                outOfSize += 1
+            }
+        }
+        if(withinSize >= requiredRouteSize && outOfSize >= requiredRouteSize){
+            res = true
+        }
+        return res
+    }
+
+    fun checkRequiredStableIntervalRoute(){
+
+    }
+
 
     // センサデータを追加
     fun addSensorData(isFinished: Boolean = false) {
@@ -386,6 +407,22 @@ class MainViewModel @Inject constructor(
 
                 // センシング時の空気圧をcsvに保存
                 openCsv.createSensingAirPressure(sensorDataFileNameList, sensingAirPressureList)
+
+                // todo: 安定区間を求めるか
+                val isRequiredIntervals = checkRequiredIntervals(sensingAirPressureList)
+
+                if(true){
+                    common.log("安定区間の抽出")
+                    // todo: 安定区間の抽出
+                    rp.extractStableInterval(sensorDataFileNameList)
+
+                }else{
+                    common.log("安定区間を求めるのに必要なデータが足りない")
+
+                }
+
+
+                // todo: 安定区間内のデータが必要な数あるか
             }else{
                 // todo: 今取得したセンサデータのcsvファイルを削除
                 // openCsv.deleteSensorDataCsv(startDate)
@@ -408,50 +445,47 @@ class MainViewModel @Inject constructor(
     }
 
     // 安定区間データのデータベースを作成
-    private fun createStableInterval() {
+    private fun createStableInterval(newStableInterval: StableIntervalData) {
         viewModelScope.launch {
-            val newStableInterval = StableIntervalData(siStartLat = siStartLat, siStartLon = siStartLon, siStopLat = siStopLat, siStopLon = siStopLon, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileName = availableFileName)
             stableIntervalDao.createStableIntervalDB(newStableInterval)
         }
     }
 
     // 安定区間データのデータベースを更新
-    private fun updateStableInterval() {
+    private fun updateStableInterval(newStableInterval: StableIntervalData) {
         viewModelScope.launch {
-            val newStableInterval = StableIntervalData(siStartLat = siStartLat, siStartLon = siStartLon, siStopLat = siStopLat, siStopLon = siStopLon, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileName = availableFileName)
             stableIntervalDao.updateStableIntervalData(newStableInterval)
         }
     }
 
     // 安定区間の情報を追加
-    fun addStableInterval(siInfoList: List<Double>){
-        siStartLat = siInfoList[0]
-        siStartLon = siInfoList[1]
-        siStopLat = siInfoList[2]
-        siStopLon = siInfoList[3]
+    fun addStableInterval(siInfoList: List<String>){
         // withinAvailableRouteCount = siInfoList[4].toInt()
         // outOfAvailableRouteCount = siInfoList[5].toInt()
         // availableFileName = stableInterval.availableFileName.toMutableList()
 
         // 安定区間データのデータベースがあるかどうか
+        siFileName = siInfoList[0].replace("'", "")
+        siStarTime = siInfoList[1].toDouble()
+        siStopTime = siInfoList[2].toDouble()
+        val newStableInterval = StableIntervalData(siFileName = siFileName, siStarTime = siStarTime, siStopTime = siStopTime, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileName = availableFileName)
+
         viewModelScope.launch {
             // id:0 のstableIntervalがnullだった場合
             if (stableIntervalDao.getStableIntervalById(0) == null){
                 // 安定区間のデータベースを作成
-                createStableInterval()
-
+                createStableInterval(newStableInterval)
             }else{
                 // 安定区間のデータベースを更新
-                updateStableInterval()
+                updateStableInterval(newStableInterval)
             }
         }
     }
 
     fun setStableInterval(stableInterval: StableIntervalData){
-        siStartLat = stableInterval.siStartLat
-        siStartLon = stableInterval.siStartLon
-        siStopLat = stableInterval.siStopLat
-        siStopLon = stableInterval.siStopLon
+        siFileName = stableInterval.siFileName
+        siStarTime = stableInterval.siStarTime
+        siStopTime = stableInterval.siStopTime
         withinAvailableRouteCount = stableInterval.withinAvailableRouteCount
         outOfAvailableRouteCount = stableInterval.outOfAvailableRouteCount
         availableFileName = stableInterval.availableFileName.toMutableList()

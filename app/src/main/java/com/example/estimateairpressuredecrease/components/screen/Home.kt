@@ -36,9 +36,9 @@ fun Home(viewModel: MainViewModel) {
     // センサデータを取得
     val sensorData by viewModel.sensorData.collectAsState(initial = emptyList())
     if (sensorData.isNotEmpty()){
-        // 適正空気圧の範囲内，外のセンサデータの個数をカウント
+        // 適正内，外の数を取得
         viewModel.countWithinData(sensorData)
-        // センシングデータの日付リストを取得
+        // センシングデータの日付・空気圧リストを取得
         viewModel.getSensingData(sensorData)
     }
 
@@ -68,24 +68,17 @@ fun Home(viewModel: MainViewModel) {
                 val rp = RunPython()
                 val siInfoList = rp.extractStableInterval(emptyList())
                 viewModel.addStableInterval(siInfoList)
-                //common.log(siInfoList.toString())
             }) {
                 Text(text = "Pythonテスト")
             }
             Button(onClick = {
                 val rp = RunPython()
-                val siAvailableInfoLis = rp.getAvailableRouteCount(emptyList(), viewModel.siStartLat, viewModel.siStartLon, viewModel.siStopLat, viewModel.siStopLon, viewModel.sensingAirPressureList, viewModel.minProperPressure, viewModel.requiredRouteCount)
+                val siAvailableInfoLis = rp.getAvailableRouteCount(emptyList(), viewModel.siFileName, viewModel.siStarTime, viewModel.siStopTime, viewModel.sensingAirPressureList, viewModel.minProperPressure, viewModel.requiredRouteCount)
                 //common.log(siInfoList.toString())
             }) {
                 Text(text = "Pythonテスト2")
             }
-
-            if (stableIntervalData.isNotEmpty()){
-                Text(text = "安定区間")
-                Text(text = "[${viewModel.siStartLat}, ${viewModel.siStartLon}]")
-                Text(text = "|")
-                Text(text = "[${viewModel.siStopLat}, ${viewModel.siStopLon}]")
-            }
+            Text(text = viewModel.siFileName)
 
             if (sensorData.isNotEmpty()){
 

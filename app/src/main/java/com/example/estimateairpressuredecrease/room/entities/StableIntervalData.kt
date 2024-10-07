@@ -7,14 +7,12 @@ import androidx.room.PrimaryKey
 data class StableIntervalData(
     @PrimaryKey
     val id: Int = 0,
-    // 安定区間の開始の緯度
-    val siStartLat: Double,
-    // 安定区間の開始の経度
-    val siStartLon: Double,
-    // 安定区間の終了の緯度
-    val siStopLat: Double,
-    // 安定区間の終了の経度
-    val siStopLon: Double,
+    // 安定区間を抽出するファイル名
+    val siFileName: String,
+    // 安定区間の開始時間
+    val siStarTime: Double,
+    // 安定区間の終了時間
+    val siStopTime: Double,
     // 安定区間が取得できる適正内のデータ数
     val withinAvailableRouteCount: Int,
     // 安定区間が取得できる適正外のデータ数
