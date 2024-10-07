@@ -12,6 +12,7 @@ import com.example.estimateairpressuredecrease.data.GraData
 import com.example.estimateairpressuredecrease.data.LocData
 import com.example.estimateairpressuredecrease.room.dao.HomeDao
 import com.example.estimateairpressuredecrease.room.dao.SensorDao
+import com.example.estimateairpressuredecrease.room.dao.StableIntervalDao
 import com.example.estimateairpressuredecrease.room.entities.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -25,6 +26,7 @@ import kotlin.math.round
 class MainViewModel @Inject constructor(
     private val homeDao: HomeDao,
     private val sensorDao: SensorDao,
+    private val stableIntervalDao: StableIntervalDao,
 ) : ViewModel(){
     private var common = Common()
 
@@ -42,11 +44,11 @@ class MainViewModel @Inject constructor(
     // 学習状態かどうか
     var isTrainingState by mutableStateOf(true)
     // 適正外のデータ数
-    var outOfSize by mutableStateOf(0)
+    var outOfCount by mutableStateOf(0)
     // 適正内のデータ数
-    var withinSize by mutableStateOf(0)
+    var withinCount by mutableStateOf(0)
     // 推定に必要な適正外、適正内の特徴量の数
-    private val requiredFvSize = 10
+    val requiredRouteCount = 10
     // 初期の日付
     val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
     // 空気を注入した時期
@@ -72,8 +74,10 @@ class MainViewModel @Inject constructor(
 
     // Sensing
     val sensorData = sensorDao.getSensorData().distinctUntilChanged()
-    // データを保存するまでの時間(s)
-    val saveTime: Double = 10.0
+    // データを保存するまでの時間(s): デフォ:10
+    val saveTime: Double = 2.0
+    // センシング終了までに必要なデータサイズ
+    private val requiredDataSize = 0.0
     // センシング画面に初めて移動したか
     var isSensingInit = true
     // 推定に必要なデータがあるか
@@ -124,13 +128,27 @@ class MainViewModel @Inject constructor(
     var zGraList: MutableList<Double> = mutableListOf()
     var graTimeList: MutableList<Double> = mutableListOf()
 
-
-
     // Bar
     var bar: Double by mutableStateOf(-1.0)
     var barTime: Double by mutableStateOf(-1.0)
     var barList: MutableList<Double> = mutableListOf()
     var barTimeList: MutableList<Double> = mutableListOf()
+
+    // StableInterval
+    // 安定区間を抽出するファイル名
+    var siFileName: String by mutableStateOf("")
+    // 安定区間の開始時間
+    var siStarTime: Double by mutableStateOf(-1.0)
+    // 安定区間の終了時間
+    var siStopTime: Double by mutableStateOf(-1.0)
+    // 安定区間が取得できる適正内のデータ数
+    var withinAvailableRouteCount: Int by mutableStateOf(-1)
+    // 安定区間が取得できる適正外のデータ数
+    var outOfAvailableRouteCount: Int by mutableStateOf(-1)
+    // 使用できるセンサデータのファイル名
+    var availableFileNameList : MutableList<String> = mutableListOf()
+    // stableIntervalのデータを取得
+    var stableIntervalData = stableIntervalDao.getStableIntervalData().distinctUntilChanged()
 
     // FeatureValue
     var accSd: Double by mutableStateOf(0.0)
@@ -181,28 +199,25 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // todo: csvファイルからセンサデータを取得
-    // todo: 学習状態から推定状態に変更できるか調べる
-    // todo: 推定状態に移行するとき，推定に適した場所を抽出
     // todo: 推定に適した場所をから特徴量を抽出
     // todo: モデルの作成
     // todo: 空気圧を推定
     // todo: 空気圧注入を促す
 
     fun countWithinData(sensorData: List<SensorData>){
-        outOfSize = 0
-        withinSize = 0
+        outOfCount = 0
+        withinCount = 0
         // 適正外、適正内のデータの数を調べる
         for (sd in sensorData) {
             if (sd.sensingAirPressure >= minProperPressure) {
-                withinSize += 1
+                withinCount += 1
             } else {
-                outOfSize += 1
+                outOfCount += 1
             }
         }
     }
 
-    // センシングデータの日付リストを取得
+    // センシングデータの日付・空気圧リストを取得
     fun getSensingData(sensorData: List<SensorData>){
         sensingDateList = emptyList<LocalDateTime>().toMutableList()
         sensingAirPressureList = emptyList<Int>().toMutableList()
@@ -214,7 +229,7 @@ class MainViewModel @Inject constructor(
 
     fun checkIsEstState(sensorData: List<SensorData>){
         // 必要サイズ以上になった場合
-        if(outOfSize >= requiredFvSize && withinSize >= requiredFvSize){
+        if(outOfCount >= requiredRouteCount && withinCount >= requiredRouteCount){
             // 特徴量を計算
             calcFeatureValue(sensorData)
             //createModel(featureValueData)
@@ -319,9 +334,35 @@ class MainViewModel @Inject constructor(
     // 推定に必要なデータがあるか調べる
     // todo: 推定に必要なデータ数を決める
     fun checkRequiredData(){
-        if(locTime > 10){
+        if(locTime > requiredDataSize){
             isRequiredData = true
         }
+    }
+
+    // 安定区間
+    private fun checkRequiredIntervals(sensingAirPressureList: List<Int>): Boolean{
+        var res = false
+        for(sa in sensingAirPressureList){
+            withinCount = 0
+            outOfCount = 0
+            if(sa >= minProperPressure){
+                withinCount += 1
+            }else{
+                outOfCount += 1
+            }
+        }
+        if(withinCount >= requiredRouteCount && outOfCount >= requiredRouteCount){
+            res = true
+        }
+        return res
+    }
+
+    fun checkRequiredStableIntervalRoute(): Boolean{
+        var res = false
+        if(withinAvailableRouteCount >= requiredRouteCount && outOfAvailableRouteCount >= requiredRouteCount){
+            res = true
+        }
+        return res
     }
 
 
@@ -342,7 +383,6 @@ class MainViewModel @Inject constructor(
         common.log("センサデータをcsvとして保存")
 
         if(isFinished){
-
             // 保存されていたセンサ日付をファイル名の形に変換
             val sensorDataFileNameList: MutableList<String> = mutableListOf()
             for (sd in sensingDateList){
@@ -355,20 +395,59 @@ class MainViewModel @Inject constructor(
 
 
             // 走行データから推定に使用できる区間に分割
-
             val rp = RunPython()
-            rp.extractIntervals(curtSensorDate)
+            val isSuccessExtractIntervals = rp.extractIntervals(curtSensorDate)
+            // 区間抽出に成功したら
+            if (isSuccessExtractIntervals){
+                // 学習時
+                if(isTrainingState){
+                    //　共通区間の抽出
+                    rp.extractCommonIntervals(sensorDataFileNameList)
 
-            //　todo: 共通区間の抽出
-            rp.extractCommonIntervals(sensorDataFileNameList)
+                    // センサ情報をデータベースに保存
+                    val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure, sensorDataPath = sensorDataPath)
+                    addSensor(newSensor)
+                    common.log("センサデータをデータベースに保存")
 
-            // センサ情報をデータベースに保存
-            val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure, sensorDataPath = sensorDataPath)
-            addSensor(newSensor)
-            common.log("センサデータをデータベースに保存")
+                    // センシング時の空気圧をcsvに保存
+                    openCsv.createSensingAirPressure(sensorDataFileNameList, sensingAirPressureList)
 
-            // センシング時の空気圧をcsvに保存
-            openCsv.createSensingAirPressure(sensorDataFileNameList, sensingAirPressureList)
+                    // 安定区間を求めるか
+                    val isRequiredIntervals = checkRequiredIntervals(sensingAirPressureList)
+
+                    if(isRequiredIntervals){
+                        common.log("安定区間の抽出")
+                        // 安定区間の抽出
+                        val siInfoList = rp.extractStableInterval(sensorDataFileNameList, sensingAirPressureList, minProperPressure, requiredRouteCount)
+                        addStableInterval(siInfoList)
+                        // 安定区間内のデータが必要な数あるか
+                        val isRequiredStableIntervalRoute = checkRequiredStableIntervalRoute()
+
+                        if(isRequiredStableIntervalRoute){
+                            // todo: 安定区間内の加速度csvを作成
+                            // todo: モデルの作成
+                        }
+
+                    }else{
+                        common.log("安定区間を求めるのに必要なデータが足りない")
+
+                    }
+
+                // 推定時
+                }else{
+                    // todo: 今取ったデータが安定区間内に使用できるデータがあるか
+
+                    // todo: 空気圧の推定
+
+                    // todo: 安定区間を作り直す
+
+                }
+
+
+            }else{
+                // todo: 今取得したセンサデータのcsvファイルを削除(コメントアウト中)
+                // openCsv.deleteSensorDataCsv(startDate)
+            }
 
             resetSensing()
 
@@ -385,6 +464,63 @@ class MainViewModel @Inject constructor(
             sensorDao.insertSensorData(newSensor)
         }
     }
+
+    // 安定区間データのデータベースを作成
+    private fun createStableInterval(newStableInterval: StableIntervalData) {
+        viewModelScope.launch {
+            stableIntervalDao.createStableIntervalDB(newStableInterval)
+        }
+    }
+
+    // 安定区間データのデータベースを更新
+    private fun updateStableInterval(newStableInterval: StableIntervalData) {
+        viewModelScope.launch {
+            stableIntervalDao.updateStableIntervalData(newStableInterval)
+        }
+    }
+
+    // 安定区間の情報を追加
+    private fun addStableInterval(siInfoList: List<String>){
+        withinAvailableRouteCount = siInfoList[0].toInt()
+        outOfAvailableRouteCount = siInfoList[1].toInt()
+
+        // 安定区間データのデータベースがあるかどうか
+        if ((siInfoList.size  >= 3)){
+            siFileName = siInfoList[2].replace("'", "")
+            siStarTime = siInfoList[3].toDouble()
+            siStopTime = siInfoList[4].toDouble()
+            availableFileNameList = siInfoList.last()
+                .removeSurrounding("['", "']")
+                .split("', '")
+                .map { it.trim() }.toMutableList()
+
+        }
+
+        val newStableInterval = StableIntervalData(siFileName = siFileName, siStarTime = siStarTime, siStopTime = siStopTime, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileNameList = availableFileNameList)
+
+        viewModelScope.launch {
+            // id:0 のstableIntervalがnullだった場合
+            if (stableIntervalDao.getStableIntervalById(0) == null){
+                // 安定区間のデータベースを作成
+                createStableInterval(newStableInterval)
+            }else{
+                // 安定区間のデータベースを更新
+                updateStableInterval(newStableInterval)
+            }
+        }
+    }
+
+    fun setStableInterval(stableInterval: StableIntervalData){
+        siFileName = stableInterval.siFileName
+        siStarTime = stableInterval.siStarTime
+        siStopTime = stableInterval.siStopTime
+        withinAvailableRouteCount = stableInterval.withinAvailableRouteCount
+        outOfAvailableRouteCount = stableInterval.outOfAvailableRouteCount
+        availableFileNameList = stableInterval.availableFileNameList.toMutableList()
+
+    }
+
+
 
 
     // 特徴量を取得

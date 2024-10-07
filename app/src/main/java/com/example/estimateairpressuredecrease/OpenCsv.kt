@@ -223,13 +223,8 @@ class OpenCsv {
     fun createSensingAirPressure(dateList: List<String>, airPressureList: List<Int>){
         val filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString() + "/sensingAirPressure" + extension
         var csvData = ""
-
-        // ファイルが存在するか調べる
-        val file = File(filePath)
-        if(!isFileExists(file)){
-            val header = "date,airPressure(kPa)"
-            csvData = header + "\n"
-        }
+        val header = "date,airPressure(kPa)"
+        csvData = header + "\n"
 
         for(i in dateList.indices){
             csvData += "${dateList[i]},${airPressureList[i]}\n"
@@ -240,6 +235,5 @@ class OpenCsv {
         pw.close()
 
     }
-
 
 }

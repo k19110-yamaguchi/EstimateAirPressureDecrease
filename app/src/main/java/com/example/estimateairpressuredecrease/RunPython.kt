@@ -11,7 +11,7 @@ class RunPython {
     private var filePath = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).toString()
 
     // 走行データを推定に使用できる区間に分割
-    fun extractIntervals(sensingDate: String, common: Common = Common()){
+    fun extractIntervals(sensingDate: String, common: Common = Common()): Boolean{
 
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
@@ -25,11 +25,14 @@ class RunPython {
         val isSuccess = res.toBoolean()
         if (isSuccess){
             common.log("走行データを推定に使用できる区間の抽出に成功")
+        }else{
+            common.log("走行データを推定に使用できる区間の抽出に失敗")
         }
+        return isSuccess
 
     }
 
-    //　todo: 共通区間の抽出
+    //　共通区間の抽出
     fun extractCommonIntervals(sensingDateList: List<String>, common: Common = Common()){
 
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
@@ -48,7 +51,43 @@ class RunPython {
 
     }
 
-    // todo: 安定区間の抽出
+    // 安定区間の抽出
+    fun extractStableInterval(sensingDateList: List<String>, sensingAirPressureList: List<Int>, minProperPressure: Int, requiredRouteCount: Int, common: Common = Common()): List<String>{
+        // Pythonコードを実行する前にPython.start()の呼び出しが必要
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(MainActivity.content))
+        }
+        val py = Python.getInstance()
+        // スクリプト名
+        val module = py.getModule("extractStableInterval")
+        // 区間をPythonで分割
+        var res = module.callAttr("extractStableInterval", sensingDateList, sensingAirPressureList, minProperPressure, requiredRouteCount, filePath).toString()
+        common.log(res)
+        return if(res != "True"){
+            res.removeSurrounding("[", "]")
+                .split(Regex(",(?![^\\[\\]]*\\])"))  // リスト内のカンマを無視する
+                .map { it.trim() }
+        }else{
+            emptyList()
+        }
+
+    }
+
+    // todo: 推定に使用できるルート数を取得
+    fun getAvailableRouteCount(sensingDateList: List<String>, siFileName: String, siStartTime: Double, siStopTime: Double, sensingAirPressureList: List<Int>, minProperPressure: Int, requiredRouteCount: Int, common: Common = Common()){
+        // Pythonコードを実行する前にPython.start()の呼び出しが必要
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(MainActivity.content))
+        }
+        val py = Python.getInstance()
+        // スクリプト名
+        val module = py.getModule("extractStableInterval")
+        // 区間をPythonで分割
+        val res = module.callAttr("getAvailableRouteCount", sensingDateList, siFileName, siStartTime, siStopTime, sensingAirPressureList, minProperPressure, requiredRouteCount, filePath).toString()
+        // 最初と最後の[]を取り除き、","で分割
+
+
+    }
 
     // todo: 安定区間内の加速度を抽出
 

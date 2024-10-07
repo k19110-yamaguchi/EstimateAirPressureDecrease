@@ -185,7 +185,9 @@ def extractIntervals(sensingDate, filePath):
         row = [startTime[i], stopTime[i]]
         data.append(row)
     intervalsDf = pd.DataFrame(data, columns=columns)    
-    intervalsDf.to_csv(f"{filePath}/{sensingDate}/intervals.csv", index=False)
-    
-    print("extractIntervals: 終了")    
-    return True    
+    res = False
+    if len(intervalsDf.columns) > 0:
+        intervalsDf.to_csv(f"{filePath}/{sensingDate}/intervals.csv", index=False)
+        res = True
+    print("extractIntervals: 終了")        
+    return res    

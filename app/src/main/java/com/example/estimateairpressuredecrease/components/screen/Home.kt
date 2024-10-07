@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import com.example.estimateairpressuredecrease.Common
 import com.example.estimateairpressuredecrease.MainViewModel
 import com.example.estimateairpressuredecrease.OpenCsv
+import com.example.estimateairpressuredecrease.RunPython
 import com.example.estimateairpressuredecrease.sensors.Accelerometer
 import com.example.estimateairpressuredecrease.sensors.Barometric
 import com.example.estimateairpressuredecrease.sensors.Gravity
@@ -35,12 +36,18 @@ fun Home(viewModel: MainViewModel) {
     // センサデータを取得
     val sensorData by viewModel.sensorData.collectAsState(initial = emptyList())
     if (sensorData.isNotEmpty()){
-        // 適正空気圧の範囲内，外のセンサデータの個数をカウント
+        // 適正内，外の数を取得
         viewModel.countWithinData(sensorData)
-        // センシングデータの日付リストを取得
+        // センシングデータの日付・空気圧リストを取得
         viewModel.getSensingData(sensorData)
+    }
+
+    // 安定区間の情報を取得
+    val stableIntervalData by viewModel.stableIntervalData.collectAsState(initial = emptyList())
+    if(stableIntervalData.isNotEmpty()){
+        // 状態をセット
+        viewModel.setStableInterval(stableIntervalData[0])
         // todo: 推定状態に移行できるかどうか
-        //viewModel.checkIsEstState()
     }
 
 
@@ -58,10 +65,15 @@ fun Home(viewModel: MainViewModel) {
 
             Text(text = "ホーム画面", fontSize = common.largeFont)
 
-            if (sensorData.isNotEmpty()){
+            Text(text = viewModel.siFileName)
 
-                Text(text = "適正内データ数： ${viewModel.withinSize}")
-                Text(text = "適正外データ数： ${viewModel.outOfSize}")
+            if (sensorData.isNotEmpty()){
+                Text(text = "適正内データ数： ${viewModel.withinCount}")
+                Text(text = "適正外データ数： ${viewModel.outOfCount}")
+                if (stableIntervalData.isNotEmpty()){
+                    Text(text = "推定に使用可能な適正内データ数： ${viewModel.withinAvailableRouteCount}")
+                    Text(text = "推定に使用可能な適正外データ数： ${viewModel.outOfAvailableRouteCount}")
+                }
 
                 Button(
                     colors = ButtonDefaults.buttonColors(

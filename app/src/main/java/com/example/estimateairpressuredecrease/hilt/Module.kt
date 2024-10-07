@@ -23,4 +23,7 @@ object Module {
     @Provides
     fun provideSensorDao(db: AppDatabase) = db.sensorDao()
 
+    @Provides
+    fun provideStableIntervalDao(db: AppDatabase) = db.stableIntervalDao()
+
 }
