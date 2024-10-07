@@ -52,7 +52,7 @@ class RunPython {
     }
 
     // 安定区間の抽出
-    fun extractStableInterval(sensingDateList: List<String>, common: Common = Common()): List<String>{
+    fun extractStableInterval(sensingDateList: List<String>, sensingAirPressureList: List<Int>, minProperPressure: Int, requiredRouteCount: Int, common: Common = Common()): List<String>{
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
@@ -61,7 +61,7 @@ class RunPython {
         // スクリプト名
         val module = py.getModule("extractStableInterval")
         // 区間をPythonで分割
-        val res = module.callAttr("extractStableInterval", sensingDateList, filePath).toString()
+        val res = module.callAttr("extractStableInterval", sensingDateList, sensingAirPressureList, minProperPressure, requiredRouteCount, filePath).toString()
         // 最初と最後の[]を取り除き、","で分割
         common.log(res)
         return if(res != "True"){

@@ -64,26 +64,16 @@ fun Home(viewModel: MainViewModel) {
             Spacer(modifier = Modifier.height(common.space))
 
             Text(text = "ホーム画面", fontSize = common.largeFont)
-            Button(onClick = { 
-                val rp = RunPython()
-                val siInfoList = rp.extractStableInterval(emptyList())
-                viewModel.addStableInterval(siInfoList)
-            }) {
-                Text(text = "Pythonテスト")
-            }
-            Button(onClick = {
-                val rp = RunPython()
-                val siAvailableInfoLis = rp.getAvailableRouteCount(emptyList(), viewModel.siFileName, viewModel.siStarTime, viewModel.siStopTime, viewModel.sensingAirPressureList, viewModel.minProperPressure, viewModel.requiredRouteCount)
-                //common.log(siInfoList.toString())
-            }) {
-                Text(text = "Pythonテスト2")
-            }
+
             Text(text = viewModel.siFileName)
 
             if (sensorData.isNotEmpty()){
-
-                Text(text = "適正内データ数： ${viewModel.withinSize}")
-                Text(text = "適正外データ数： ${viewModel.outOfSize}")
+                Text(text = "適正内データ数： ${viewModel.withinCount}")
+                Text(text = "適正外データ数： ${viewModel.outOfCount}")
+                if (stableIntervalData.isNotEmpty()){
+                    Text(text = "推定に使用可能な適正内データ数： ${viewModel.withinAvailableRouteCount}")
+                    Text(text = "推定に使用可能な適正外データ数： ${viewModel.outOfAvailableRouteCount}")
+                }
 
                 Button(
                     colors = ButtonDefaults.buttonColors(

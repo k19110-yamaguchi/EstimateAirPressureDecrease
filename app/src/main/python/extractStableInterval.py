@@ -1,5 +1,7 @@
 ## pip install pandas
 import pandas as pd  # type: ignore
+import math
+from pyproj import Transformer
 
 
 class LocHeader:
@@ -20,6 +22,9 @@ ih = IntervalsHeader()
 
 # 推定区間に必要な距離(km)
 thresholdDis = 0.4  
+
+thresholdSimPointDis = 10.0   
+
 
 # java.util.ArrayList(1次元)をlistの型に変換
 def changeJavaList(javaList):
@@ -110,6 +115,46 @@ def getMaxCommonIntervalsCount(commonCounts):
             res = float(count[2])
     return res
 
+# 平面座標系(m)に変換
+def convertToRCS(locDf):
+    wgs84_epsg, rect_epsg = 4326, 6677
+    tr = Transformer.from_proj(wgs84_epsg, rect_epsg)
+    xList = []
+    yList = []
+    for i, row in locDf.iterrows():        
+        x, y = tr.transform(row[lh.lat], row[lh.lon])
+        # x軸が逆だったので反転
+        x = x*-1   
+        xList.append(x)
+        yList.append(y)         
+    return [xList, yList]
+
+# 共通地点を計算
+def calcSimPoints(locDf1, locDf2):
+    resDis = []                      
+    resTime = []
+    x1, y1 = convertToRCS(locDf1)                             
+    x2, y2 = convertToRCS(locDf2) 
+
+    for i in range(len(locDf1)):
+        minDis = 0
+        minTime = 0
+        for j in range(len(locDf2)):                                    
+            xDis = pow(x1[i]-x2[j], 2.0)
+            yDis = pow(y1[i]-y2[j], 2.0)   
+            dis =  math.sqrt(xDis+yDis) 
+            if j == 0:
+                minDis = dis
+                minTime = locDf2[lh.time][j]
+            else:
+                if dis < minDis:
+                    minDis = dis
+                    minTime = locDf2[lh.time][j]
+        resDis.append(minDis)
+        resTime.append(minTime)
+    return [resDis, resTime]
+
+
 '''
 def withinAvailableRouteCount():
     # 適正内，外の利用できるルートの数
@@ -138,11 +183,69 @@ def withinAvailableRouteCount():
         print("データ数が足りない")
 '''
 
+# 推定に使用可能な適正内，外のルート数
+def getAvailableRouteCount(locDfs, intervalsDfs, siLocDf, stableRouteNums, sensingAirPressures, minProperPressure): 
+    resWithinAvailableRouteCount = 0
+    resOutOfAvailableRouteCount = 0
+    j = 0
+    for i, locDf in enumerate(locDfs):
+        print(f"i: {i}")
+        if i == stableRouteNums[j]:
+            if sensingAirPressures[i] >= minProperPressure:
+                resWithinAvailableRouteCount = resWithinAvailableRouteCount + 1
+            else:
+                resOutOfAvailableRouteCount = resOutOfAvailableRouteCount + 1
+            
+            if j != len(stableRouteNums)-1:
+                j = j+1
+
+        else:
+            intervalsDf = intervalsDfs[i]        
+            for j, row in intervalsDf.iterrows():
+                print(f"Route[{i}][{j}]")
+                startTime = row[ih.startTime]
+                stopTime = row[ih.stopTime]            
+                curtExLocDf = extractLocDf(locDfs[i], startTime, stopTime)   
+                simPointsDis, simPointsTime = calcSimPoints(curtExLocDf, siLocDf)                     
+
+                isCommon = False  
+                startTime = -1
+                stopTime = -1                                                
+                dis = 0               
+                for n in range(len(curtExLocDf)):
+                    if simPointsDis[n] < thresholdSimPointDis: 
+                        isCommon = True                       
+                        if startTime == -1:
+                            startTime = curtExLocDf[lh.time][n]                     
+                        stopTime = curtExLocDf[lh.time][n]               
+                        dis += curtExLocDf[lh.dis][n]
+                    elif simPointsDis[n] >= thresholdSimPointDis and isCommon:
+                        isCommon = False                        
+                                                                                                                
+                if startTime == -1:
+                    print(f"共通区間なし")    
+
+                elif dis < thresholdDis:
+                    print(f"共通区間距離が短い: {round(dis, 5)}km")
+                    
+                else:    
+                    if sensingAirPressures[i] >= minProperPressure:
+                        resWithinAvailableRouteCount = resWithinAvailableRouteCount + 1
+                    else:
+                        resOutOfAvailableRouteCount = resOutOfAvailableRouteCount + 1                                                       
+    return [resWithinAvailableRouteCount, resOutOfAvailableRouteCount]
+                                                     
+        
+
+
+
+
 ## 安定区間の抽出
-def extractStableInterval(sensingDatesArray, filePath2):
+def extractStableInterval(sensingDatesArray, sensingAirPressuresArray, minProperPressure, requiredRouteCount, filePath2):
     print("extractStableInterval: 開始")
     # JavaList→Listに変換       
-    # sensingDates = changeJavaList(sensingDatesArray)         
+    # sensingDates = changeJavaList(sensingDatesArray)  
+    # sensingAirPressures = changeJavaList(sensingAirPressuresArray)       
      
     # デバック
     import os
@@ -230,18 +333,27 @@ def extractStableInterval(sensingDatesArray, filePath2):
 
     print(f"安定区間距離: {round(siDis*1000, 1)}m")    
     if siDis > thresholdDis:
-        siStartLat = siLocDf[lh.lat].iloc[0]
-        siStartLon = siLocDf[lh.lon].iloc[0]
-        siStopLat = siLocDf[lh.lat].iloc[-1]
-        siStopLon = siLocDf[lh.lon].iloc[-1]
-        print(f"安定区間位置情報: [{siStartLat}, {siStartLon}] ~ [{siStopLat}, {siStopLon}]")     
-        print("extractStableInterval: 終了")  
-        return [sensingDates[stableRouteNums[0]], siStartTime, siStopTime]
+        withinAvailableRouteCount, outOfAvailableRouteCount = getAvailableRouteCount(locDfs, intervalsDfs, siLocDf, stableIntervalNums, sensingAirPressures, minProperPressure)
+        
+        print(withinAvailableRouteCount)
+        print(outOfAvailableRouteCount)
+        
+        if withinAvailableRouteCount >= requiredRouteCount and outOfAvailableRouteCount >= requiredRouteCount:
+            print(f"推定できる")
+            print("extractStableInterval: 終了")  
+            return [withinAvailableRouteCount, outOfAvailableRouteCount, sensingDates[stableRouteNums[0]], siStartTime, siStopTime]
+        
+        else:
+            print(f"推定に必要な距離が足りない")   
+            print("extractStableInterval: 終了")  
+            return [withinAvailableRouteCount, outOfAvailableRouteCount]                      
+        
     else:
         print(f"安定区間に必要な距離が足りない")
         print("extractStableInterval: 終了")  
         return True
 
+'''
 def getAvailableRouteCount(sensingDatesArray, siFileName, siStartTime, siStopTime, sensingAirPressureArray, minProperPressure, requiredRouteCount, filePath2):    
     print("getAvailableRouteCount: 開始")
     # JavaList→Listに変換       
@@ -269,4 +381,5 @@ def getAvailableRouteCount(sensingDatesArray, siFileName, siStartTime, siStopTim
     print("extractStableInterval: 終了")  
     return True
 
+'''
     

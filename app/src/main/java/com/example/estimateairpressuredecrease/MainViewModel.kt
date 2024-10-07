@@ -44,11 +44,11 @@ class MainViewModel @Inject constructor(
     // 学習状態かどうか
     var isTrainingState by mutableStateOf(true)
     // 適正外のデータ数
-    var outOfSize by mutableStateOf(0)
+    var outOfCount by mutableStateOf(0)
     // 適正内のデータ数
-    var withinSize by mutableStateOf(0)
+    var withinCount by mutableStateOf(0)
     // 推定に必要な適正外、適正内の特徴量の数
-    val requiredRouteSize = 10
+    val requiredRouteCount = 10
     // 初期の日付
     val initDate: LocalDateTime = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
     // 空気を注入した時期
@@ -147,7 +147,6 @@ class MainViewModel @Inject constructor(
     var availableFileName : MutableList<String> = mutableListOf()
     // stableIntervalのデータを取得
     var stableIntervalData = stableIntervalDao.getStableIntervalData().distinctUntilChanged()
-    val requiredRouteCount = 10
 
     // FeatureValue
     var accSd: Double by mutableStateOf(0.0)
@@ -207,14 +206,14 @@ class MainViewModel @Inject constructor(
     // todo: 空気圧注入を促す
 
     fun countWithinData(sensorData: List<SensorData>){
-        outOfSize = 0
-        withinSize = 0
+        outOfCount = 0
+        withinCount = 0
         // 適正外、適正内のデータの数を調べる
         for (sd in sensorData) {
             if (sd.sensingAirPressure >= minProperPressure) {
-                withinSize += 1
+                withinCount += 1
             } else {
-                outOfSize += 1
+                outOfCount += 1
             }
         }
     }
@@ -231,7 +230,7 @@ class MainViewModel @Inject constructor(
 
     fun checkIsEstState(sensorData: List<SensorData>){
         // 必要サイズ以上になった場合
-        if(outOfSize >= requiredRouteSize && withinSize >= requiredRouteSize){
+        if(outOfCount >= requiredRouteCount && withinCount >= requiredRouteCount){
             // 特徴量を計算
             calcFeatureValue(sensorData)
             //createModel(featureValueData)
@@ -345,15 +344,15 @@ class MainViewModel @Inject constructor(
     private fun checkRequiredIntervals(sensingAirPressureList: List<Int>): Boolean{
         var res = false
         for(sa in sensingAirPressureList){
-            withinSize = 0
-            outOfSize = 0
+            withinCount = 0
+            outOfCount = 0
             if(sa >= minProperPressure){
-                withinSize += 1
+                withinCount += 1
             }else{
-                outOfSize += 1
+                outOfCount += 1
             }
         }
-        if(withinSize >= requiredRouteSize && outOfSize >= requiredRouteSize){
+        if(withinCount >= requiredRouteCount && outOfCount >= requiredRouteCount){
             res = true
         }
         return res
@@ -414,7 +413,8 @@ class MainViewModel @Inject constructor(
                 if(true){
                     common.log("安定区間の抽出")
                     // todo: 安定区間の抽出
-                    rp.extractStableInterval(sensorDataFileNameList)
+                    val siInfoList = rp.extractStableInterval(sensorDataFileNameList, sensingAirPressureList, minProperPressure, requiredRouteCount)
+                    addStableInterval(siInfoList)
 
                 }else{
                     common.log("安定区間を求めるのに必要なデータが足りない")
@@ -459,15 +459,19 @@ class MainViewModel @Inject constructor(
     }
 
     // 安定区間の情報を追加
-    fun addStableInterval(siInfoList: List<String>){
-        // withinAvailableRouteCount = siInfoList[4].toInt()
-        // outOfAvailableRouteCount = siInfoList[5].toInt()
-        // availableFileName = stableInterval.availableFileName.toMutableList()
+    private fun addStableInterval(siInfoList: List<String>){
+        withinAvailableRouteCount = siInfoList[0].toInt()
+        outOfAvailableRouteCount = siInfoList[1].toInt()
 
         // 安定区間データのデータベースがあるかどうか
-        siFileName = siInfoList[0].replace("'", "")
-        siStarTime = siInfoList[1].toDouble()
-        siStopTime = siInfoList[2].toDouble()
+        if ((siInfoList.size  == 5)){
+            siFileName = siInfoList[2].replace("'", "")
+            siStarTime = siInfoList[3].toDouble()
+            siStopTime = siInfoList[4].toDouble()
+            //availableFileName = stableInterval.availableFileName.toMutableList()
+
+        }
+
         val newStableInterval = StableIntervalData(siFileName = siFileName, siStarTime = siStarTime, siStopTime = siStopTime, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileName = availableFileName)
 
         viewModelScope.launch {
