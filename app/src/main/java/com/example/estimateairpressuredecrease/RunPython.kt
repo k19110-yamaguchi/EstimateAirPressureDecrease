@@ -73,23 +73,25 @@ class RunPython {
 
     }
 
-    // todo: 推定に使用できるルート数を取得
-    fun getAvailableRouteCount(sensingDateList: List<String>, siFileName: String, siStartTime: Double, siStopTime: Double, sensingAirPressureList: List<Int>, minProperPressure: Int, requiredRouteCount: Int, common: Common = Common()){
+    // todo: 安定区間内の加速度を抽出
+    fun extractAccData(availableFileNameList: List<String>, siFileName: String, siStartTime: Double, siStopTime: Double, common: Common = Common()){
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
         }
         val py = Python.getInstance()
         // スクリプト名
-        val module = py.getModule("extractStableInterval")
+        val module = py.getModule("extractAccData")
         // 区間をPythonで分割
-        val res = module.callAttr("getAvailableRouteCount", sensingDateList, siFileName, siStartTime, siStopTime, sensingAirPressureList, minProperPressure, requiredRouteCount, filePath).toString()
-        // 最初と最後の[]を取り除き、","で分割
+        val isSuccess = module.callAttr("extractAccData", availableFileNameList, siFileName, siStartTime, siStopTime, filePath).toBoolean()
+
+        if (isSuccess){
+            common.log("安定区間内の加速度抽出に成功")
+        }
 
 
     }
 
-    // todo: 安定区間内の加速度を抽出
 
     // todo: 特徴量を取得
     fun createFeatureValue(newAcc: MutableList<List<Double>>, newGra: MutableList<List<Double>>, newLoc: MutableList<List<Double>>, newBar: MutableList<List<Double>>): List<Double> {

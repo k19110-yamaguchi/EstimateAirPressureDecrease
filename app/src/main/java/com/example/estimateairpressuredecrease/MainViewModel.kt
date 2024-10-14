@@ -15,9 +15,12 @@ import com.example.estimateairpressuredecrease.room.dao.SensorDao
 import com.example.estimateairpressuredecrease.room.dao.StableIntervalDao
 import com.example.estimateairpressuredecrease.room.entities.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import kotlin.math.round
 
@@ -138,7 +141,7 @@ class MainViewModel @Inject constructor(
     // 安定区間を抽出するファイル名
     var siFileName: String by mutableStateOf("")
     // 安定区間の開始時間
-    var siStarTime: Double by mutableStateOf(-1.0)
+    var siStartTime: Double by mutableStateOf(-1.0)
     // 安定区間の終了時間
     var siStopTime: Double by mutableStateOf(-1.0)
     // 安定区間が取得できる適正内のデータ数
@@ -383,73 +386,104 @@ class MainViewModel @Inject constructor(
         common.log("センサデータをcsvとして保存")
 
         if(isFinished){
-            // 保存されていたセンサ日付をファイル名の形に変換
-            val sensorDataFileNameList: MutableList<String> = mutableListOf()
-            for (sd in sensingDateList){
-                sensorDataFileNameList.add(openCsv.createFileName(sd))
-            }
-            // 現在センシングした日付と空気圧を取得
-            val curtSensorDate = openCsv.createFileName(startDate)
-            sensorDataFileNameList.add(curtSensorDate)
-            sensingAirPressureList.add(sensingAirPressure)
+            GlobalScope.launch(Dispatchers.IO) {
+                // 保存されていたセンサ日付をファイル名の形に変換
+                val sensorDataFileNameList: MutableList<String> = mutableListOf()
+                for (sd in sensingDateList) {
+                    sensorDataFileNameList.add(openCsv.createFileName(sd))
+                }
+                // 現在センシングした日付と空気圧を取得
+                val curtSensorDate = openCsv.createFileName(startDate)
+                sensorDataFileNameList.add(curtSensorDate)
+                sensingAirPressureList.add(sensingAirPressure)
 
 
-            // 走行データから推定に使用できる区間に分割
-            val rp = RunPython()
-            val isSuccessExtractIntervals = rp.extractIntervals(curtSensorDate)
-            // 区間抽出に成功したら
-            if (isSuccessExtractIntervals){
-                // 学習時
-                if(isTrainingState){
-                    //　共通区間の抽出
-                    rp.extractCommonIntervals(sensorDataFileNameList)
+                // 走行データから推定に使用できる区間に分割
+                val rp = RunPython()
+                val isSuccessExtractIntervals = rp.extractIntervals(curtSensorDate)
+                // 区間抽出に成功したら
+                if (isSuccessExtractIntervals) {
+                    // 重い処理をここで実行
 
-                    // センサ情報をデータベースに保存
-                    val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure, sensorDataPath = sensorDataPath)
-                    addSensor(newSensor)
-                    common.log("センサデータをデータベースに保存")
+                    // 学習時
+                    if (isTrainingState) {
+                        // センサ情報をデータベースに保存
+                        val newSensor = SensorData(
+                            startDate = startDate,
+                            stopDate = stopDate,
+                            sensingAirPressure = sensingAirPressure,
+                            estimatedAirPressure = estimatedAirPressure,
+                            sensorDataPath = sensorDataPath
+                        )
+                        addSensor(newSensor)
+                        common.log("センサデータをデータベースに保存")
 
-                    // センシング時の空気圧をcsvに保存
-                    openCsv.createSensingAirPressure(sensorDataFileNameList, sensingAirPressureList)
 
-                    // 安定区間を求めるか
-                    val isRequiredIntervals = checkRequiredIntervals(sensingAirPressureList)
+                        //　共通区間の抽出
+                        homeMessage = "共通区間の抽出中"
+                        rp.extractCommonIntervals(sensorDataFileNameList)
 
-                    if(isRequiredIntervals){
-                        common.log("安定区間の抽出")
-                        // 安定区間の抽出
-                        val siInfoList = rp.extractStableInterval(sensorDataFileNameList, sensingAirPressureList, minProperPressure, requiredRouteCount)
-                        addStableInterval(siInfoList)
-                        // 安定区間内のデータが必要な数あるか
-                        val isRequiredStableIntervalRoute = checkRequiredStableIntervalRoute()
+                        // センシング時の空気圧をcsvに保存
+                        openCsv.createSensingAirPressure(
+                            sensorDataFileNameList,
+                            sensingAirPressureList
+                        )
 
-                        if(isRequiredStableIntervalRoute){
-                            // todo: 安定区間内の加速度csvを作成
-                            // todo: モデルの作成
+                        // 安定区間を求めるか
+                        val isRequiredIntervals = checkRequiredIntervals(sensingAirPressureList)
+
+                        if (true) {
+                            common.log("安定区間の抽出")
+                            // 安定区間の抽出
+                            homeMessage = "安定区間の抽出中"
+                            val siInfoList = rp.extractStableInterval(
+                                sensorDataFileNameList,
+                                sensingAirPressureList,
+                                minProperPressure,
+                                requiredRouteCount
+                            )
+                            addStableInterval(siInfoList)
+                            // 安定区間内のデータが必要な数あるか
+                            val isRequiredStableIntervalRoute = checkRequiredStableIntervalRoute()
+
+                            if (true) {
+                                // todo: 安定区間内の加速度csvを作成
+                                homeMessage = "安定区間内の加速度抽出中"
+                                rp.extractAccData(
+                                    availableFileNameList,
+                                    siFileName,
+                                    siStartTime,
+                                    siStopTime
+                                )
+                                // todo: モデルの作成
+                            }
+
+                        } else {
+
+                            common.log("安定区間を求めるのに必要なデータが足りない")
+
                         }
 
-                    }else{
-                        common.log("安定区間を求めるのに必要なデータが足りない")
+
+                        // 推定時
+                    } else {
+                        // todo: 今取ったデータが安定区間内に使用できるデータがあるか
+
+                        // todo: 空気圧の推定
+
+                        // todo: 安定区間を作り直す
 
                     }
+                    homeMessage = "処理の終了"
 
-                // 推定時
-                }else{
-                    // todo: 今取ったデータが安定区間内に使用できるデータがあるか
 
-                    // todo: 空気圧の推定
-
-                    // todo: 安定区間を作り直す
-
+                } else {
+                    // todo: 今取得したセンサデータのcsvファイルを削除(コメントアウト中)
+                    homeMessage = "区間抽出に失敗"
+                    // openCsv.deleteSensorDataCsv(startDate)
                 }
-
-
-            }else{
-                // todo: 今取得したセンサデータのcsvファイルを削除(コメントアウト中)
-                // openCsv.deleteSensorDataCsv(startDate)
+                resetSensing()
             }
-
-            resetSensing()
 
         }else{
             resetSensorData()
@@ -487,7 +521,7 @@ class MainViewModel @Inject constructor(
         // 安定区間データのデータベースがあるかどうか
         if ((siInfoList.size  >= 3)){
             siFileName = siInfoList[2].replace("'", "")
-            siStarTime = siInfoList[3].toDouble()
+            siStartTime = siInfoList[3].toDouble()
             siStopTime = siInfoList[4].toDouble()
             availableFileNameList = siInfoList.last()
                 .removeSurrounding("['", "']")
@@ -496,7 +530,7 @@ class MainViewModel @Inject constructor(
 
         }
 
-        val newStableInterval = StableIntervalData(siFileName = siFileName, siStarTime = siStarTime, siStopTime = siStopTime, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileNameList = availableFileNameList)
+        val newStableInterval = StableIntervalData(siFileName = siFileName, siStarTime = siStartTime, siStopTime = siStopTime, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileNameList = availableFileNameList)
 
         viewModelScope.launch {
             // id:0 のstableIntervalがnullだった場合
@@ -512,7 +546,7 @@ class MainViewModel @Inject constructor(
 
     fun setStableInterval(stableInterval: StableIntervalData){
         siFileName = stableInterval.siFileName
-        siStarTime = stableInterval.siStarTime
+        siStartTime = stableInterval.siStarTime
         siStopTime = stableInterval.siStopTime
         withinAvailableRouteCount = stableInterval.withinAvailableRouteCount
         outOfAvailableRouteCount = stableInterval.outOfAvailableRouteCount
@@ -639,7 +673,8 @@ class MainViewModel @Inject constructor(
         openCsv.deleteSensorDataCsv(sensorData.startDate)
         viewModelScope.launch {
             sensorDao.deleteSensorData(sensorData)
-            dataManagementMessage = "${sensorData.startDate}のデータを削除"
+            val dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH-mm-ss")
+            dataManagementMessage = "${sensorData.startDate.format(dateFormat)}のデータを削除"
         }
 
     }
