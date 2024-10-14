@@ -504,19 +504,19 @@ class MainViewModel @Inject constructor(
                         }
                         val isEstimable = rp.extractEstimatedAccData(curtSensorDate, siFileName, siStartTime, siStopTime)
                         if(isEstimable){
-                            // todo: 特徴量の抽出
+                            // 特徴量の抽出
                             withContext(Dispatchers.Main) {
                                 homeMessage = "特徴量抽出中"
                             }
                             rp.createEstimatedFeatureValue(curtSensorDate)
 
-                            // todo: 空気圧の推定
+                            // 空気圧の推定
                             withContext(Dispatchers.Main) {
                                 homeMessage = "空気圧推定中"
                             }
                             estimatedAirPressure = rp.estimateAirPressure()
 
-                            // todo: 推定した空気圧の保存
+                            // 推定した空気圧の保存
                             // センサ情報をデータベースに保存
                             val newSensor = SensorData(
                                 startDate = startDate,
