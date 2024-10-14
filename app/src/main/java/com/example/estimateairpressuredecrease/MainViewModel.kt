@@ -498,13 +498,14 @@ class MainViewModel @Inject constructor(
 
                         // 推定時
                     } else {
-                        // todo: 加速度の抽出
+                        // 加速度の抽出
                         withContext(Dispatchers.Main) {
                             homeMessage = "加速度の抽出"
                         }
                         val isEstimable = rp.extractEstimatedAccData(curtSensorDate, siFileName, siStartTime, siStopTime)
                         if(isEstimable){
                             // todo: 特徴量の抽出
+                            rp.createEstimatedFeatureValue(curtSensorDate)
 
                             // todo: 空気圧の推定
 

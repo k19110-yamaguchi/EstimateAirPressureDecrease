@@ -1,6 +1,7 @@
 import numpy as np # type: ignore
 import pandas as pd  # type: ignore
 from statistics import stdev
+import os
 
 class AccHeader:
     def __init__(self,time="time(s)",x="x(m/s^2)",y="y(m/s^2)",z="z(m/s^2)"):
@@ -87,7 +88,7 @@ def createFvHeader():
     return res
 
 # 特徴量のファイル作成    
-def cereateTrainingFvCsv(featureValues, filePath):             
+def cereateTrainingFvCsv(featureValues, filePath):                 
     header = createFvHeader()    
 
     fvDf = pd.DataFrame(columns = header)
@@ -100,9 +101,24 @@ def cereateTrainingFvCsv(featureValues, filePath):
 
     # CSV ファイル (employee.csv) として出力
     fvDf.to_csv(f"{filePath}/trainingFeatureValue.csv", index = False)
+        
     
-    print("hoge")  
+def cereateEstimatedFvCsv(featureValue, filePath):
+    header = createFvHeader()    
+    header.pop(-1)
+    if os.path.isfile(f"{filePath}/estimatedFeatureValue.csv"):        
+        fvDf = pd.read_csv(f"{filePath}/estimatedFeatureValue.csv")             
+    else:       
+        fvDf = pd.DataFrame(columns = header)            
+        
+    s = pd.Series(featureValue, index=header)
+    fvDf = pd.concat([fvDf, s.to_frame().T]) 
+
+    # CSV ファイル (employee.csv) として出力
+    fvDf.to_csv(f"{filePath}/estimatedFeatureValue.csv", index = False)
     
+
+
 
 def createTrainingFeatureValue(availableFileNameArray, sensingAirPressuresArray, filePath): 
     print("createTrainingFeatureValue: 開始")        
@@ -143,4 +159,34 @@ def createTrainingFeatureValue(availableFileNameArray, sensingAirPressuresArray,
             
     
     print("createTrainingFeatureValue: 終了")        
+    return True
+
+def createEstimatedFeatureValue(curtFileName, filePath):
+    curtFileName = "20241008132847"     
+
+    siAccDf = pd.read_csv(f"{filePath}/siAcc/{curtFileName}.csv") 
+
+    featureValue = []
+        
+    drivingYAcc = getDrivingYAcc(siAccDf)  
+    print(f"長さ：{len(drivingYAcc)}")
+
+    # 加速度標準偏差の取得
+    if len(drivingYAcc) >= 2:
+        AccSd = stdev(drivingYAcc)        
+
+        # 振幅スペクトルを取得 
+        ampSpec = getAmpSpec(drivingYAcc)
+                
+        # 特徴量の行を作成
+        featureValue = [AccSd]
+        for j in range(len(ampSpec)):
+            featureValue.append(ampSpec[j])          
+        print(featureValue)        
+    
+    # 特徴量のファイル作成
+    cereateEstimatedFvCsv(featureValue, filePath)
+
+    print("createEstimatedFeatureValue: 開始")        
+    print("createEstimatedFeatureValue: 終了")        
     return True
