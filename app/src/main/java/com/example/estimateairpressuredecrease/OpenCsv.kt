@@ -19,9 +19,8 @@ class OpenCsv {
     private val extension : String = ".csv"
 
     // 保存するフォルダ名の作成
-    fun createFileName(startDate: LocalDateTime, common: Common = Common()): String {
+    fun createFileName(startDate: LocalDateTime): String {
         val dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH-mm-ss")
-        common.log(startDate.toString())
         return startDate.format(dateFormat).toString()
             .replace("/", "")
             .replace("-", "")

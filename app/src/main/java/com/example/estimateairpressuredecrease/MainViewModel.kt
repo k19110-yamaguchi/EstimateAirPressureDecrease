@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -78,7 +79,7 @@ class MainViewModel @Inject constructor(
     // Sensing
     val sensorData = sensorDao.getSensorData().distinctUntilChanged()
     // データを保存するまでの時間(s): デフォ:10
-    val saveTime: Double = 2.0
+    val saveTime: Double = 10.0
     // センシング終了までに必要なデータサイズ
     private val requiredDataSize = 0.0
     // センシング画面に初めて移動したか
@@ -386,7 +387,8 @@ class MainViewModel @Inject constructor(
         common.log("センサデータをcsvとして保存")
 
         if(isFinished){
-            GlobalScope.launch(Dispatchers.IO) {
+            // 重い処理をここで実行
+            viewModelScope.launch(Dispatchers.IO) {
                 // 保存されていたセンサ日付をファイル名の形に変換
                 val sensorDataFileNameList: MutableList<String> = mutableListOf()
                 for (sd in sensingDateList) {
@@ -394,17 +396,17 @@ class MainViewModel @Inject constructor(
                 }
                 // 現在センシングした日付と空気圧を取得
                 val curtSensorDate = openCsv.createFileName(startDate)
+                common.log("追加された空気圧:${sensingAirPressure}")
                 sensorDataFileNameList.add(curtSensorDate)
+                common.log("前：${sensingAirPressureList}")
                 sensingAirPressureList.add(sensingAirPressure)
-
+                common.log("後：${sensingAirPressureList}")
 
                 // 走行データから推定に使用できる区間に分割
                 val rp = RunPython()
                 val isSuccessExtractIntervals = rp.extractIntervals(curtSensorDate)
                 // 区間抽出に成功したら
                 if (isSuccessExtractIntervals) {
-                    // 重い処理をここで実行
-
                     // 学習時
                     if (isTrainingState) {
                         // センサ情報をデータベースに保存
@@ -420,10 +422,15 @@ class MainViewModel @Inject constructor(
 
 
                         //　共通区間の抽出
-                        homeMessage = "共通区間の抽出中"
+                        withContext(Dispatchers.Main) {
+                            homeMessage = "共通区間の抽出中"
+                        }
+
                         rp.extractCommonIntervals(sensorDataFileNameList)
 
                         // センシング時の空気圧をcsvに保存
+                        common.log(sensorDataFileNameList.toString())
+                        common.log(sensingAirPressureList.toString())
                         openCsv.createSensingAirPressure(
                             sensorDataFileNameList,
                             sensingAirPressureList
@@ -435,7 +442,9 @@ class MainViewModel @Inject constructor(
                         if (true) {
                             common.log("安定区間の抽出")
                             // 安定区間の抽出
-                            homeMessage = "安定区間の抽出中"
+                            withContext(Dispatchers.Main) {
+                                homeMessage = "安定区間の抽出中"
+                            }
                             val siInfoList = rp.extractStableInterval(
                                 sensorDataFileNameList,
                                 sensingAirPressureList,
@@ -447,15 +456,31 @@ class MainViewModel @Inject constructor(
                             val isRequiredStableIntervalRoute = checkRequiredStableIntervalRoute()
 
                             if (true) {
-                                // todo: 安定区間内の加速度csvを作成
-                                homeMessage = "安定区間内の加速度抽出中"
+                                // 安定区間内の加速度csvを作成
+                                withContext(Dispatchers.Main) {
+                                    homeMessage = "安定区間内の加速度抽出中"
+                                }
+
                                 rp.extractAccData(
                                     availableFileNameList,
                                     siFileName,
                                     siStartTime,
                                     siStopTime
                                 )
+                                // todo: 特徴量の取得
+                                var availableAirPressureList: MutableList<Int> = mutableListOf()
+                                for(i in 0 until sensorDataFileNameList.size) {
+                                    for (afn in availableFileNameList) {
+                                        if(sensorDataFileNameList[i] == afn){
+                                            availableAirPressureList.add(sensingAirPressureList[i])
+                                        }
+
+                                    }
+                                }
+                                common.log("空気圧：${availableAirPressureList}")
+                                rp.createFeatureValue(availableFileNameList, availableAirPressureList)
                                 // todo: モデルの作成
+                                // rp.createModel()
                             }
 
                         } else {
@@ -474,12 +499,15 @@ class MainViewModel @Inject constructor(
                         // todo: 安定区間を作り直す
 
                     }
-                    homeMessage = "処理の終了"
-
+                    withContext(Dispatchers.Main) {
+                        homeMessage = "処理の終了"
+                    }
 
                 } else {
                     // todo: 今取得したセンサデータのcsvファイルを削除(コメントアウト中)
-                    homeMessage = "区間抽出に失敗"
+                    withContext(Dispatchers.Main) {
+                        homeMessage = "区間抽出に失敗"
+                    }
                     // openCsv.deleteSensorDataCsv(startDate)
                 }
                 resetSensing()
