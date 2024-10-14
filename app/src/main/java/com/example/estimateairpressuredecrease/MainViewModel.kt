@@ -384,6 +384,7 @@ class MainViewModel @Inject constructor(
         // ファイルの作成
         val openCsv = OpenCsv()
         val sensorDataPath = openCsv.createSensorDataCsv(startDate, newAcc, newGra, newLoc, newBar)
+        val curtSensorDate = openCsv.createFileName(startDate)
         common.log("センサデータをcsvとして保存")
 
         if(isFinished){
@@ -395,7 +396,6 @@ class MainViewModel @Inject constructor(
                     sensorDataFileNameList.add(openCsv.createFileName(sd))
                 }
                 // 現在センシングした日付と空気圧を取得
-                val curtSensorDate = openCsv.createFileName(startDate)
                 common.log("追加された空気圧:${sensingAirPressure}")
                 sensorDataFileNameList.add(curtSensorDate)
                 common.log("前：${sensingAirPressureList}")
@@ -478,7 +478,10 @@ class MainViewModel @Inject constructor(
                                     }
                                 }
                                 common.log("空気圧：${availableAirPressureList}")
-                                rp.createFeatureValue(availableFileNameList, availableAirPressureList)
+                                withContext(Dispatchers.Main) {
+                                    homeMessage = "モデル作成中"
+                                }
+                                rp.createTrainingFeatureValue(availableFileNameList, availableAirPressureList)
                                 // モデルの作成
                                 rp.createModel()
                                 isTrainingState = false
@@ -495,11 +498,43 @@ class MainViewModel @Inject constructor(
 
                         // 推定時
                     } else {
-                        // todo: 今取ったデータが安定区間内に使用できるデータがあるか
+                        // 加速度の抽出
+                        withContext(Dispatchers.Main) {
+                            homeMessage = "加速度抽出中"
+                        }
+                        val isEstimable = rp.extractEstimatedAccData(curtSensorDate, siFileName, siStartTime, siStopTime)
+                        if(isEstimable){
+                            // 特徴量の抽出
+                            withContext(Dispatchers.Main) {
+                                homeMessage = "特徴量抽出中"
+                            }
+                            rp.createEstimatedFeatureValue(curtSensorDate)
 
-                        // todo: 空気圧の推定
+                            // 空気圧の推定
+                            withContext(Dispatchers.Main) {
+                                homeMessage = "空気圧推定中"
+                            }
+                            estimatedAirPressure = rp.estimateAirPressure()
 
-                        // todo: 安定区間を作り直す
+                            // 推定した空気圧の保存
+                            // センサ情報をデータベースに保存
+                            val newSensor = SensorData(
+                                startDate = startDate,
+                                stopDate = stopDate,
+                                sensingAirPressure = sensingAirPressure,
+                                estimatedAirPressure = estimatedAirPressure,
+                                sensorDataPath = sensorDataPath
+                            )
+                            addSensor(newSensor)
+                            common.log("センサデータをデータベースに保存")
+
+
+                            // todo: 安定区間を作り直す
+
+                        }else{
+                            common.log("安定区間に使用できるデータがなかったよ")
+
+                        }
 
                     }
                     withContext(Dispatchers.Main) {

@@ -47,7 +47,6 @@ fun Home(viewModel: MainViewModel) {
     if(stableIntervalData.isNotEmpty()){
         // 状態をセット
         viewModel.setStableInterval(stableIntervalData[0])
-        // todo: 推定状態に移行できるかどうか
     }
 
 
@@ -65,15 +64,30 @@ fun Home(viewModel: MainViewModel) {
 
             Text(text = "ホーム画面", fontSize = common.largeFont)
 
-            Text(text = viewModel.siFileName)
-
             if (sensorData.isNotEmpty()){
-                Text(text = "適正内データ数： ${viewModel.withinCount}")
-                Text(text = "適正外データ数： ${viewModel.outOfCount}")
-                if (stableIntervalData.isNotEmpty()){
-                    Text(text = "推定に使用可能な適正内データ数： ${viewModel.withinAvailableRouteCount}")
-                    Text(text = "推定に使用可能な適正外データ数： ${viewModel.outOfAvailableRouteCount}")
+                if(viewModel.isTrainingState){
+                    Text(text = "適正内データ数： ${viewModel.withinCount}")
+                    Text(text = "適正外データ数： ${viewModel.outOfCount}")
+                    if (stableIntervalData.isNotEmpty()){
+                        Text(text = "推定に使用可能な適正内データ数： ${viewModel.withinAvailableRouteCount}")
+                        Text(text = "推定に使用可能な適正外データ数： ${viewModel.outOfAvailableRouteCount}")
+                    }
+                }else{
+                    Text(text = "直近の推定空気圧")
+                    if(sensorData.size>3){
+                        for(i in sensorData.size-3 until sensorData.size){
+                            if(sensorData[i].estimatedAirPressure > 0){
+                                if(sensorData[i].estimatedAirPressure < viewModel.minProperPressure){
+                                    Text(text = "${sensorData[i].estimatedAirPressure}kPa", fontSize = common.largeFont, color = Color.Red)
+                                }else{
+                                    Text(text = "${sensorData[i].estimatedAirPressure}kPa", fontSize = common.normalFont)
+                                }
+
+                            }
+                        }
+                    }
                 }
+
 
                 Button(
                     colors = ButtonDefaults.buttonColors(

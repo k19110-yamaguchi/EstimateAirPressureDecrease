@@ -41,7 +41,7 @@ def createModel(filePath):
     # 目的変数のヘッダーを生成
     header = createFvHeader()  
     # 追加で集めた特徴量データの取得
-    trainDf = pd.read_csv(f"{filePath}/featureValue.csv") 
+    trainDf = pd.read_csv(f"{filePath}/trainingFeatureValue.csv") 
     print(trainDf)
     ev = trainDf.drop(header[-1], axis=1).reset_index(drop=True)
     ov = trainDf[header[-1]].reset_index(drop=True)        
@@ -78,7 +78,17 @@ def createModel(filePath):
     return True     
 
 # 空気圧推定
-def estimateAirPressure(estimateDataArray, filePath):         
+def estimateAirPressure(filePath):
+    estDf = pd.read_csv(f"{filePath}/estimatedFeatureValue.csv").tail(1)    
+    
+    # 空気圧を推定
+    model = loadModel(filePath)        
+    estimatedAirPressure = model.predict(estDf)             
+    print(f"推定空気圧：{estimatedAirPressure}")
+    return int(estimatedAirPressure) 
+
+    print("estimateAirPressure: 開始")       
+    print("estimateAirPressure: 終了")       
     '''
     # 目的変数のヘッダーを生成
     evHeader = createEVHeader()

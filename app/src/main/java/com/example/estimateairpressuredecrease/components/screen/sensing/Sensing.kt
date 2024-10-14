@@ -69,8 +69,14 @@ fun Sensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewMod
                     ),
                     onClick = {
                         stopSensing(acc, gra, loc, bar, viewModel)
-                        viewModel.screenStatus = common.inputNum
-                        viewModel.inputStatus = common.inputPressureNum
+                        if(viewModel.isTrainingState){
+                            viewModel.screenStatus = common.inputNum
+                            viewModel.inputStatus = common.inputPressureNum
+                        }else{
+                            viewModel.addSensorData(true)
+                            viewModel.screenStatus = common.homeNum
+                        }
+
                     }) {
                     Text(text = "測定終了", fontSize = common.normalFont)
                 }

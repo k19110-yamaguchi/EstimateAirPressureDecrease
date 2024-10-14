@@ -73,7 +73,7 @@ class RunPython {
 
     }
 
-    // todo: 安定区間内の加速度を抽出
+    // 安定区間内の加速度を抽出
     fun extractAccData(availableFileNameList: List<String>, siFileName: String, siStartTime: Double, siStopTime: Double, common: Common = Common()){
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
@@ -93,8 +93,8 @@ class RunPython {
     }
 
 
-    // todo: 特徴量を取得
-    fun createFeatureValue(availableFileNameList: List<String>, availableAirPressureList: List<Int>,common: Common = Common()) {
+    // 学習用特徴量を取得
+    fun createTrainingFeatureValue(availableFileNameList: List<String>, availableAirPressureList: List<Int>,common: Common = Common()) {
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
@@ -103,14 +103,14 @@ class RunPython {
         // スクリプト名
         val module = py.getModule("analyzeData")
         // 特徴量をPythonで取得
-        val isSuccess = module.callAttr("createFeatureValue", availableFileNameList, availableAirPressureList, filePath).toBoolean()
+        val isSuccess = module.callAttr("createTrainingFeatureValue", availableFileNameList, availableAirPressureList, filePath).toBoolean()
         // 最初と最後の[]を取り除き、","で分割
         if (isSuccess){
             common.log("特徴量抽出に成功")
         }
     }
 
-    // todo: 学習モデルを作成
+    // 学習モデルを作成
     fun createModel(common: Common = Common()){
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
@@ -126,8 +126,38 @@ class RunPython {
         }
     }
 
+    // 今取ったデータが安定区間内に使用できるデータがあるか
+    fun extractEstimatedAccData(curtSensorDate: String, siFileName: String, siStartTime: Double, siStopTime: Double, common: Common = Common()): Boolean {
+        // Pythonコードを実行する前にPython.start()の呼び出しが必要
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(MainActivity.content))
+        }
+
+        val py = Python.getInstance()
+        // スクリプト名
+        val module = py.getModule("extractAccData")
+        return module.callAttr("extractEstimatedAccData", curtSensorDate, siFileName, siStartTime, siStopTime, filePath).toBoolean()
+    }
+
+    // 学習用特徴量を取得
+    fun createEstimatedFeatureValue(curtSensorDate: String, common: Common = Common()) {
+        // Pythonコードを実行する前にPython.start()の呼び出しが必要
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(MainActivity.content))
+        }
+        val py = Python.getInstance()
+        // スクリプト名
+        val module = py.getModule("analyzeData")
+        // 特徴量をPythonで取得
+        val isSuccess = module.callAttr("createEstimatedFeatureValue", curtSensorDate, filePath).toBoolean()
+        // 最初と最後の[]を取り除き、","で分割
+        if (isSuccess){
+            common.log("特徴量抽出に成功")
+        }
+    }
+
     // todo: 特徴量から空気圧を推定
-    fun estimateAirPressure(EstimatedFv: MutableList<List<Double>>): Int{
+    fun estimateAirPressure(common: Common = Common()): Int{
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
@@ -135,8 +165,8 @@ class RunPython {
         val py = Python.getInstance()
         // スクリプト名
         val module = py.getModule("machineLearning")
-        var estimatedAirPressure = module.callAttr("estimateAirPressure", EstimatedFv, filePath).toString()
-        // 最初と最後の[]を取り除き、","で分割
+        var estimatedAirPressure = module.callAttr("estimateAirPressure", filePath).toString()
+
         return estimatedAirPressure.toInt()
 
     }

@@ -236,12 +236,7 @@ def getAvailableRouteCount(locDfs, intervalsDfs, siLocDf, stableRouteNums, sensi
                         resWithinAvailableRouteCount = resWithinAvailableRouteCount + 1
                     else:
                         resOutOfAvailableRouteCount = resOutOfAvailableRouteCount + 1                                                       
-    return [resWithinAvailableRouteCount, resOutOfAvailableRouteCount, resAvailableFileNameList]
-                                                     
-        
-
-
-
+    return [resWithinAvailableRouteCount, resOutOfAvailableRouteCount, resAvailableFileNameList]                                                     
 
 ## 安定区間の抽出
 def extractStableInterval(sensingDatesArray, sensingAirPressuresArray, minProperPressure, requiredRouteCount, filePath2):
@@ -356,6 +351,8 @@ def extractStableInterval(sensingDatesArray, sensingAirPressuresArray, minProper
         print(f"安定区間に必要な距離が足りない")
         print("extractStableInterval: 終了")  
         return True
+
+
 
 '''
 def getAvailableRouteCount(sensingDatesArray, siFileName, siStartTime, siStopTime, sensingAirPressureArray, minProperPressure, requiredRouteCount, filePath2):    
