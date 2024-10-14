@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.estimateairpressuredecrease.MainViewModel
 import com.example.estimateairpressuredecrease.ui.theme.element
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun ShowDataList(sensorData: List<SensorData>, viewModel: MainViewModel){
@@ -24,7 +25,8 @@ fun ShowDataList(sensorData: List<SensorData>, viewModel: MainViewModel){
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ){
-                Text(text = sd.startDate.toString(), fontSize = common.smallFont)
+                val dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH-mm-ss")
+                Text(text = sd.startDate.format(dateFormat), fontSize = common.smallFont)
 
                 Spacer(modifier = Modifier.width(common.space))
 

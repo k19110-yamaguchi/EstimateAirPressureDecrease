@@ -74,7 +74,7 @@ class RunPython {
     }
 
     // todo: 安定区間内の加速度を抽出
-    fun extractAccData(availableFileNameList: List<String>, siFileName: String, siStartTime: Double, siStopTime: Double, common: Common = Common()): Boolean{
+    fun extractAccData(availableFileNameList: List<String>, siFileName: String, siStartTime: Double, siStopTime: Double, common: Common = Common()){
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
@@ -83,7 +83,12 @@ class RunPython {
         // スクリプト名
         val module = py.getModule("extractAccData")
         // 区間をPythonで分割
-        return module.callAttr("extractAccData", availableFileNameList, siFileName, siStartTime, siStopTime, filePath).toBoolean()
+        val isSuccess = module.callAttr("extractAccData", availableFileNameList, siFileName, siStartTime, siStopTime, filePath).toBoolean()
+
+        if (isSuccess){
+            common.log("安定区間内の加速度抽出に成功")
+        }
+
 
     }
 

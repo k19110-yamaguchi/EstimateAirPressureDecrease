@@ -9,6 +9,7 @@ import java.io.File
 import java.io.FileWriter
 import java.io.PrintWriter
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class OpenCsv {
     //true=追記, false=上書き
@@ -18,11 +19,13 @@ class OpenCsv {
     private val extension : String = ".csv"
 
     // 保存するフォルダ名の作成
-    fun createFileName(startDate: LocalDateTime): String {
-        return startDate.toString()
+    fun createFileName(startDate: LocalDateTime, common: Common = Common()): String {
+        val dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH-mm-ss")
+        common.log(startDate.toString())
+        return startDate.format(dateFormat).toString()
+            .replace("/", "")
             .replace("-", "")
-            .replace("T", "")
-            .replace(":", "")
+            .replace(" ", "")
             .substring(0, 14)
     }
 
