@@ -87,25 +87,25 @@ def createFvHeader():
     return res
 
 # 特徴量のファイル作成    
-def cereateFvCsv(featureValues, filePath):     
+def cereateTrainingFvCsv(featureValues, filePath):             
     header = createFvHeader()    
 
     fvDf = pd.DataFrame(columns = header)
     #print(len(fvData))
     for fv in featureValues:        
         s = pd.Series(fv, index=header)
-        fvDf = pd.concat([fvDf, s.to_frame().T])    
+        fvDf = pd.concat([fvDf, s.to_frame().T])        
 
     print(fvDf)
 
     # CSV ファイル (employee.csv) として出力
-    fvDf.to_csv(f"{filePath}/featureValue.csv", index = False)
+    fvDf.to_csv(f"{filePath}/trainingFeatureValue.csv", index = False)
     
     print("hoge")  
     
 
-def createFeatureValue(availableFileNameArray, sensingAirPressuresArray, filePath): 
-    print("createFeatureValue: 開始")        
+def createTrainingFeatureValue(availableFileNameArray, sensingAirPressuresArray, filePath): 
+    print("createTrainingFeatureValue: 開始")        
     # java.util.ArrayListをlistの型に変換
     availableFileNames = changeJavaList(availableFileNameArray) 
     sensingAirPressures = changeJavaList(sensingAirPressuresArray)     
@@ -139,8 +139,8 @@ def createFeatureValue(availableFileNameArray, sensingAirPressuresArray, filePat
             featureValues.append(featureValue)
     
     # 特徴量のファイル作成
-    cereateFvCsv(featureValues, filePath)
+    cereateTrainingFvCsv(featureValues, filePath)
             
     
-    print("createFeatureValue: 終了")        
+    print("createTrainingFeatureValue: 終了")        
     return True

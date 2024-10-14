@@ -41,7 +41,7 @@ def createModel(filePath):
     # 目的変数のヘッダーを生成
     header = createFvHeader()  
     # 追加で集めた特徴量データの取得
-    trainDf = pd.read_csv(f"{filePath}/featureValue.csv") 
+    trainDf = pd.read_csv(f"{filePath}/trainingFeatureValue.csv") 
     print(trainDf)
     ev = trainDf.drop(header[-1], axis=1).reset_index(drop=True)
     ov = trainDf[header[-1]].reset_index(drop=True)        

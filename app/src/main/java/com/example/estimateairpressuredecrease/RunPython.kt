@@ -94,7 +94,7 @@ class RunPython {
 
 
     // todo: 特徴量を取得
-    fun createFeatureValue(availableFileNameList: List<String>, availableAirPressureList: List<Int>,common: Common = Common()) {
+    fun createTrainingFeatureValue(availableFileNameList: List<String>, availableAirPressureList: List<Int>,common: Common = Common()) {
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
@@ -103,7 +103,7 @@ class RunPython {
         // スクリプト名
         val module = py.getModule("analyzeData")
         // 特徴量をPythonで取得
-        val isSuccess = module.callAttr("createFeatureValue", availableFileNameList, availableAirPressureList, filePath).toBoolean()
+        val isSuccess = module.callAttr("createTrainingFeatureValue", availableFileNameList, availableAirPressureList, filePath).toBoolean()
         // 最初と最後の[]を取り除き、","で分割
         if (isSuccess){
             common.log("特徴量抽出に成功")

@@ -478,7 +478,10 @@ class MainViewModel @Inject constructor(
                                     }
                                 }
                                 common.log("空気圧：${availableAirPressureList}")
-                                rp.createFeatureValue(availableFileNameList, availableAirPressureList)
+                                withContext(Dispatchers.Main) {
+                                    homeMessage = "モデル作成中"
+                                }
+                                rp.createTrainingFeatureValue(availableFileNameList, availableAirPressureList)
                                 // モデルの作成
                                 rp.createModel()
                                 isTrainingState = false
@@ -497,7 +500,14 @@ class MainViewModel @Inject constructor(
                     } else {
                         // todo: 今取ったデータが安定区間内に使用できるデータがあるか
 
+                        // todo: 加速度の抽出
+
+                        // todo: 特徴量の抽出
+
                         // todo: 空気圧の推定
+
+                        // todo: 推定した空気圧の保存
+
 
                         // todo: 安定区間を作り直す
 
