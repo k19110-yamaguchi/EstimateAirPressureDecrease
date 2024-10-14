@@ -467,7 +467,7 @@ class MainViewModel @Inject constructor(
                                     siStartTime,
                                     siStopTime
                                 )
-                                // todo: 特徴量の取得
+                                // 特徴量の取得
                                 var availableAirPressureList: MutableList<Int> = mutableListOf()
                                 for(i in 0 until sensorDataFileNameList.size) {
                                     for (afn in availableFileNameList) {
@@ -479,8 +479,11 @@ class MainViewModel @Inject constructor(
                                 }
                                 common.log("空気圧：${availableAirPressureList}")
                                 rp.createFeatureValue(availableFileNameList, availableAirPressureList)
-                                // todo: モデルの作成
-                                // rp.createModel()
+                                // モデルの作成
+                                rp.createModel()
+                                isTrainingState = false
+                                updateHome()
+
                             }
 
                         } else {

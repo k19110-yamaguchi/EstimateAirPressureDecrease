@@ -75,15 +75,20 @@ def getAmpSpec(drivingYAcc):
     
     return res
     
-# 特徴量のファイル作成    
-def cereateFvCsv(featureValues, filePath):     
-    header = ["accSd(m/s^2)"] 
+# 特徴量ヘッダーの作成
+def createFvHeader():
+    res = ["accSd(m/s^2)"] 
     # 周波数の範囲
     fqWidth = 0.5    
     fqMax = 25
     for i in range(int(fqMax/fqWidth)):
-        header.append(str(i*fqWidth) + "~" + str((i+1)*fqWidth) + "(Hz)")
-    header.append("airPressure(kPa)")
+        res.append(str(i*fqWidth) + "~" + str((i+1)*fqWidth) + "(Hz)")
+    res.append("airPressure(kPa)")
+    return res
+
+# 特徴量のファイル作成    
+def cereateFvCsv(featureValues, filePath):     
+    header = createFvHeader()    
 
     fvDf = pd.DataFrame(columns = header)
     #print(len(fvData))

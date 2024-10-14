@@ -111,7 +111,7 @@ class RunPython {
     }
 
     // todo: 学習モデルを作成
-    fun createModel(TrainingFv: MutableList<List<Double>>){
+    fun createModel(common: Common = Common()){
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
@@ -120,7 +120,10 @@ class RunPython {
         val py = Python.getInstance()
         // スクリプト名
         val module = py.getModule("machineLearning")
-        module.callAttr("createModel", TrainingFv, filePath)
+        val isSuccess = module.callAttr("createModel", filePath).toBoolean()
+        if (isSuccess){
+            common.log("学習モデル作成に成功")
+        }
     }
 
     // todo: 特徴量から空気圧を推定
