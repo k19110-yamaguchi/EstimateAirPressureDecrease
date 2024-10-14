@@ -498,27 +498,24 @@ class MainViewModel @Inject constructor(
 
                         // 推定時
                     } else {
-                        // todo: 今取ったデータが安定区間内に使用できるデータがあるか
+                        // todo: 加速度の抽出
                         withContext(Dispatchers.Main) {
-                            homeMessage = "推定できるか判定中"
+                            homeMessage = "加速度の抽出"
                         }
                         val isEstimable = rp.extractEstimatedAccData(curtSensorDate, siFileName, siStartTime, siStopTime)
                         if(isEstimable){
+                            // todo: 特徴量の抽出
+
+                            // todo: 空気圧の推定
+
+                            // todo: 推定した空気圧の保存
+
+                            // todo: 安定区間を作り直す
 
                         }else{
+                            common.log("安定区間に使用できるデータがなかったよ")
 
                         }
-
-                        // todo: 加速度の抽出
-
-                        // todo: 特徴量の抽出
-
-                        // todo: 空気圧の推定
-
-                        // todo: 推定した空気圧の保存
-
-
-                        // todo: 安定区間を作り直す
 
                     }
                     withContext(Dispatchers.Main) {

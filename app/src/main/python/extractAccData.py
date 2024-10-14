@@ -224,13 +224,13 @@ def extractAccData(availableFileNameArray, siFileName, siStartTime, siStopTime, 
     return True
 
 
-def extractEstimatedAccData(curtFileName, siFileName, siStartTime, siStopTime, filePath):
+def extractEstimatedAccData(curtFileName, siFileName, siStartTime, siStopTime, filePath2):
     print("extractEstimatedAccData: 開始")  
     # デバック
     import os
     # スクリプトのディレクトリに移動
     os.chdir(os.path.dirname(os.path.abspath(__file__)))       
-    curtFileName = "20240714074015" 
+    curtFileName = "20241008132847" 
     filePath = "./sensorData"
 
     curtLocDf = pd.read_csv(f"{filePath}/{curtFileName}/loc.csv") 
@@ -252,6 +252,9 @@ def extractEstimatedAccData(curtFileName, siFileName, siStartTime, siStopTime, f
         # 加速度抽出
         print(f"startTime: {startTime}")
         print(f"stopTime: {stopTime}")
+        accDf = pd.read_csv(f"{filePath}/{curtFileName}/acc.csv") 
+        print(curtFileName)
+        cereateExtractAccCsv(accDf, startTime, stopTime, filePath2, curtFileName)
         print("extractEstimatedAccData: 終了")  
         return True
     else:
