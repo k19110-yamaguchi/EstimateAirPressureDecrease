@@ -94,7 +94,7 @@ class RunPython {
 
 
     // todo: 特徴量を取得
-    fun createFeatureValue(newAcc: MutableList<List<Double>>, newGra: MutableList<List<Double>>, newLoc: MutableList<List<Double>>, newBar: MutableList<List<Double>>): List<Double> {
+    fun createFeatureValue(availableFileNameList: List<String>, availableAirPressureList: List<Int>,common: Common = Common()) {
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
@@ -103,17 +103,15 @@ class RunPython {
         // スクリプト名
         val module = py.getModule("analyzeData")
         // 特徴量をPythonで取得
-        val featureValueStr = module.callAttr("createFeatureValue", newAcc, newGra, newLoc, newBar).toString()
+        val isSuccess = module.callAttr("createFeatureValue", availableFileNameList, availableAirPressureList, filePath).toBoolean()
         // 最初と最後の[]を取り除き、","で分割
-        return if(featureValueStr != "0"){
-            featureValueStr.substring(1, featureValueStr.length - 1).split(",").map { it.trim().toDouble() }
-        }else{
-            emptyList()
+        if (isSuccess){
+            common.log("特徴量抽出に成功")
         }
     }
 
     // todo: 学習モデルを作成
-    fun createModel(TrainingFv: MutableList<List<Double>>){
+    fun createModel(common: Common = Common()){
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
@@ -122,7 +120,10 @@ class RunPython {
         val py = Python.getInstance()
         // スクリプト名
         val module = py.getModule("machineLearning")
-        module.callAttr("createModel", TrainingFv, filePath)
+        val isSuccess = module.callAttr("createModel", filePath).toBoolean()
+        if (isSuccess){
+            common.log("学習モデル作成に成功")
+        }
     }
 
     // todo: 特徴量から空気圧を推定

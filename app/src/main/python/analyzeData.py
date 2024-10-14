@@ -1,66 +1,39 @@
-import numpy as np
-from geopy.distance import geodesic
+import numpy as np # type: ignore
+import pandas as pd  # type: ignore
 from statistics import stdev
 
-# java.util.ArrayListをlistの型に変換
+class AccHeader:
+    def __init__(self,time="time(s)",x="x(m/s^2)",y="y(m/s^2)",z="z(m/s^2)"):
+        self.time = time
+        self.x = x
+        self.y = y
+        self.z = z      
+
+ah = AccHeader()
+
+# java.util.ArrayList(1次元)をlistの型に変換
 def changeJavaList(javaList):
-    pyList = [[javaList.get(i).get(j) for j in range(javaList.get(i).size())] 
-                for i in range(javaList.size())]   
+    pyList = [javaList.get(i) for i in range(javaList.size())]                    
     return pyList
 
-
-# 走行中の加速度を取得
-def getDrivingAccData(accData, locData):
-    locSize = len(locData)   
-    # 距離を求める
-    disData = [0.0]
-    for i in range(locSize - 1):          
-        dis = geodesic([locData[i][0], locData[i][1]], [locData[i+1][0], locData[i+1][1]]).km
-        disData.append(dis)
-    
-    # 時速を求める
-    speedData = [0.0]
-    for i in range(locSize - 1):
-        speed = (disData[i+1] / (locData[i+1][2] - locData[i][2])) * 3600
-        speedRound = round(speed, 1)        
-        speedData.append(speedRound)
-
-    # 走行開始・終了時間を求める
-    startTime = 0.0
-    stopTime = 0.0
-    drivingThreshold = 5.0
-    for i in range(locSize):
-        if startTime == 0.0 and speedData[i] >= drivingThreshold:
-            startTime = locData[i][2]
-        if speedData[i] <= drivingThreshold and speedData[i-1] >= drivingThreshold:
-            stopTime = locData[i][2]  
-        
-    #### デバック用
-    #startTime = locData[0][2]
-    #stopTime = locData[locSize-1][2]
-
-    # 走行区間の加速度を取得    
-    accSize = len(accData)    
-    
-    res = []     
-    for i in range(accSize):
-        if accData[i][3] >= startTime and accData[i][3] <= stopTime:
-            res.append([accData[i][0], accData[i][1], accData[i][2], accData[i][3]])
-
+# 加速度データを全て取得
+def getAllSiAccDfs(filePath, sensingDates):
+    res = []
+    for sd in sensingDates:
+        accDf = pd.read_csv(f"{filePath}/siAcc/{sd}.csv") 
+        res.append(accDf)
     return res
-
 
 # 走行中のy軸方向の加速度を取得
-def getDrivingYAcc(drivingAccData):
-    drivingAccSize = len(drivingAccData)
-    res = []
-    for i in range(drivingAccSize):
+def getDrivingYAcc(siAccDf):    
+    res = []        
+    for i, row in siAccDf.iterrows():                    
         # 重力加速度成分を除く
-        res.append(drivingAccData[i][1]-9.8)
+        res.append(row[ah.y]-9.8)        
 
     return res
     
-
+# 振幅スペクトルを取得 
 def getAmpSpec(drivingYAcc):    
     # FFT
     fft = np.fft.fft(drivingYAcc)
@@ -77,7 +50,7 @@ def getAmpSpec(drivingYAcc):
 
     # 周波数の範囲
     fqWidth = 0.5    
-    fqMax = 40
+    fqMax = 25
     res = []
     ampSum = 0
     fqNow = 0
@@ -102,38 +75,72 @@ def getAmpSpec(drivingYAcc):
     
     return res
     
+# 特徴量ヘッダーの作成
+def createFvHeader():
+    res = ["accSd(m/s^2)"] 
+    # 周波数の範囲
+    fqWidth = 0.5    
+    fqMax = 25
+    for i in range(int(fqMax/fqWidth)):
+        res.append(str(i*fqWidth) + "~" + str((i+1)*fqWidth) + "(Hz)")
+    res.append("airPressure(kPa)")
+    return res
 
-def createFeatureValue(accDataArray, graDataArray, locDataArray, barDataArray):         
+# 特徴量のファイル作成    
+def cereateFvCsv(featureValues, filePath):     
+    header = createFvHeader()    
+
+    fvDf = pd.DataFrame(columns = header)
+    #print(len(fvData))
+    for fv in featureValues:        
+        s = pd.Series(fv, index=header)
+        fvDf = pd.concat([fvDf, s.to_frame().T])    
+
+    print(fvDf)
+
+    # CSV ファイル (employee.csv) として出力
+    fvDf.to_csv(f"{filePath}/featureValue.csv", index = False)
+    
+    print("hoge")  
+    
+
+def createFeatureValue(availableFileNameArray, sensingAirPressuresArray, filePath): 
+    print("createFeatureValue: 開始")        
     # java.util.ArrayListをlistの型に変換
-    accData = changeJavaList(accDataArray) 
-    graData = changeJavaList(graDataArray)
-    locData = changeJavaList(locDataArray)
-    barData = changeJavaList(barDataArray)
+    availableFileNames = changeJavaList(availableFileNameArray) 
+    sensingAirPressures = changeJavaList(sensingAirPressuresArray)     
+    sensingAirPressures = [
+        300, 300, 300, 300,
+        273, 273, 263, 263, 
+        263, 263, 235, 213, 
+        153, 294,294, 261
+    ]      
 
-    #走行中の加速度を取得
-    drivingAccData = getDrivingAccData(accData, locData)
-    # デバック用
-    #drivingAccData = accData
+    siAccDfs = getAllSiAccDfs(filePath, availableFileNames)  
+    featureValues = []
+    print(siAccDfs[0]) 
+    for i in range(len(siAccDfs)):
+        drivingYAcc = getDrivingYAcc(siAccDfs[i])  
+        print(f"長さ：{len(drivingYAcc)}")
     
-    # 走行中のy軸方向の加速度を取得
-    drivingYAcc = getDrivingYAcc(drivingAccData)  
+        # 加速度標準偏差の取得
+        if len(drivingYAcc) >= 2:
+            AccSd = stdev(drivingYAcc)        
 
-    # 加速度標準偏差の取得
-    if len(drivingYAcc) >= 2:
-        AccSd = stdev(drivingYAcc)
-
-    else:
-        return 0
-
-    # 振幅スペクトルを取得 
-    ampSpec = getAmpSpec(drivingYAcc)
+            # 振幅スペクトルを取得 
+            ampSpec = getAmpSpec(drivingYAcc)
+                    
+            # 特徴量の行を作成
+            featureValue = [AccSd]
+            for j in range(len(ampSpec)):
+                featureValue.append(ampSpec[j])  
+            featureValue.append(sensingAirPressures[i])          
+            print(featureValue)
+            featureValues.append(featureValue)
     
-    if ampSpec == 0:
-        return 0
+    # 特徴量のファイル作成
+    cereateFvCsv(featureValues, filePath)
+            
     
-    # 特徴量の行を作成
-    futureValues = [AccSd]
-    for i in range(len(ampSpec)):
-        futureValues.append(ampSpec[i])    
-
-    return futureValues
+    print("createFeatureValue: 終了")        
+    return True

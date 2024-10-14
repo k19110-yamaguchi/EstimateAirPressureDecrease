@@ -1,25 +1,23 @@
-import pandas as pd
-import pickle
-import joblib
+import pandas as pd # type: ignore
+import pickle # type: ignore
+import joblib # type: ignore
 import os
-from sklearn.ensemble import RandomForestRegressor
-# スクリプトのディレクトリに移動
-os.chdir(os.path.dirname(os.path.abspath(__file__)))   
+from sklearn.ensemble import RandomForestRegressor # type: ignore
 
-# 初期の特徴量データのファイルパス
-initFilePath = "initial_feature_value.csv"
-
-# 特徴量のデータセットのヘッダー
-AIR_PRESSURE_HEADER = "air_pressure"
-SUST_SPEED_HEADER = "sust_speed"
-ACC_SD_HEADER = 'acc_sd'
-
-# 振幅スペクトルを求める最大周波数と幅
-maxFq = 40
-fqWidth = 0.5
+# 特徴量ヘッダーの作成
+def createFvHeader():
+    res = ["accSd(m/s^2)"] 
+    # 周波数の範囲
+    fqWidth = 0.5    
+    fqMax = 25
+    for i in range(int(fqMax/fqWidth)):
+        res.append(str(i*fqWidth) + "~" + str((i+1)*fqWidth) + "(Hz)")
+    res.append("airPressure(kPa)")
+    return res
 
 # モデルの名前
 modelName = "estimateAirPressure.pkl"
+
 def saveModel(model, filePath):
     print("filePath")
     print(filePath)
@@ -35,44 +33,20 @@ def loadModel(filePath):
     print()
     model = joblib.load(filePath + "/" + modelName)
     #model = pickle.load(open(modelName, 'rb'))   
-    return model
-     
-
-# java.util.ArrayListをlistの型に変換
-def changeJavaList(javaList):
-    res = [[javaList.get(i).get(j) for j in range(javaList.get(i).size())] 
-                for i in range(javaList.size())]   
-    return res
+    return model     
 
 
-# 目的変数のヘッダー生成
-def createEVHeader():
-        res = []    
-        res.append(ACC_SD_HEADER)
-        for i in range(int(maxFq/fqWidth)):
-            res.append(str(i*fqWidth) + "~" + str((i+1)*fqWidth) + "Hz")    
-        return res
-
-
-def createModel(trainDataArray, filePath):    
-    # 初期の特徴量データの取得
-    #df = pd.read_csv(initFilePath)    
-    # 初期の説明変数の取得
-    #ev = df.drop(SUST_SPEED_HEADER, axis=1).drop(AIR_PRESSURE_HEADER, axis=1)
-    # 初期の目的変数の取得
-    #ov = df[[AIR_PRESSURE_HEADER]]  
+def createModel(filePath):   
+    print("createModel: 開始")     
     # 目的変数のヘッダーを生成
-    evHeader = createEVHeader()  
+    header = createFvHeader()  
     # 追加で集めた特徴量データの取得
-    trainData = changeJavaList(trainDataArray)  
-
+    trainDf = pd.read_csv(f"{filePath}/featureValue.csv") 
+    print(trainDf)
+    ev = trainDf.drop(header[-1], axis=1).reset_index(drop=True)
+    ov = trainDf[header[-1]].reset_index(drop=True)        
     
-    #trainData = [
-        #[5.685614395437727,0.019888394686261187,0.016582451940548595,0.02553055196464995,0.020591944675981133,0.027350864739222984,0.0426802219796937,0.059040812747360255,0.05504769131104991,0.04557572605537938,0.04971092090601084,0.07062814000806537,0.07116337307742647,0.07954960079206946,0.06883955206651306,0.08033591980753059,0.08576086994785694,0.11957613228483102,0.16596576001490254,0.1642359185323246,0.1784417658501968,0.18783876910054678,0.23094099333690987,0.2645792514932042,0.21046093059862342,0.29878647395591185,0.1981918444494015,0.2394964482843532,0.2921746013568906,0.3288902883618186,0.2990798842256273,0.36297419161015293,0.25967216560409506,0.2605316092863592,0.21296700177570477,0.24979664660873757,0.23929638225218045,0.19998316733199245,0.16195978302071248,0.13709209554559343,0.1873280436083882,0.18342684390350636,0.22585021080573384,0.18466529826982334,0.22622042910223522,0.20790566279420927,0.2160176422976639,0.1881509810968886,0.13240601755269518,0.08264573139158861,0.06601340087104923,0.03959221366195698,0.03703829545055714,0.02876137531846776,0.020674444117405554,0.024364388153634314,0.030310700731961897,0.030018582763258528,0.036461651654668865,0.031236608543463745,0.030875800002398136,0.02982254910896783,0.02382699522506412,0.023784174579222134,0.02101705026274706,0.01776176237687328,0.018319967184625332,0.018533445917499804,0.021521775664205853,0.01842650689929004,0.016727923366390746,0.014840463276667543,0.01304968425454703,0.012914455005471412,0.014610577837351443,0.012018047538355368,0.012308152027763204,0.012024660240016243,0.012511720539341522,0.01016777125519704,0.014888036652623423,300.0],
-        #[3.755254909246834,0.019028085411784062,0.019701211367060725,0.020363882749585827,0.021770964649775005,0.020362759449909968,0.023482448567674306,0.035851540754496015,0.04493423290044574,0.043029191685139245,0.04531534626898974,0.06034401338764481,0.048225410448257185,0.043903475887395335,0.05757836862564552,0.06985704443849963,0.057912633239444386,0.06635845026887977,0.08487228631040068,0.08297749209198113,0.11285280456827514,0.10667937346488718,0.09622103513548719,0.10928668029980126,0.10759796231815635,0.10175547874545064,0.10171188389588494,0.16088453494759716,0.16384084864313964,0.23763902915329785,0.20937909134885932,0.20265123278107353,0.15336276715640434,0.17767321101821176,0.14159692092301576,0.15823656508821737,0.14221249163928795,0.11449609774275198,0.10919169288554455,0.09657981894276217,0.13343757246282395,0.1419750874045952,0.13601476660488776,0.12018531396661494,0.12465175291926515,0.0992321051202511,0.09861640845726255,0.08003565588284996,0.0840839761626388,0.06265052461907186,0.03726816561320408,0.026540265580715452,0.018288319694122493,0.012311284988964475,0.008401977289731691,0.013934403717725091,0.024796364769191406,0.020422068211547934,0.019047615332334157,0.029934341080463167,0.018626602675551017,0.0212813517739906,0.014529625207838327,0.017638396501246573,0.015548317098657418,0.014885684601137953,0.01393400997747369,0.014478299067065983,0.012238847479411865,0.012208158133500933,0.010721199602276518,0.007712097163277704,0.008876107772453694,0.0066627044865283785,0.007861166139365262,0.007109552797914115,0.006760091793215622,0.0055138538417954415,0.006982858660533423,0.006233179791952892,0.006922007562183743,300.0]
-    #] 
-    
-
+    ''' 
     # 追加で集めた学習データを説明・目的変数に分ける    
     l = trainData[0]
     m = l.pop(-1)
@@ -91,18 +65,21 @@ def createModel(trainDataArray, filePath):
         df2 = pd.DataFrame([m], columns=[AIR_PRESSURE_HEADER])
         # 出力するDataFrameに結合
         ov = pd.concat([ov, df2], ignore_index=True) 
+    '''
    
     # 学習モデルを作成(ランダムフォレスト：回帰)        
     model = RandomForestRegressor(random_state=0)
 
     # 学習モデルにテストデータを与えて学習させる
     model.fit(ev, ov)  
-    saveModel(model, filePath)    
+    saveModel(model, filePath)  
 
+    print("createModel: 終了")      
     return True     
 
 # 空気圧推定
 def estimateAirPressure(estimateDataArray, filePath):         
+    '''
     # 目的変数のヘッダーを生成
     evHeader = createEVHeader()
     # 追加で集めた特徴量データの取得
@@ -120,6 +97,8 @@ def estimateAirPressure(estimateDataArray, filePath):
     model = loadModel(filePath)        
     estimatedAirPressure = model.predict(estimateEv)             
     return int(estimatedAirPressure)
+    '''
+    return True
             
 #createModel("")
 #p = estimateAirPressure("")
