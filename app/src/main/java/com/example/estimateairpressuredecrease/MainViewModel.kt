@@ -500,16 +500,34 @@ class MainViewModel @Inject constructor(
                     } else {
                         // 加速度の抽出
                         withContext(Dispatchers.Main) {
-                            homeMessage = "加速度の抽出"
+                            homeMessage = "加速度抽出中"
                         }
                         val isEstimable = rp.extractEstimatedAccData(curtSensorDate, siFileName, siStartTime, siStopTime)
                         if(isEstimable){
                             // todo: 特徴量の抽出
+                            withContext(Dispatchers.Main) {
+                                homeMessage = "特徴量抽出中"
+                            }
                             rp.createEstimatedFeatureValue(curtSensorDate)
 
                             // todo: 空気圧の推定
+                            withContext(Dispatchers.Main) {
+                                homeMessage = "空気圧推定中"
+                            }
+                            estimatedAirPressure = rp.estimateAirPressure()
 
                             // todo: 推定した空気圧の保存
+                            // センサ情報をデータベースに保存
+                            val newSensor = SensorData(
+                                startDate = startDate,
+                                stopDate = stopDate,
+                                sensingAirPressure = sensingAirPressure,
+                                estimatedAirPressure = estimatedAirPressure,
+                                sensorDataPath = sensorDataPath
+                            )
+                            addSensor(newSensor)
+                            common.log("センサデータをデータベースに保存")
+
 
                             // todo: 安定区間を作り直す
 

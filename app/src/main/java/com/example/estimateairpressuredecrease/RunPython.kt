@@ -140,7 +140,7 @@ class RunPython {
     }
 
     // 学習用特徴量を取得
-    fun createEstimatedFeatureValue(curtSensorDate: String,common: Common = Common()) {
+    fun createEstimatedFeatureValue(curtSensorDate: String, common: Common = Common()) {
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
@@ -157,7 +157,7 @@ class RunPython {
     }
 
     // todo: 特徴量から空気圧を推定
-    fun estimateAirPressure(EstimatedFv: MutableList<List<Double>>): Int{
+    fun estimateAirPressure(common: Common = Common()): Int{
         // Pythonコードを実行する前にPython.start()の呼び出しが必要
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(MainActivity.content))
@@ -165,8 +165,8 @@ class RunPython {
         val py = Python.getInstance()
         // スクリプト名
         val module = py.getModule("machineLearning")
-        var estimatedAirPressure = module.callAttr("estimateAirPressure", EstimatedFv, filePath).toString()
-        // 最初と最後の[]を取り除き、","で分割
+        var estimatedAirPressure = module.callAttr("estimateAirPressure", filePath).toString()
+
         return estimatedAirPressure.toInt()
 
     }
