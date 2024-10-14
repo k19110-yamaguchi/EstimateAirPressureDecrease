@@ -47,7 +47,6 @@ fun Home(viewModel: MainViewModel) {
     if(stableIntervalData.isNotEmpty()){
         // 状態をセット
         viewModel.setStableInterval(stableIntervalData[0])
-        // todo: 推定状態に移行できるかどうか
     }
 
 

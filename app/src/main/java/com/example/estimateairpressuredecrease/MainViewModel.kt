@@ -384,6 +384,7 @@ class MainViewModel @Inject constructor(
         // ファイルの作成
         val openCsv = OpenCsv()
         val sensorDataPath = openCsv.createSensorDataCsv(startDate, newAcc, newGra, newLoc, newBar)
+        val curtSensorDate = openCsv.createFileName(startDate)
         common.log("センサデータをcsvとして保存")
 
         if(isFinished){
@@ -395,7 +396,6 @@ class MainViewModel @Inject constructor(
                     sensorDataFileNameList.add(openCsv.createFileName(sd))
                 }
                 // 現在センシングした日付と空気圧を取得
-                val curtSensorDate = openCsv.createFileName(startDate)
                 common.log("追加された空気圧:${sensingAirPressure}")
                 sensorDataFileNameList.add(curtSensorDate)
                 common.log("前：${sensingAirPressureList}")
@@ -499,6 +499,15 @@ class MainViewModel @Inject constructor(
                         // 推定時
                     } else {
                         // todo: 今取ったデータが安定区間内に使用できるデータがあるか
+                        withContext(Dispatchers.Main) {
+                            homeMessage = "推定できるか判定中"
+                        }
+                        val isEstimable = rp.extractEstimatedAccData(curtSensorDate, siFileName, siStartTime, siStopTime)
+                        if(isEstimable){
+
+                        }else{
+
+                        }
 
                         // todo: 加速度の抽出
 
