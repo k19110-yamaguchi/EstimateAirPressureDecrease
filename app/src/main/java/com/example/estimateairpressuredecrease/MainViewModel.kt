@@ -138,7 +138,7 @@ class MainViewModel @Inject constructor(
     // 安定区間を抽出するファイル名
     var siFileName: String by mutableStateOf("")
     // 安定区間の開始時間
-    var siStarTime: Double by mutableStateOf(-1.0)
+    var siStartTime: Double by mutableStateOf(-1.0)
     // 安定区間の終了時間
     var siStopTime: Double by mutableStateOf(-1.0)
     // 安定区間が取得できる適正内のデータ数
@@ -401,13 +401,14 @@ class MainViewModel @Inject constructor(
             if (isSuccessExtractIntervals){
                 // 学習時
                 if(isTrainingState){
-                    //　共通区間の抽出
-                    rp.extractCommonIntervals(sensorDataFileNameList)
-
                     // センサ情報をデータベースに保存
                     val newSensor = SensorData(startDate = startDate, stopDate = stopDate, sensingAirPressure = sensingAirPressure, estimatedAirPressure = estimatedAirPressure, sensorDataPath = sensorDataPath)
                     addSensor(newSensor)
                     common.log("センサデータをデータベースに保存")
+
+
+                    //　共通区間の抽出
+                    rp.extractCommonIntervals(sensorDataFileNameList)
 
                     // センシング時の空気圧をcsvに保存
                     openCsv.createSensingAirPressure(sensorDataFileNameList, sensingAirPressureList)
@@ -415,7 +416,7 @@ class MainViewModel @Inject constructor(
                     // 安定区間を求めるか
                     val isRequiredIntervals = checkRequiredIntervals(sensingAirPressureList)
 
-                    if(isRequiredIntervals){
+                    if(true){
                         common.log("安定区間の抽出")
                         // 安定区間の抽出
                         val siInfoList = rp.extractStableInterval(sensorDataFileNameList, sensingAirPressureList, minProperPressure, requiredRouteCount)
@@ -423,8 +424,9 @@ class MainViewModel @Inject constructor(
                         // 安定区間内のデータが必要な数あるか
                         val isRequiredStableIntervalRoute = checkRequiredStableIntervalRoute()
 
-                        if(isRequiredStableIntervalRoute){
+                        if(true){
                             // todo: 安定区間内の加速度csvを作成
+                            rp.extractAccData(availableFileNameList, siFileName, siStartTime, siStopTime)
                             // todo: モデルの作成
                         }
 
@@ -432,6 +434,7 @@ class MainViewModel @Inject constructor(
                         common.log("安定区間を求めるのに必要なデータが足りない")
 
                     }
+
 
                 // 推定時
                 }else{
@@ -487,7 +490,7 @@ class MainViewModel @Inject constructor(
         // 安定区間データのデータベースがあるかどうか
         if ((siInfoList.size  >= 3)){
             siFileName = siInfoList[2].replace("'", "")
-            siStarTime = siInfoList[3].toDouble()
+            siStartTime = siInfoList[3].toDouble()
             siStopTime = siInfoList[4].toDouble()
             availableFileNameList = siInfoList.last()
                 .removeSurrounding("['", "']")
@@ -496,7 +499,7 @@ class MainViewModel @Inject constructor(
 
         }
 
-        val newStableInterval = StableIntervalData(siFileName = siFileName, siStarTime = siStarTime, siStopTime = siStopTime, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileNameList = availableFileNameList)
+        val newStableInterval = StableIntervalData(siFileName = siFileName, siStarTime = siStartTime, siStopTime = siStopTime, withinAvailableRouteCount = withinAvailableRouteCount, outOfAvailableRouteCount = outOfAvailableRouteCount, availableFileNameList = availableFileNameList)
 
         viewModelScope.launch {
             // id:0 のstableIntervalがnullだった場合
@@ -512,7 +515,7 @@ class MainViewModel @Inject constructor(
 
     fun setStableInterval(stableInterval: StableIntervalData){
         siFileName = stableInterval.siFileName
-        siStarTime = stableInterval.siStarTime
+        siStartTime = stableInterval.siStarTime
         siStopTime = stableInterval.siStopTime
         withinAvailableRouteCount = stableInterval.withinAvailableRouteCount
         outOfAvailableRouteCount = stableInterval.outOfAvailableRouteCount
