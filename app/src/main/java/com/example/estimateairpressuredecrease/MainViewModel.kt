@@ -196,17 +196,12 @@ class MainViewModel @Inject constructor(
     }
 
     // データベースを更新
-    private fun updateHome() {
+    private fun updateHome(newHome: HomeData) {
         viewModelScope.launch {
-            val newHome = HomeData(isTrainingState = isTrainingState, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
             homeDao.updateHomeData(newHome)
         }
     }
 
-    // todo: 推定に適した場所をから特徴量を抽出
-    // todo: モデルの作成
-    // todo: 空気圧を推定
-    // todo: 空気圧注入を促す
 
     fun countWithinData(sensorData: List<SensorData>){
         outOfCount = 0
@@ -231,21 +226,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun checkIsEstState(sensorData: List<SensorData>){
-        // 必要サイズ以上になった場合
-        if(outOfCount >= requiredRouteCount && withinCount >= requiredRouteCount){
-            // 特徴量を計算
-            calcFeatureValue(sensorData)
-            //createModel(featureValueData)
-            isTrainingState = false
-            updateHome()
-        }
-    }
 
     // 空気注入時期の更新
     fun updateInflateDate(){
         inflatedDate = LocalDateTime.now()
-        updateHome()
+        val newHome = HomeData(isTrainingState = isTrainingState, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
+        updateHome(newHome)
     }
 
     fun showInflateDate(): String{
@@ -308,7 +294,8 @@ class MainViewModel @Inject constructor(
                     createHome()
                     // 初回以外時
                 }else{
-                    updateHome()
+                    val newHome = HomeData(isTrainingState = isTrainingState, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
+                    updateHome(newHome)
                 }
 
             // 学習状態・空気圧入力時
@@ -485,7 +472,8 @@ class MainViewModel @Inject constructor(
                                 // モデルの作成
                                 rp.createModel()
                                 isTrainingState = false
-                                updateHome()
+                                val newHome = HomeData(isTrainingState = isTrainingState, minProperPressure = minProperPressure, inflatedDate = inflatedDate)
+                                updateHome(newHome)
 
                             }
 

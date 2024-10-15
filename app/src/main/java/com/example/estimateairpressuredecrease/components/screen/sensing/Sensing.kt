@@ -100,7 +100,6 @@ fun Sensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewMod
 }
 
 // センシングを開始
-// todo: startSensingとstartSensing2をまとめる
 fun startSensing(acc: Accelerometer, gra: Gravity, loc: Gps, bar: Barometric, viewModel: MainViewModel){
     val common = Common()
     // 現在時刻(開始)を取得

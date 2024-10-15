@@ -49,6 +49,19 @@ fun Home(viewModel: MainViewModel) {
         viewModel.setStableInterval(stableIntervalData[0])
     }
 
+    Spacer(modifier = Modifier.height(common.smallSpace))
+
+    Button(
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = element,
+            contentColor = Color.White
+        ),
+        onClick = {
+            viewModel.screenStatus = common.dataManagementNum
+        }) {
+        Text(text = "データ管理", fontSize = common.smallFont)
+    }
+
 
     // 画面表示
     Box(
@@ -60,9 +73,11 @@ fun Home(viewModel: MainViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(common.space))
+            Spacer(modifier = Modifier.height(common.smallSpace))
 
             Text(text = "ホーム画面", fontSize = common.largeFont)
+
+            Spacer(modifier = Modifier.height(common.smallSpace))
 
             if (sensorData.isNotEmpty()){
                 if(viewModel.isTrainingState){
@@ -73,31 +88,21 @@ fun Home(viewModel: MainViewModel) {
                         Text(text = "推定に使用可能な適正外データ数： ${viewModel.outOfAvailableRouteCount}")
                     }
                 }else{
-                    Text(text = "直近の推定空気圧")
-                    if(sensorData.size>3){
-                        for(i in sensorData.size-3 until sensorData.size){
-                            if(sensorData[i].estimatedAirPressure > 0){
-                                if(sensorData[i].estimatedAirPressure < viewModel.minProperPressure){
-                                    Text(text = "${sensorData[i].estimatedAirPressure}kPa", fontSize = common.largeFont, color = Color.Red)
-                                }else{
-                                    Text(text = "${sensorData[i].estimatedAirPressure}kPa", fontSize = common.normalFont)
-                                }
+                    if(sensorData.last().estimatedAirPressure > 0){
+                        Text(text = "直近の推定空気圧")
+                        Text(text = "${sensorData.last().estimatedAirPressure}kPa", fontSize = common.smallFont, color = Color.Red)
 
-                            }
-                        }
                     }
-                }
 
+                    Spacer(modifier = Modifier.height(common.smallSpace))
 
-                Button(
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = element,
-                        contentColor = Color.White
-                    ),
-                    onClick = {
-                        viewModel.screenStatus = common.dataManagementNum
-                    }) {
-                    Text(text = "データ管理", fontSize = common.smallFont)
+                    if(sensorData.last().estimatedAirPressure < viewModel.minProperPressure){
+                        Text(text = "空気圧は適正外だよ", fontSize = common.normalFont)
+                        Text(text = "空気を注入しよう", fontSize = common.normalFont, color = Color.Red)
+                    }else{
+                        Text(text = "空気圧は適正内だよ", fontSize = common.normalFont)
+
+                    }
                 }
 
             }
@@ -115,11 +120,10 @@ fun Home(viewModel: MainViewModel) {
 
                 } else {
                     Text(text = "推定状態", fontSize = common.largeFont)
-                    // todo 推定空気圧の取得，表示
                 }
             }
 
-            Spacer(modifier = Modifier.height(common.space))
+            Spacer(modifier = Modifier.height(common.smallSpace))
 
             // 空気注入時期
             Row(
@@ -186,8 +190,6 @@ fun Home(viewModel: MainViewModel) {
                     contentColor = Color.White
                 ),
                 onClick = {
-                    // todo: startSensing()をSensingに移動させる
-                    // startSensing(acc, gra, loc, bar, viewModel)
                     viewModel.screenStatus = common.sensingNum
                 }) {
                 Text(text = "測定開始", fontSize = common.largeFont)

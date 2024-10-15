@@ -18,6 +18,7 @@ class Common {
     val textField = 300.dp
 
     // 余白サイズ
+    val smallSpace = 10.dp
     val space = 40.dp
 
     // 画面番号
