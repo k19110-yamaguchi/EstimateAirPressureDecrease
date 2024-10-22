@@ -129,7 +129,7 @@ def createTrainingFeatureValue(availableFileNameArray, sensingAirPressuresArray,
         300, 300, 300, 300,
         273, 273, 263, 263, 
         263, 263, 235, 213, 
-        153, 294,294, 261
+        153, 294, 294, 261, 261
     ]      
 
     siAccDfs = getAllSiAccDfs(filePath, availableFileNames)  

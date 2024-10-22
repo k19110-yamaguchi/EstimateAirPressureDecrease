@@ -154,6 +154,75 @@ def calcSimPoints(locDf1, locDf2):
         resTime.append(minTime)
     return [resDis, resTime]
 
+# 最大共通区間を絞る
+def reGetMaxCommonIntervals(locDfs, intervalsDfs, commonStartTimeList, sameRouteNums, stableRouteNums, stableIntervalNums):
+    # 同じルートの区間を抽出
+    routes = []
+    intervals = []    
+    for trn in sameRouteNums:
+        for srn, sin  in zip(stableRouteNums, stableIntervalNums):    
+            if srn == trn:
+                routes.append(srn)
+                intervals.append(sin)
+
+    # 同じルートの区間と共通部分を抽出
+    _stableRouteNums = []
+    _stableIntervalNums = []
+    commonCount = 0
+    for r, i  in zip(routes, intervals): 
+        print(f"[{r}][{i}]")           
+        for firstIndex in range(len(locDfs)):            
+            for secondIndex in range(len(intervalsDfs[firstIndex])):                
+                if firstIndex == r and secondIndex == i:
+                    _stableRouteNums.append(r)
+                    _stableIntervalNums.append(i)
+                else:                                       
+                    t = commonStartTimeList[r][i][firstIndex][secondIndex]
+                    if t != -1:
+                        _stableRouteNums.append(firstIndex)
+                        _stableIntervalNums.append(secondIndex)
+
+        # 共通区間数が最大のものに絞る
+        a = []
+        b = []
+        for srn, sin  in zip(stableRouteNums, stableIntervalNums):       
+            for _srn, _sin  in zip(_stableRouteNums, _stableIntervalNums):       
+                if srn == _srn and sin == _sin:
+                    a.append(srn)
+                    b.append(sin)                    
+                    break         
+        
+        if len(a) > commonCount:                        
+            commonCount = len(a)
+            resStableRouteNums = a
+            resStableIntervalNums = b
+        elif len(a) == commonCount:
+            #距離が長い方を頻出区間に
+            start = intervalsDfs[resStableRouteNums[0]][ih.startTime][[resStableIntervalNums[0]]].iloc[0]
+            stop = intervalsDfs[resStableRouteNums[0]][ih.stopTime][[resStableIntervalNums[0]]].iloc[0]
+            print(start)
+            if start > stop:
+                tmp = start
+                start = stop
+                stop = tmp
+            disA = calcIntervalsDistance(locDfs[resStableRouteNums[0]], start, stop)           
+            start = intervalsDfs[a[0]][ih.startTime][b[0]]
+            stop = intervalsDfs[a[0]][ih.stopTime][b[0]]
+            if start > stop:
+                tmp = start
+                start = stop
+                stop = tmp
+            disB = calcIntervalsDistance(locDfs[a[0]], start, stop)
+            if disB > disA:
+                resStableRouteNums = a
+                resStableIntervalNums = b
+        _stableRouteNums = []
+        _stableIntervalNums = []  
+        print(f"ーーーーーーーー")              
+    return [resStableRouteNums, resStableIntervalNums]
+
+
+
 
 '''
 def withinAvailableRouteCount():
@@ -238,6 +307,9 @@ def getAvailableRouteCount(locDfs, intervalsDfs, siLocDf, stableRouteNums, sensi
                         resOutOfAvailableRouteCount = resOutOfAvailableRouteCount + 1                                                       
     return [resWithinAvailableRouteCount, resOutOfAvailableRouteCount, resAvailableFileNameList]                                                     
 
+# 
+
+
 ## 安定区間の抽出
 def extractStableInterval(sensingDatesArray, sensingAirPressuresArray, minProperPressure, requiredRouteCount, filePath2):
     print("extractStableInterval: 開始")
@@ -292,10 +364,21 @@ def extractStableInterval(sensingDatesArray, sensingAirPressuresArray, minProper
     # 最大共通区間数の区間を抽出    
     stableRouteNums = []
     stableIntervalNums = []
+    sameRouteNums = []
+    tmpRouteNum = -1
     for cic in commonIntervalsCounts:
-        if cic[2] >= maxCommonIntervalsCount:
+        if cic[2] >= maxCommonIntervalsCount-1:
+            if tmpRouteNum == cic[0]:                
+                sameRouteNums.append(cic[0])
             stableRouteNums.append(cic[0])
             stableIntervalNums.append(cic[1])                 
+            tmpRouteNum = cic[0]
+    
+    if sameRouteNums != []: 
+        print("最大共通区間が同じルートに複数あり")
+        stableRouteNums, stableIntervalNums = reGetMaxCommonIntervals(locDfs, intervalsDfs, commonStartTimeList, sameRouteNums, stableRouteNums, stableIntervalNums)     
+
+    sameRouteNums = list(dict.fromkeys(sameRouteNums))
     print(f"最大共通数: {round(maxCommonIntervalsCount)}/{len(locDfs)-1}")  
 
     # todo: 最大共通区間が同じルートに複数あった場合の処理

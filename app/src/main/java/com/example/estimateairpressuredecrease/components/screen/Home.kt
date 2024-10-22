@@ -90,19 +90,19 @@ fun Home(viewModel: MainViewModel) {
                 }else{
                     if(sensorData.last().estimatedAirPressure > 0){
                         Text(text = "直近の推定空気圧")
-                        Text(text = "${sensorData.last().estimatedAirPressure}kPa", fontSize = common.smallFont, color = Color.Red)
+                        Text(text = "${sensorData.last().estimatedAirPressure}kPa", fontSize = common.smallFont)
 
+                        Spacer(modifier = Modifier.height(common.smallSpace))
+
+                        if(sensorData.last().estimatedAirPressure < viewModel.minProperPressure){
+                            Text(text = "空気圧は適正外だよ", fontSize = common.normalFont)
+                            Text(text = "空気を注入しよう", fontSize = common.normalFont, color = Color.Red)
+                        }else{
+                            Text(text = "空気圧は適正内だよ", fontSize = common.normalFont)
+
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(common.smallSpace))
-
-                    if(sensorData.last().estimatedAirPressure < viewModel.minProperPressure){
-                        Text(text = "空気圧は適正外だよ", fontSize = common.normalFont)
-                        Text(text = "空気を注入しよう", fontSize = common.normalFont, color = Color.Red)
-                    }else{
-                        Text(text = "空気圧は適正内だよ", fontSize = common.normalFont)
-
-                    }
                 }
 
             }
