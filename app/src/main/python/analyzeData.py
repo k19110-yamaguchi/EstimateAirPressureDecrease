@@ -117,20 +117,20 @@ def cereateEstimatedFvCsv(featureValue, filePath):
     # CSV ファイル (employee.csv) として出力
     fvDf.to_csv(f"{filePath}/estimatedFeatureValue.csv", index = False)
     
-
-
-
+## 学習データの特徴量作成
 def createTrainingFeatureValue(availableFileNameArray, sensingAirPressuresArray, filePath): 
     print("createTrainingFeatureValue: 開始")        
     # java.util.ArrayListをlistの型に変換
     availableFileNames = changeJavaList(availableFileNameArray) 
     sensingAirPressures = changeJavaList(sensingAirPressuresArray)     
+    '''
     sensingAirPressures = [
         300, 300, 300, 300,
         273, 273, 263, 263, 
         263, 263, 235, 213, 
         153, 294, 294, 261, 261
     ]      
+    '''
 
     siAccDfs = getAllSiAccDfs(filePath, availableFileNames)  
     featureValues = []
@@ -161,8 +161,9 @@ def createTrainingFeatureValue(availableFileNameArray, sensingAirPressuresArray,
     print("createTrainingFeatureValue: 終了")        
     return True
 
+## 推定データの特徴量作成
 def createEstimatedFeatureValue(curtFileName, filePath):
-    curtFileName = "20241008132847"     
+    #curtFileName = "20241008132847"     
 
     siAccDf = pd.read_csv(f"{filePath}/siAcc/{curtFileName}.csv") 
 

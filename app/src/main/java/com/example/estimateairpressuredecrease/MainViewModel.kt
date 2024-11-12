@@ -426,7 +426,7 @@ class MainViewModel @Inject constructor(
                         // 安定区間を求めるか
                         val isRequiredIntervals = checkRequiredIntervals(sensingAirPressureList)
 
-                        if (true) {
+                        if (isRequiredIntervals) {
                             common.log("安定区間の抽出")
                             // 安定区間の抽出
                             withContext(Dispatchers.Main) {

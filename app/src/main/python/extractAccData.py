@@ -175,17 +175,19 @@ def compareLocDfs(curtExLocDfs, compExLocDf):
     return [startTime, stopTime]
 
 
-# 推定に使用する加速度データを抽出
-def extractAccData(availableFileNameArray, siFileName, siStartTime, siStopTime, filePath2):
+## 推定に使用する加速度データを抽出
+def extractAccData(availableFileNameArray, siFileName, siStartTime, siStopTime, filePath):
     print("extractAccData: 開始")
     availableFileNames = changeJavaList(availableFileNameArray)
     print(availableFileNames) 
 
     # デバック    
+    '''
     # スクリプトのディレクトリに移動
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     filePath = "./sensorData"          
-    
+    '''
+
     # 推定に使用する位置情報データを取得
     locDfs = getAllLocDfs(filePath, availableFileNames)   
     accDfs = getAllAccDfs(filePath, availableFileNames)
@@ -203,7 +205,7 @@ def extractAccData(availableFileNameArray, siFileName, siStartTime, siStopTime, 
     for i, fn in enumerate(availableFileNames):
         print(fn)
         if fn == siFileName:            
-            cereateExtractAccCsv(accDfs[siIndex], siStartTime, siStopTime, filePath2, fn)
+            cereateExtractAccCsv(accDfs[siIndex], siStartTime, siStopTime, filePath, fn)
             
         else:
             curtLocDf = locDfs[i]
@@ -218,21 +220,22 @@ def extractAccData(availableFileNameArray, siFileName, siStartTime, siStopTime, 
 
             print(startTime)
             print(stopTime)
-            cereateExtractAccCsv(curtAccDf, startTime, stopTime, filePath2, fn)            
+            cereateExtractAccCsv(curtAccDf, startTime, stopTime, filePath, fn)            
 
     print("extractAccData: 終了")
     return True
 
-
-def extractEstimatedAccData(curtFileName, siFileName, siStartTime, siStopTime, filePath2):
+## 推定する加速度データを抽出
+def extractEstimatedAccData(curtFileName, siFileName, siStartTime, siStopTime, filePath):
     print("extractEstimatedAccData: 開始")  
     # デバック
+    ''' 
     import os
     # スクリプトのディレクトリに移動
     os.chdir(os.path.dirname(os.path.abspath(__file__)))       
     curtFileName = "20241008132847" 
     filePath = "./sensorData"
-
+    '''
     curtLocDf = pd.read_csv(f"{filePath}/{curtFileName}/loc.csv") 
     curtIntervalsDf = pd.read_csv(f"{filePath}/{curtFileName}/intervals.csv")      
 
@@ -254,7 +257,7 @@ def extractEstimatedAccData(curtFileName, siFileName, siStartTime, siStopTime, f
         print(f"stopTime: {stopTime}")
         accDf = pd.read_csv(f"{filePath}/{curtFileName}/acc.csv") 
         print(curtFileName)
-        cereateExtractAccCsv(accDf, startTime, stopTime, filePath2, curtFileName)
+        cereateExtractAccCsv(accDf, startTime, stopTime, filePath, curtFileName)
         print("extractEstimatedAccData: 終了")  
         return True
     else:
