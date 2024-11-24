@@ -1,6 +1,7 @@
 package com.example.estimateairpressuredecrease
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -52,6 +53,8 @@ class MainActivity: ComponentActivity() {
                 }
             }
         }
+        // 画面をスリープさせない
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     //
