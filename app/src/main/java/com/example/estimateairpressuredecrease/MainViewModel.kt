@@ -394,6 +394,10 @@ class MainViewModel @Inject constructor(
                 val isSuccessExtractIntervals = rp.extractIntervals(curtSensorDate)
                 // 区間抽出に成功したら
                 if (isSuccessExtractIntervals) {
+                    //　共通区間の抽出
+                    withContext(Dispatchers.Main) {
+                        homeMessage = "センサデータ保存中"
+                    }
                     // 学習時
                     if (isTrainingState) {
                         // センサ情報をデータベースに保存
@@ -442,7 +446,7 @@ class MainViewModel @Inject constructor(
                             // 安定区間内のデータが必要な数あるか
                             val isRequiredStableIntervalRoute = checkRequiredStableIntervalRoute()
 
-                            if (true) {
+                            if (isRequiredStableIntervalRoute) {
                                 // 安定区間内の加速度csvを作成
                                 withContext(Dispatchers.Main) {
                                     homeMessage = "安定区間内の加速度抽出中"

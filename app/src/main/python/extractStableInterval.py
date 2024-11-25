@@ -311,13 +311,14 @@ def getAvailableRouteCount(locDfs, intervalsDfs, siLocDf, stableRouteNums, sensi
 
 
 ## 安定区間の抽出
-def extractStableInterval(sensingDatesArray, sensingAirPressuresArray, minProperPressure, requiredRouteCount, filePath2):
+def extractStableInterval(sensingDatesArray, sensingAirPressuresArray, minProperPressure, requiredRouteCount, filePath):
     print("extractStableInterval: 開始")
     # JavaList→Listに変換       
-    # sensingDates = changeJavaList(sensingDatesArray)  
-    # sensingAirPressures = changeJavaList(sensingAirPressuresArray)       
+    sensingDates = changeJavaList(sensingDatesArray)  
+    sensingAirPressures = changeJavaList(sensingAirPressuresArray)       
      
     # デバック
+    '''
     import os
     # スクリプトのディレクトリに移動
     os.chdir(os.path.dirname(os.path.abspath(__file__)))   
@@ -334,7 +335,8 @@ def extractStableInterval(sensingDatesArray, sensingAirPressuresArray, minProper
                            235, 213, 153, 294,
                            294, 261
     ]  
-    filePath = "./sensorData"          
+    filePath = "./sensorData" 
+    '''         
 
     # 保存した位置情報，区間データを取得
     locDfs, intervalsDfs = getAllLocDfs(filePath, sensingDates)        
@@ -419,8 +421,8 @@ def extractStableInterval(sensingDatesArray, sensingAirPressuresArray, minProper
         print(withinAvailableRouteCount)
         print(outOfAvailableRouteCount)
         
-        # withinAvailableRouteCount >= requiredRouteCount and outOfAvailableRouteCount >= requiredRouteCount:
-        if True:
+        
+        if withinAvailableRouteCount >= requiredRouteCount and outOfAvailableRouteCount >= requiredRouteCount:
             print(f"推定できる")
             print("extractStableInterval: 終了")  
             return [withinAvailableRouteCount, outOfAvailableRouteCount, sensingDates[stableRouteNums[0]], siStartTime, siStopTime, availableFileNameList]
